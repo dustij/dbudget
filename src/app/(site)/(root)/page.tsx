@@ -12,13 +12,13 @@ const LandingPage = () => {
 
   return (
     <main className="h-full w-full bg-white">
-      <div className="flex h-full w-full flex-col items-center justify-center space-y-6">
+      <div className="mobile-hz:space-y-6 flex h-full flex-col items-center justify-center space-y-2">
         <Image src={"/images/logo.png"} width={100} height={100} alt="Logo" />
         <div className="text-center tracking-tight">
-          <h1 className="text-2xl font-bold text-zinc-900 sm:text-4xl">
+          <h1 className="mobile:text-4xl text-2xl font-bold text-zinc-900">
             Welcome to Dbudget!
           </h1>
-          <p className="text-lg text-zinc-900 sm:text-xl">
+          <p className="mobile:text-xl text-lg text-zinc-900">
             The budgeting app for the rest of us.
           </p>
         </div>
