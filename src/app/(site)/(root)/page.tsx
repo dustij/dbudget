@@ -1,14 +1,15 @@
 "use client"
 
+import { signIn } from "next-auth/react"
 import Image from "next/image"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { BsGoogle, BsGithub } from "react-icons/bs"
+import { Icons } from "~/components/ui/icons"
 
 const LandingPage = () => {
   const router = useRouter()
-
-  const handleGetStarted = () => {}
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   return (
     <main className="h-full w-full bg-white">
@@ -39,18 +40,35 @@ const LandingPage = () => {
             </span>
             <hr className="border-1 w-[50px] border-gray-300" />
           </div>
+
           <button
-            onClick={handleGetStarted}
-            className="flex w-full items-center justify-center rounded-full border border-lime-500 bg-lime-50 px-5 py-3 text-lg font-semibold tracking-tight text-zinc-900 hover:opacity-75 hover:shadow-sm"
+            onClick={() => {
+              setIsLoading(true)
+              signIn("google", { callbackUrl: "/dashboard" })
+            }}
+            className="flex w-full items-center justify-center rounded-full border border-lime-500 bg-lime-50 px-5 py-3 text-lg font-semibold tracking-tight text-zinc-900 hover:opacity-75 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isLoading}
           >
-            <BsGoogle className="mr-3" />
+            {isLoading ? (
+              <Icons.spinner className="mr-3 h-4 w-4 animate-spin" />
+            ) : (
+              <BsGoogle className="mr-3" />
+            )}
             Google
           </button>
           <button
-            onClick={handleGetStarted}
-            className="flex w-full items-center justify-center rounded-full border border-lime-500 bg-lime-50 px-5 py-3 text-lg font-semibold tracking-tight text-zinc-900 hover:opacity-75 hover:shadow-sm"
+            onClick={() => {
+              setIsLoading(true)
+              signIn("github", { callbackUrl: "/dashboard" })
+            }}
+            className="flex w-full items-center justify-center rounded-full border border-lime-500 bg-lime-50 px-5 py-3 text-lg font-semibold tracking-tight text-zinc-900 hover:opacity-75 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isLoading}
           >
-            <BsGithub className="mr-3" />
+            {isLoading ? (
+              <Icons.spinner className="mr-3 h-4 w-4 animate-spin" />
+            ) : (
+              <BsGithub className="mr-3" />
+            )}
             Github
           </button>
         </div>
