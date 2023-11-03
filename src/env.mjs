@@ -11,6 +11,10 @@ export const env = createEnv({
     GITHUB_SECRET: z.string().min(1),
     GOOGLE_ID: z.string().min(1),
     GOOGLE_SECRET: z.string().min(1),
+    DATABASE_URL: z.string().min(1).url(),
+    DATABASE_HOST: z.string().min(1),
+    DATABASE_USERNAME: z.string().min(1),
+    DATABASE_PASSWORD: z.string().min(1),
   },
   client: {},
   /**
@@ -24,5 +28,9 @@ export const env = createEnv({
     GOOGLE_ID: process.env.GOOGLE_ID,
     GOOGLE_SECRET: process.env.GOOGLE_SECRET,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+    DATABASE_URL: process.env.DATABASE_URL,
+    DATABASE_HOST: process.env.DATABASE_HOST,
+    DATABASE_USERNAME: process.env.DATABASE_USERNAME,
+    DATABASE_PASSWORD: process.env.DATABASE_PASSWORD,
   },
 })

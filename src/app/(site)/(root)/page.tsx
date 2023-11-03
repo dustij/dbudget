@@ -5,7 +5,7 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { BsGoogle, BsGithub } from "react-icons/bs"
-import { Icons } from "~/components/ui/icons"
+import { Icons } from "~/components/icons"
 
 const LandingPage = () => {
   const router = useRouter()
