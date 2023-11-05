@@ -5,9 +5,9 @@ import { getServerAuthSession } from "~/app/api/auth/[...nextauth]/options"
 // import { selectAllUsers, insertUser } from "~/lib/actions"
 
 const Dashboard: NextPage = async () => {
-  const { data: session, status } = useSession()
-
   const user = await getServerAuthSession()
+
+  console.debug("user")
 
   console.debug(JSON.stringify({ user }, null, 2))
 
