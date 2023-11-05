@@ -3,13 +3,11 @@
 import { signIn } from "next-auth/react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { BsGoogle, BsGithub } from "react-icons/bs"
 import { Icons } from "~/components/icons"
 
 const LandingPage = () => {
-  const router = useRouter()
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
   return (
@@ -22,6 +20,7 @@ const LandingPage = () => {
               width={100}
               height={100}
               alt="Logo"
+              priority
             />
             <div className="text-center tracking-tight">
               <h1 className="mobile:text-4xl text-2xl font-bold text-zinc-900">
