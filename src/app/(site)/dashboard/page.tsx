@@ -1,11 +1,15 @@
-"use client"
-
+import { NextPage } from "next"
 import { useSession } from "next-auth/react"
 import { useEffect } from "react"
+import { getServerAuthSession } from "~/app/api/auth/[...nextauth]/options"
 // import { selectAllUsers, insertUser } from "~/lib/actions"
 
-const Dashboard = () => {
+const Dashboard: NextPage = async () => {
   const { data: session, status } = useSession()
+
+  const user = await getServerAuthSession()
+
+  console.debug(JSON.stringify({ user }, null, 2))
 
   // useEffect(() => {
   //   if (
