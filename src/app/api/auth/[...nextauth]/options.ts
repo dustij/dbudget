@@ -1,5 +1,5 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter"
-import type { NextAuthOptions } from "next-auth"
+import { type NextAuthOptions, getServerSession } from "next-auth"
 import GitHubProvider from "next-auth/providers/github"
 import GoogleProvider from "next-auth/providers/google"
 import { db } from "~/db"
@@ -24,3 +24,10 @@ export const options: NextAuthOptions = {
 
   callbacks: {},
 }
+
+/**
+ * Wrapper for `getServerSession` so that you don't need to import the `authOptions` in every file.
+ *
+ * @see https://next-auth.js.org/configuration/nextjs
+ */
+export const getServerAuthSession = () => getServerSession(options);
