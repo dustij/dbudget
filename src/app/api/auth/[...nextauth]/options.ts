@@ -9,13 +9,22 @@ import { mysqlTable, users } from "~/db/schema"
 export const options: NextAuthOptions = {
   adapter: DrizzleAdapter(db, mysqlTable),
   providers: [
+    /**
+     * Normally, when you sign in with an OAuth provider and another account with the same
+     * email address already exists, the accounts are not linked automatically. Automatic
+     * account linking on sign in is not secure between arbitrary providers and is
+     * disabled by default
+     * https://next-auth.js.org/configuration/providers/oauth#automatic-account-linking
+     */
     GitHubProvider({
       clientId: process.env.GITHUB_ID!,
       clientSecret: process.env.GITHUB_SECRET!,
+      allowDangerousEmailAccountLinking: true,
     }),
     GoogleProvider({
       clientId: process.env.GOOGLE_ID!,
       clientSecret: process.env.GOOGLE_SECRET!,
+      allowDangerousEmailAccountLinking: true,
     }),
   ],
 

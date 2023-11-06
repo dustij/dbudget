@@ -10,6 +10,8 @@ import { Icons } from "~/components/icons"
 
 const LandingPage: NextPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isGoogle, setIsGoogle] = useState<boolean>(false)
+  const [isGithub, setIsGithub] = useState<boolean>(false)
 
   return (
     <div className="flex h-full flex-col">
@@ -53,12 +55,13 @@ const LandingPage: NextPage = () => {
             <button
               onClick={() => {
                 setIsLoading(true)
+                setIsGoogle(true)
                 signIn("google", { callbackUrl: "/dashboard" })
               }}
               className="flex w-full items-center justify-center rounded-full border border-lime-500 bg-lime-50 px-5 py-3 text-lg font-semibold tracking-tight text-zinc-900 hover:opacity-75 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:opacity-60"
               disabled={isLoading}
             >
-              {isLoading ? (
+              {isLoading && isGoogle ? (
                 <Icons.spinner className="mr-3 h-4 w-4 animate-spin" />
               ) : (
                 <BsGoogle className="mr-3" />
@@ -68,12 +71,13 @@ const LandingPage: NextPage = () => {
             <button
               onClick={() => {
                 setIsLoading(true)
+                setIsGithub(true)
                 signIn("github", { callbackUrl: "/dashboard" })
               }}
               className="flex w-full items-center justify-center rounded-full border border-lime-500 bg-lime-50 px-5 py-3 text-lg font-semibold tracking-tight text-zinc-900 hover:opacity-75 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:opacity-60"
               disabled={isLoading}
             >
-              {isLoading ? (
+              {isLoading && isGithub ? (
                 <Icons.spinner className="mr-3 h-4 w-4 animate-spin" />
               ) : (
                 <BsGithub className="mr-3" />
