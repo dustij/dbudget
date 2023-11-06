@@ -1,9 +1,10 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter"
+import { eq } from "drizzle-orm"
 import { type NextAuthOptions, getServerSession } from "next-auth"
 import GitHubProvider from "next-auth/providers/github"
 import GoogleProvider from "next-auth/providers/google"
 import { db } from "~/db"
-import { mysqlTable } from "~/db/schema"
+import { mysqlTable, users } from "~/db/schema"
 
 export const options: NextAuthOptions = {
   adapter: DrizzleAdapter(db, mysqlTable),
@@ -22,7 +23,27 @@ export const options: NextAuthOptions = {
 
   pages: { signIn: "/" },
 
-  callbacks: {},
+  callbacks: {
+    async session({ session, token, user }) {
+      // Send properties to the client.
+      if (session.user) {
+        session.user.id = token.id
+      }
+      return session
+    },
+
+    async jwt({ token, account, profile }) {
+      // Persist the user id to the token right after signin
+      if (account) {
+        const user = (await db
+          .select()
+          .from(users)
+          .where(eq(users.email, token.email as string))) as { id: string }[]
+        token.id = user[0].id
+      }
+      return token
+    },
+  },
 }
 
 /**
@@ -30,4 +51,4 @@ export const options: NextAuthOptions = {
  *
  * @see https://next-auth.js.org/configuration/nextjs
  */
-export const getServerAuthSession = () => getServerSession(options);
+export const getServerAuthSession = () => getServerSession(options)

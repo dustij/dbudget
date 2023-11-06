@@ -1,5 +1,6 @@
 "use client"
 
+import type { NextPage } from "next"
 import { signIn } from "next-auth/react"
 import Image from "next/image"
 import Link from "next/link"
@@ -7,7 +8,7 @@ import { useState } from "react"
 import { BsGoogle, BsGithub } from "react-icons/bs"
 import { Icons } from "~/components/icons"
 
-const LandingPage = () => {
+const LandingPage: NextPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
   return (

@@ -1,7 +1,6 @@
-// type UserModel = {
-//   email: string
-//   name?: string | null | undefined
-//   image?: string | null | undefined
-//   createdAt?: Date
-//   updatedAt?: Date | null | undefined
-// }
+type SessionUser = {
+  name?: string | null
+  email?: string | null
+  image?: string | null
+  id?: string | null
+}
