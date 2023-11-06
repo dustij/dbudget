@@ -35,7 +35,7 @@ const Header: FC<HeaderProps> = ({ user }) => {
       {showUserDialog && (
         <>
           <div
-            // onClick={() => setShowUserDialog(false)}
+            onClick={() => setShowUserDialog(false)}
             className="mobile:bg-transparent mobile:backdrop-blur-none fixed inset-0 bg-neutral-900/70 backdrop-blur-sm"
           />
           <div
