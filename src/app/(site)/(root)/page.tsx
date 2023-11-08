@@ -8,7 +8,6 @@ import { useState } from "react"
 import { BsGoogle, BsGithub } from "react-icons/bs"
 import { Icons } from "~/components/icons"
 
-// TODO: if user is logged in, redirect to dashboard
 const LandingPage: NextPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [isGoogle, setIsGoogle] = useState<boolean>(false)

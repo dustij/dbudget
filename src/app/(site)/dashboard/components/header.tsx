@@ -3,8 +3,11 @@
 import { signOut } from "next-auth/react"
 import Image from "next/image"
 import Link from "next/link"
-import { useSelectedLayoutSegment } from "next/navigation"
+import { useSelectedLayoutSegments } from "next/navigation"
 import { useState, type FC } from "react"
+import { cn } from "~/lib/utils"
+import { RxHamburgerMenu } from "react-icons/rx"
+import { AiOutlineClose } from "react-icons/ai" // import the AiOutlineClose icon from react-icons/ai
 
 interface HeaderProps {
   user: SessionUser
@@ -12,47 +15,161 @@ interface HeaderProps {
 
 const Header: FC<HeaderProps> = ({ user }) => {
   const [showUserDialog, setShowUserDialog] = useState(false)
-  const segement = useSelectedLayoutSegment()
+  const [showSidebar, setShowSidebar] = useState(false)
+  const segement = useSelectedLayoutSegments()
 
   return (
     <>
-      <header className="flex h-12 items-center justify-between border-b px-4">
+      <header className="mobile:px-6 flex h-12 items-center justify-between border-b px-4">
         <div>
           <Image src={"/images/logo.png"} alt="Logo" width={32} height={32} />
         </div>
-        <div className="mobile:block mr-auto hidden pl-6">
-          <div className="flex items-center space-x-4">
+        <div
+          className="mobile:hidden mr-auto cursor-pointer pl-6"
+          aria-label="Toggle Sidebar"
+        >
+          <RxHamburgerMenu
+            className="h-6 w-6 text-zinc-500 hover:text-zinc-900"
+            onClick={() => setShowSidebar(!showSidebar)}
+          />
+        </div>
+        <div
+          className={cn(
+            "mobile:hidden z-10 bg-transparent",
+            showSidebar ? "fixed inset-0" : "hidden",
+          )}
+          onClick={() => setShowSidebar(false)}
+        />
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className={cn(
+            "mobile:hidden fixed left-0 top-0 z-50 h-full w-[350px] border bg-white shadow-xl transition-all duration-300 ease-in-out",
+            showSidebar ? "translate-x-0" : "-translate-x-full shadow-none",
+          )}
+        >
+          <nav
+            aria-label="Sidebar Mobile Navigation"
+            className="flex flex-col justify-between space-y-2 py-2"
+          >
+            <div className="flex justify-end pr-4">
+              <AiOutlineClose
+                className="h-6 w-6 cursor-pointer text-zinc-500 hover:text-zinc-900"
+                onClick={() => setShowSidebar(false)}
+              />
+            </div>
             <Link
               href="/dashboard/budget"
-              className={`${
-                segement === "budget"
-                  ? "text-neutral-900"
-                  : "text-neutral-500 hover:text-neutral-900"
-              }`}
+              onClick={() => setShowSidebar(false)}
+              className={cn(
+                "group relative",
+                segement[1] === "budget"
+                  ? "text-zinc-900"
+                  : "text-zinc-400 hover:text-zinc-900",
+              )}
             >
-              Budget
+              <span className="px-6 text-lg">Budget</span>
+              <span
+                className={cn(
+                  "absolute inset-y-0 left-0 w-1 scale-y-0 transform rounded-full bg-lime-600 transition-transform duration-200 ease-out ",
+                  segement[1] === "budget" ? "scale-y-100" : "scale-y-0",
+                )}
+              />
             </Link>
             <Link
               href="/dashboard/balance"
-              className={`${
-                segement === "balance"
-                  ? "text-neutral-900"
-                  : "text-neutral-500 hover:text-neutral-900"
-              }`}
+              onClick={() => setShowSidebar(false)}
+              className={cn(
+                "group relative",
+                segement[1] === "balance"
+                  ? "text-zinc-900"
+                  : "text-zinc-400 hover:text-zinc-900",
+              )}
             >
-              Balance
+              <span className="px-6 text-lg">Balance</span>
+              <span
+                className={cn(
+                  "absolute inset-y-0 left-0 w-1 scale-y-0 transform rounded-full bg-lime-600 transition-transform duration-200 ease-out ",
+                  segement[1] === "balance" ? "scale-y-100" : "scale-y-0",
+                )}
+              />
             </Link>
             <Link
               href="/dashboard/journal"
-              className={`${
-                segement === "journal"
-                  ? "text-neutral-900"
-                  : "text-neutral-500 hover:text-neutral-900"
-              }`}
+              onClick={() => setShowSidebar(false)}
+              className={cn(
+                "group relative",
+                segement[1] === "journal"
+                  ? "text-zinc-900"
+                  : "text-zinc-400 hover:text-zinc-900",
+              )}
             >
-              Journal
+              <span className="px-6 text-lg">Journal</span>
+              <span
+                className={cn(
+                  "absolute inset-y-0 left-0 w-1 scale-y-0 transform rounded-full bg-lime-600 transition-transform duration-200 ease-out ",
+                  segement[1] === "journal" ? "scale-y-100" : "scale-y-0",
+                )}
+              />
             </Link>
-          </div>
+          </nav>
+        </div>
+        <div className="mobile:block mr-auto hidden pl-6">
+          <nav
+            className="mobile:flex-row mobile:items-center mobile:gap-5 flex gap-6 lg:gap-6"
+            aria-label="Desktop Navbar"
+          >
+            <Link
+              href="/dashboard/budget"
+              className={cn(
+                "group relative",
+                segement[1] === "budget"
+                  ? "text-zinc-900"
+                  : "text-zinc-400 hover:text-zinc-900",
+              )}
+            >
+              <span>Budget</span>
+              <span
+                className={cn(
+                  "absolute inset-x-0 bottom-0 h-0.5 scale-x-0 transform rounded-full bg-lime-600 transition-transform duration-200 ease-out ",
+                  segement[1] === "budget" ? "scale-x-100" : "scale-x-0",
+                )}
+              />
+            </Link>
+            <Link
+              href="/dashboard/balance"
+              className={cn(
+                "group relative",
+                segement[1] === "balance"
+                  ? "text-zinc-900"
+                  : "text-zinc-400 hover:text-zinc-900",
+              )}
+            >
+              <span>Balance</span>
+              <span
+                className={cn(
+                  "absolute inset-x-0 bottom-0 h-0.5 scale-x-0 transform rounded-full bg-lime-600 transition-transform duration-200 ease-out",
+                  segement[1] === "balance" ? "scale-x-100" : "scale-x-0",
+                )}
+              />
+            </Link>
+            <Link
+              href="/dashboard/journal"
+              className={cn(
+                "group relative",
+                segement[1] === "journal"
+                  ? "text-zinc-900"
+                  : "text-zinc-400 hover:text-zinc-900",
+              )}
+            >
+              <span>Journal</span>
+              <span
+                className={cn(
+                  "absolute inset-x-0 bottom-0 h-0.5 scale-x-0 transform rounded-full bg-lime-600 transition-transform duration-200 ease-out ",
+                  segement[1] === "journal" ? "scale-x-100" : "scale-x-0",
+                )}
+              />
+            </Link>
+          </nav>
         </div>
         <div className="flex items-center">
           <div className="mr-6">{user.name}</div>
@@ -73,24 +190,25 @@ const Header: FC<HeaderProps> = ({ user }) => {
         <>
           <div
             onClick={() => setShowUserDialog(false)}
-            className="mobile:bg-transparent mobile:backdrop-blur-none fixed inset-0 bg-neutral-900/70 backdrop-blur-sm"
+            className="mobile:bg-transparent mobile:backdrop-blur-none fixed inset-0 bg-zinc-900/70 backdrop-blur-sm"
           />
           <div
             onClick={() => setShowUserDialog(false)}
             className="fixed inset-0 flex flex-col items-center justify-center"
           >
             <div
+              aria-label="User Dialog"
               onClick={(e) => e.stopPropagation()}
               className="mobile:mt-14 mobile:mr-4 mobile:fixed mobile:top-0 mobile:right-0 z-50 rounded-lg border bg-white shadow-md"
             >
               <div className="flex flex-col justify-between space-y-2 py-2">
                 <div className="flex flex-col px-6">
-                  <h1 className="text-lg font-bold">{user.name}</h1>
-                  <div className="text-sm text-neutral-500">{user.email}</div>
+                  <h1 className="text-lg font-semibold">{user.name}</h1>
+                  <div className="font-light text-zinc-400">{user.email}</div>
                 </div>
                 <div
                   onClick={() => signOut()}
-                  className="flex items-center border-t px-6 py-2 text-neutral-700 hover:cursor-pointer hover:bg-neutral-50 hover:text-neutral-950"
+                  className="flex items-center border-t px-6 py-2 text-zinc-600 hover:cursor-pointer hover:bg-zinc-50 hover:text-zinc-950"
                 >
                   <p>Sign Out</p>
                 </div>

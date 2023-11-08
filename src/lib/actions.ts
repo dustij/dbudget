@@ -13,6 +13,6 @@
 //   const result = await db
 //     .insert(users)
 //     .values(user)
-//     .onDuplicateKeyUpdate({ set: user }) // TODO: This is not working, updateAt is not being set
+//     .onDuplicateKeyUpdate({ set: user }) // This is not working, updateAt is not being set
 //   return result
 // }
