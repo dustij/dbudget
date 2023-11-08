@@ -48,6 +48,12 @@ export const options: NextAuthOptions = {
           .select()
           .from(users)
           .where(eq(users.email, token.email as string))) as { id: string }[]
+        if (!user[0]) {
+          throw new Error("User not found")
+        }
+        if (user.length > 1) {
+          throw new Error("Multiple users found with the same email address")
+        }
         token.id = user[0].id
       }
       return token
