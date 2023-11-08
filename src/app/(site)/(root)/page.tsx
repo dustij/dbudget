@@ -8,6 +8,7 @@ import { useState } from "react"
 import { BsGoogle, BsGithub } from "react-icons/bs"
 import { Icons } from "~/components/icons"
 
+// TODO: if user is logged in, redirect to dashboard
 const LandingPage: NextPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [isGoogle, setIsGoogle] = useState<boolean>(false)
@@ -34,7 +35,6 @@ const LandingPage: NextPage = () => {
               </p>
             </div>
           </div>
-
           <div className="mobile-hz:flex my-6 hidden w-full items-center justify-center">
             <hr className="border-1 w-[70px] border-gray-300 sm:w-[100px]" />
             <span className="mx-3 font-medium text-gray-500">
@@ -42,7 +42,6 @@ const LandingPage: NextPage = () => {
             </span>
             <hr className="border-1 w-[70px] border-gray-300 sm:w-[100px]" />
           </div>
-
           <div className="flex w-[250px] flex-col space-y-2 sm:w-[300px]">
             <div className="mobile-hz:hidden my-2 flex w-full items-center justify-center">
               <hr className="border-1 w-[50px] border-gray-300" />
@@ -51,14 +50,13 @@ const LandingPage: NextPage = () => {
               </span>
               <hr className="border-1 w-[50px] border-gray-300" />
             </div>
-
             <button
               onClick={() => {
                 setIsLoading(true)
                 setIsGoogle(true)
                 signIn("google", { callbackUrl: "/dashboard" })
               }}
-              className="flex w-full items-center justify-center rounded-full border border-lime-500 bg-lime-50 px-5 py-3 text-lg font-semibold tracking-tight text-zinc-900 hover:opacity-75 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:opacity-60"
+              className="flex w-full items-center justify-center rounded-full border border-lime-500 bg-lime-50 px-5 py-3 text-lg font-semibold tracking-tight text-zinc-900 hover:opacity-75 hover:shadow disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:opacity-60"
               disabled={isLoading}
             >
               {isLoading && isGoogle ? (
@@ -74,7 +72,7 @@ const LandingPage: NextPage = () => {
                 setIsGithub(true)
                 signIn("github", { callbackUrl: "/dashboard" })
               }}
-              className="flex w-full items-center justify-center rounded-full border border-lime-500 bg-lime-50 px-5 py-3 text-lg font-semibold tracking-tight text-zinc-900 hover:opacity-75 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:opacity-60"
+              className="flex w-full items-center justify-center rounded-full border border-lime-500 bg-lime-50 px-5 py-3 text-lg font-semibold tracking-tight text-zinc-900 hover:opacity-75 hover:shadow disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:opacity-60"
               disabled={isLoading}
             >
               {isLoading && isGithub ? (
