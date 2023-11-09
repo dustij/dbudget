@@ -11,21 +11,27 @@ import { AiOutlineClose } from "react-icons/ai" // import the AiOutlineClose ico
 
 interface HeaderProps {
   user: SessionUser
+  className?: string
 }
 
-const Header: FC<HeaderProps> = ({ user }) => {
+const Header: FC<HeaderProps> = ({ user, className }) => {
   const [showUserDialog, setShowUserDialog] = useState(false)
   const [showSidebar, setShowSidebar] = useState(false)
   const segement = useSelectedLayoutSegments()
 
   return (
     <>
-      <header className="mobile:px-6 flex h-12 items-center justify-between border-b px-4">
+      <header
+        className={cn(
+          "flex h-12 items-center justify-between border-b px-4 mobile:px-6",
+          className,
+        )}
+      >
         <div>
           <Image src={"/images/logo.png"} alt="Logo" width={32} height={32} />
         </div>
         <div
-          className="mobile:hidden mr-auto cursor-pointer pl-6"
+          className="mr-auto cursor-pointer pl-6 mobile:hidden"
           aria-label="Toggle Sidebar"
         >
           <RxHamburgerMenu
@@ -35,7 +41,7 @@ const Header: FC<HeaderProps> = ({ user }) => {
         </div>
         <div
           className={cn(
-            "mobile:hidden z-10 bg-transparent",
+            "z-10 bg-transparent mobile:hidden",
             showSidebar ? "fixed inset-0" : "hidden",
           )}
           onClick={() => setShowSidebar(false)}
@@ -43,7 +49,7 @@ const Header: FC<HeaderProps> = ({ user }) => {
         <div
           onClick={(e) => e.stopPropagation()}
           className={cn(
-            "mobile:hidden fixed left-0 top-0 z-50 h-full w-[350px] border bg-white shadow-xl transition-all duration-300 ease-in-out",
+            "fixed left-0 top-0 z-50 h-full w-[350px] border bg-white shadow-xl transition-all duration-300 ease-in-out mobile:hidden",
             showSidebar ? "translate-x-0" : "-translate-x-full shadow-none",
           )}
         >
@@ -113,9 +119,9 @@ const Header: FC<HeaderProps> = ({ user }) => {
             </Link>
           </nav>
         </div>
-        <div className="mobile:block mr-auto hidden pl-6">
+        <div className="mr-auto hidden pl-6 mobile:block">
           <nav
-            className="mobile:flex-row mobile:items-center mobile:gap-5 flex gap-6 lg:gap-6"
+            className="flex gap-6 lg:gap-6 mobile:flex-row mobile:items-center mobile:gap-5"
             aria-label="Desktop Navbar"
           >
             <Link
@@ -190,16 +196,16 @@ const Header: FC<HeaderProps> = ({ user }) => {
         <>
           <div
             onClick={() => setShowUserDialog(false)}
-            className="mobile:bg-transparent mobile:backdrop-blur-none fixed inset-0 bg-zinc-900/70 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-zinc-900/70 backdrop-blur-sm mobile:bg-transparent mobile:backdrop-blur-none"
           />
           <div
             onClick={() => setShowUserDialog(false)}
-            className="fixed inset-0 flex flex-col items-center justify-center"
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center"
           >
             <div
               aria-label="User Dialog"
               onClick={(e) => e.stopPropagation()}
-              className="mobile:mt-14 mobile:mr-4 mobile:fixed mobile:top-0 mobile:right-0 z-50 rounded-lg border bg-white shadow-md"
+              className="z-50 rounded-lg border bg-white shadow-md mobile:fixed mobile:right-0 mobile:top-0 mobile:mr-4 mobile:mt-14"
             >
               <div className="flex flex-col justify-between space-y-2 py-2">
                 <div className="flex flex-col px-6">
