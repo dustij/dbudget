@@ -117,6 +117,24 @@ const Header: FC<HeaderProps> = ({ user, className }) => {
                 )}
               />
             </Link>
+            <Link
+              href="/dashboard/reminders"
+              onClick={() => setShowSidebar(false)}
+              className={cn(
+                "group relative",
+                segement[1] === "reminders"
+                  ? "text-zinc-900"
+                  : "text-zinc-400 hover:text-zinc-900",
+              )}
+            >
+              <span className="px-6 text-lg">Reminders</span>
+              <span
+                className={cn(
+                  "absolute inset-y-0 left-0 w-1 scale-y-0 transform rounded-full bg-lime-600 transition-transform duration-200 ease-out ",
+                  segement[1] === "reminders" ? "scale-y-100" : "scale-y-0",
+                )}
+              />
+            </Link>
           </nav>
         </div>
         <div className="mr-auto hidden pl-6 mobile:block">
@@ -175,6 +193,24 @@ const Header: FC<HeaderProps> = ({ user, className }) => {
                 )}
               />
             </Link>
+            <Link
+              href="/dashboard/reminders"
+              onClick={() => setShowSidebar(false)}
+              className={cn(
+                "group relative",
+                segement[1] === "reminders"
+                  ? "text-zinc-900"
+                  : "text-zinc-400 hover:text-zinc-900",
+              )}
+            >
+              <span>Reminders</span>
+              <span
+                className={cn(
+                  "absolute inset-x-0 bottom-0 h-0.5 scale-x-0 transform rounded-full bg-lime-600 transition-transform duration-200 ease-out ",
+                  segement[1] === "reminders" ? "scale-x-100" : "scale-x-0",
+                )}
+              />
+            </Link>
           </nav>
         </div>
         <div className="flex items-center">
@@ -196,7 +232,7 @@ const Header: FC<HeaderProps> = ({ user, className }) => {
         <>
           <div
             onClick={() => setShowUserDialog(false)}
-            className="fixed inset-0 z-40 bg-zinc-900/70 backdrop-blur-sm mobile:bg-transparent mobile:backdrop-blur-none"
+            className="fixed inset-0 z-40 bg-zinc-900/60 backdrop-blur-sm mobile:bg-zinc-900/10 mobile:backdrop-blur-none"
           />
           <div
             onClick={() => setShowUserDialog(false)}

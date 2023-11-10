@@ -16,7 +16,9 @@ const DashboardLayout: React.FC<DashboardProps> = async ({ children }) => {
   return (
     <>
       <Header user={session.user} />
-      <div className="my-content border-b border-l border-r">{children}</div>
+      <div className="my-content border-b border-l border-r bg-zinc-50">
+        {children}
+      </div>
     </>
   )
 }

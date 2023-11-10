@@ -1,5 +1,13 @@
 import type { FC } from "react"
-import { Td, Th } from "../components/table-elements"
+import {
+  Spreadsheet,
+  SpreadsheetBody,
+  SpreadsheetHeader,
+  SpreadsheetRow,
+  SpreadsheetCell,
+  SpreadsheetHeaderCell,
+} from "../components/spreadsheet"
+import YearPicker from "../components/year-picker"
 
 interface BudgetProps {}
 
@@ -160,53 +168,58 @@ const Budget: FC<BudgetProps> = () => {
   ]
 
   return (
-    <div>
-      <table className="w-full min-w-[1000px] table-fixed border-separate border-spacing-0 text-[14px]">
-        <thead className="sticky top-0 z-30 h-[33px] bg-white">
-          <tr>
-            <Th className="sticky left-0 bg-white text-left">Category</Th>
-            <Th>Jan</Th>
-            <Th>Feb</Th>
-            <Th>Mar</Th>
-            <Th>Apr</Th>
-            <Th>May</Th>
-            <Th>Jun</Th>
-            <Th>Jul</Th>
-            <Th>Aug</Th>
-            <Th>Sep</Th>
-            <Th>Oct</Th>
-            <Th>Nov</Th>
-            <Th className="border-r-0">Dec</Th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row, index) => (
-            <tr key={index}>
-              <Td
-                className="sticky left-0 z-10 bg-white text-left"
-                inputType="text"
-              >
-                {row.category}
-              </Td>
-              <Td inputType="number">{row.jan}</Td>
-              <Td inputType="number">{row.feb}</Td>
-              <Td inputType="number">{row.mar}</Td>
-              <Td inputType="number">{row.apr}</Td>
-              <Td inputType="number">{row.may}</Td>
-              <Td inputType="number">{row.jun}</Td>
-              <Td inputType="number">{row.jul}</Td>
-              <Td inputType="number">{row.aug}</Td>
-              <Td inputType="number">{row.sep}</Td>
-              <Td inputType="number">{row.oct}</Td>
-              <Td inputType="number">{row.nov}</Td>
-              <Td className="border-r-0" inputType="number">
-                {row.dec}
-              </Td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <>
+      <div className="sticky left-0 top-0 z-20 flex h-[33px] items-center justify-center border-b bg-white">
+        <YearPicker>{2021}</YearPicker>
+      </div>
+      <div className="relative">
+        <Spreadsheet>
+          <SpreadsheetHeader className="top-[33px]">
+            <SpreadsheetRow>
+              <SpreadsheetHeaderCell className="sticky left-0 bg-white text-left">
+                Category
+              </SpreadsheetHeaderCell>
+              <SpreadsheetHeaderCell>Jan</SpreadsheetHeaderCell>
+              <SpreadsheetHeaderCell>Feb</SpreadsheetHeaderCell>
+              <SpreadsheetHeaderCell>Mar</SpreadsheetHeaderCell>
+              <SpreadsheetHeaderCell>Apr</SpreadsheetHeaderCell>
+              <SpreadsheetHeaderCell>May</SpreadsheetHeaderCell>
+              <SpreadsheetHeaderCell>Jun</SpreadsheetHeaderCell>
+              <SpreadsheetHeaderCell>Jul</SpreadsheetHeaderCell>
+              <SpreadsheetHeaderCell>Aug</SpreadsheetHeaderCell>
+              <SpreadsheetHeaderCell>Sep</SpreadsheetHeaderCell>
+              <SpreadsheetHeaderCell>Oct</SpreadsheetHeaderCell>
+              <SpreadsheetHeaderCell>Nov</SpreadsheetHeaderCell>
+              <SpreadsheetHeaderCell>Dec</SpreadsheetHeaderCell>
+            </SpreadsheetRow>
+          </SpreadsheetHeader>
+          <SpreadsheetBody>
+            {data.map((row, rowIndex) => (
+              <SpreadsheetRow key={row.category}>
+                <SpreadsheetCell
+                  className="sticky left-0 z-10"
+                  inputType="text"
+                >
+                  {row.category}
+                </SpreadsheetCell>
+                <SpreadsheetCell>{row.jan}</SpreadsheetCell>
+                <SpreadsheetCell>{row.feb}</SpreadsheetCell>
+                <SpreadsheetCell>{row.mar}</SpreadsheetCell>
+                <SpreadsheetCell>{row.apr}</SpreadsheetCell>
+                <SpreadsheetCell>{row.may}</SpreadsheetCell>
+                <SpreadsheetCell>{row.jun}</SpreadsheetCell>
+                <SpreadsheetCell>{row.jul}</SpreadsheetCell>
+                <SpreadsheetCell>{row.aug}</SpreadsheetCell>
+                <SpreadsheetCell>{row.sep}</SpreadsheetCell>
+                <SpreadsheetCell>{row.oct}</SpreadsheetCell>
+                <SpreadsheetCell>{row.nov}</SpreadsheetCell>
+                <SpreadsheetCell>{row.dec}</SpreadsheetCell>
+              </SpreadsheetRow>
+            ))}
+          </SpreadsheetBody>
+        </Spreadsheet>
+      </div>
+    </>
   )
 }
 
