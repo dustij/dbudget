@@ -229,6 +229,7 @@ export const SpreadsheetSection: FC<SpreadsheetSectionProps> = ({
       {isNewRow && (
         <SpreadsheetRow className="h-[22px] ">
           <SpreadsheetCell
+            className="sticky left-0 z-10"
             isNewRow
             inputType="text"
             // onSubmit={handleSubmitCategory}
