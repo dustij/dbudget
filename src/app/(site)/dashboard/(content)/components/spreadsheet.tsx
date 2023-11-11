@@ -3,6 +3,7 @@
 import React, { useState, type FC, useRef, useEffect } from "react"
 import { Input } from "~/components/ui/input"
 import { cn, formatCurrency } from "~/lib/utils"
+import { IoAddCircleOutline } from "react-icons/io5"
 
 interface SpreadsheetProps {
   children: React.ReactNode
@@ -47,40 +48,7 @@ export const SpreadsheetBody: FC<SpreadsheetBodyProps> = ({
   children,
   className,
 }) => {
-  const [activeCell, setActiveCell] = useState<null | {
-    row: number
-    col: number
-  }>(null)
-  const rows = useRef<React.ReactNode[]>([])
-
-  useEffect(() => {
-    rows.current.forEach((row, rowIndex) => {
-      if (React.isValidElement(row)) {
-        React.Children.forEach(
-          row.props.children,
-          (cell: React.ReactElement<SpreadsheetCellProps>, colIndex) => {
-            if (React.isValidElement(cell)) {
-              cell.props.loc = { row: rowIndex, col: colIndex }
-              cell.props.setActiveCell = setActiveCell
-            }
-          },
-        )
-      }
-    })
-  }, [])
-
-  useEffect(() => {
-    console.log("Active cell", activeCell)
-  }, [activeCell])
-
-  return (
-    <tbody className={cn(className)}>
-      {React.Children.map(children, (child, rowIndex) => {
-        rows.current[rowIndex] = child
-        return child
-      })}
-    </tbody>
-  )
+  return <tbody className={cn(className)}>{children}</tbody>
 }
 
 interface SpreadsheetRowProps {
@@ -99,21 +67,22 @@ interface SpreadsheetCellProps {
   children: string | number | undefined
   className?: string
   inputType?: "text" | "number"
-  loc?: { row: number; col: number }
-  setActiveCell?: React.Dispatch<{ row: number; col: number }>
+  isNewRow?: boolean
+  // onSubmit: (value: string | number | undefined) => void
 }
 
 export const SpreadsheetCell: FC<SpreadsheetCellProps> = ({
   children,
   className,
   inputType = "number",
-  loc,
-  setActiveCell,
+  isNewRow = false,
+  // onSubmit,
 }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [isClient, setIsClient] = useState(false)
   const [value, setValue] = useState(children)
   const inputRef = useRef<HTMLInputElement>(null)
+  // TODO: need a prop for the category so when submiting the amounts that data is sent to the server correctly
 
   useEffect(() => {
     setIsClient(true)
@@ -123,8 +92,6 @@ export const SpreadsheetCell: FC<SpreadsheetCellProps> = ({
     if (isEditing && inputRef.current) {
       inputRef.current.focus()
       inputRef.current.select()
-      console.log("Broadcasting", loc)
-      setActiveCell?.(loc!)
     }
   }, [isEditing])
 
@@ -134,16 +101,22 @@ export const SpreadsheetCell: FC<SpreadsheetCellProps> = ({
   }
 
   const submitEditing = () => {
+    // TODO: need to check if there is a valid category name associated with the amount
+    // onSubmit(value)
     setIsEditing(false)
   }
   return (
     <td
       onClick={() => setIsEditing(true)}
       className={cn(
-        "relative cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 py-0 text-left font-normal hover:bg-zinc-50",
+        "relative cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 py-0 text-left font-normal transition hover:bg-zinc-50",
         inputType === "number"
           ? "text-right font-light tabular-nums"
           : "text-left",
+        isNewRow && "bg-amber-50 hover:bg-yellow-100 hover:bg-opacity-40",
+        isNewRow &&
+          inputType === "number" &&
+          "cursor-default hover:cursor-default hover:bg-amber-50 hover:bg-opacity-100",
         className,
       )}
     >
@@ -158,7 +131,11 @@ export const SpreadsheetCell: FC<SpreadsheetCellProps> = ({
           className={cn(
             "absolute left-0 top-0 h-full w-full rounded-lg px-1 selection:bg-lime-100 focus:border-lime-500 focus-visible:ring-0 focus-visible:ring-offset-0",
             inputType === "number" ? "text-right tabular-nums" : "text-left",
+            isNewRow && "selection:bg-amber-100 focus:border-yellow-400 ",
             isEditing ? "block" : "hidden",
+            isNewRow &&
+              inputType === "number" &&
+              "hidden cursor-default hover:cursor-default",
           )}
           value={value}
           onChange={(e) => setValue(e.target.value)}
@@ -189,5 +166,98 @@ export const SpreadsheetHeaderCell: FC<SpreadsheetHeaderCellProps> = ({
     >
       {children}
     </th>
+  )
+}
+
+interface SpreadsheetSectionCellProps {
+  children?: React.ReactNode
+  className?: string
+  onClick?: () => void
+}
+
+export const SpreadsheetSectionCell: FC<SpreadsheetSectionCellProps> = ({
+  children,
+  className,
+  onClick,
+}) => {
+  return (
+    <td
+      className={cn(
+        "relative cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 py-0 text-left font-normal hover:bg-zinc-50",
+        className,
+      )}
+      onClick={onClick}
+    >
+      {children}
+    </td>
+  )
+}
+
+interface SpreadsheetSectionProps {
+  children?: React.ReactNode[]
+  name: string
+}
+
+export const SpreadsheetSection: FC<SpreadsheetSectionProps> = ({
+  children,
+  name,
+}) => {
+  const [isNewRow, setIsNewRow] = useState(false)
+  const [newCategory, setNewCategory] = useState("")
+
+  const onAddRow = (name: string) => {
+    setIsNewRow(true)
+  }
+
+  // const handleSubmitCategory = (value: string | number | undefined) => {
+  // TODO: handle unique constraint when server actions are implemented
+  // setNewCategory(value as string)
+  // setIsNewRow(false)
+  // }
+
+  return (
+    <>
+      <SpreadsheetRow>
+        <SpreadsheetSectionCell className="font-semibold hover:bg-white">
+          {name}
+        </SpreadsheetSectionCell>
+        {Array.from({ length: 12 }, (_, i) => (
+          <SpreadsheetSectionCell key={i} className="hover:bg-white" />
+        ))}
+      </SpreadsheetRow>
+      {children}
+      {isNewRow && (
+        <SpreadsheetRow className="h-[22px] ">
+          <SpreadsheetCell
+            isNewRow
+            inputType="text"
+            children={newCategory}
+            // onSubmit={handleSubmitCategory}
+          />
+          {Array.from({ length: 12 }, (_, i) => (
+            <SpreadsheetCell
+              isNewRow
+              key={i}
+              children={undefined}
+              // onSubmit={() => {}}
+            />
+          ))}
+        </SpreadsheetRow>
+      )}
+      <SpreadsheetRow>
+        <SpreadsheetSectionCell
+          className="pl-3 text-zinc-400 transition hover:cursor-pointer hover:bg-zinc-50 hover:text-zinc-900"
+          onClick={() => {
+            onAddRow(name)
+          }}
+        >
+          <IoAddCircleOutline className="mr-1 inline-block" />
+          Add
+        </SpreadsheetSectionCell>
+        {Array.from({ length: 12 }, (_, i) => (
+          <SpreadsheetSectionCell key={i} className="hover:bg-white" />
+        ))}
+      </SpreadsheetRow>
+    </>
   )
 }

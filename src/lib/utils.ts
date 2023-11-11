@@ -13,7 +13,7 @@ export function formatCurrency(
   amount: string | number | undefined,
   dollarSign = true,
 ) {
-  if (!amount) return ""
+  if (amount === undefined) return ""
   if (typeof amount === "string") amount = parseFloat(amount)
   const USD = new Intl.NumberFormat("en-US", {
     style: "currency",
