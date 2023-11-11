@@ -231,16 +231,18 @@ export const SpreadsheetSection: FC<SpreadsheetSectionProps> = ({
           <SpreadsheetCell
             isNewRow
             inputType="text"
-            children={newCategory}
             // onSubmit={handleSubmitCategory}
-          />
+          >
+            {undefined}
+          </SpreadsheetCell>
           {Array.from({ length: 12 }, (_, i) => (
             <SpreadsheetCell
               isNewRow
               key={i}
-              children={undefined}
               // onSubmit={() => {}}
-            />
+            >
+              {undefined}
+            </SpreadsheetCell>
           ))}
         </SpreadsheetRow>
       )}
