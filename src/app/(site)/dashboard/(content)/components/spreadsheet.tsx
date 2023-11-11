@@ -218,7 +218,7 @@ export const SpreadsheetSection: FC<SpreadsheetSectionProps> = ({
   return (
     <>
       <SpreadsheetRow>
-        <SpreadsheetSectionCell className="font-semibold hover:bg-white">
+        <SpreadsheetSectionCell className="sticky left-0 z-10 font-semibold hover:bg-white ">
           {name}
         </SpreadsheetSectionCell>
         {Array.from({ length: 12 }, (_, i) => (
@@ -248,7 +248,7 @@ export const SpreadsheetSection: FC<SpreadsheetSectionProps> = ({
       )}
       <SpreadsheetRow>
         <SpreadsheetSectionCell
-          className="pl-3 text-zinc-400 transition hover:cursor-pointer hover:bg-zinc-50 hover:text-zinc-900"
+          className="sticky left-0 z-10 pl-3 text-zinc-400 transition hover:cursor-pointer hover:bg-zinc-50 hover:text-zinc-900"
           onClick={() => {
             onAddRow(name)
           }}
