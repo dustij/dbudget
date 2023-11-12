@@ -2,14 +2,14 @@
 
 import { useState, type FC } from "react"
 import { cn } from "~/lib/utils"
-import { useMatrixRefs } from "./hooks"
+import { useRefsMatrix } from "./hooks"
 
 interface MatrixTableProps {
   className?: string
 }
 
 const MatrixTable: FC<MatrixTableProps> = ({ className }) => {
-  const refsMatrix = useMatrixRefs(10, 13)
+  const refsMatrix = useRefsMatrix(10, 13)
 
   const [componentsMatrix, setComponentsMatrix] = useState(
     refsMatrix.map((row, rowIndex) =>
