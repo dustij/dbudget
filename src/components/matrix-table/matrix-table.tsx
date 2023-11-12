@@ -8,11 +8,10 @@ interface MatrixTableProps {
 }
 
 const MatrixTable: FC<MatrixTableProps> = ({ className }) => {
-  const [refsMatrix, setRefsMatrix] = useState(
-    Array.from({ length: 10 }, () =>
-      Array.from({ length: 13 }, () => useRef<HTMLInputElement>(null)),
-    ),
+  const baseMatrix = Array.from({ length: 10 }, () =>
+    Array.from({ length: 13 }, () => useRef<HTMLInputElement>(null)),
   )
+  const [refsMatrix, setRefsMatrix] = useState(baseMatrix)
 
   const [componentsMatrix, setComponentMatrix] = useState(
     refsMatrix.map((row, rowIndex) =>
