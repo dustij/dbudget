@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type FC } from "react"
+import { useState, type FC, useCallback } from "react"
 import { cn } from "~/lib/utils"
 import { useRefsMatrix } from "./hooks"
 
@@ -12,25 +12,27 @@ const MatrixTable: FC<MatrixTableProps> = ({ className }) => {
   const refsMatrix = useRefsMatrix(10, 13)
 
   const [componentsMatrix, setComponentsMatrix] = useState(
-    refsMatrix.map((row, rowIndex) =>
+    refsMatrix.current.map((row, rowIndex) =>
       row.map((cell, colIndex) => (
         <input
           key={`${rowIndex}-${colIndex}`}
           className="w-full"
-          ref={cell}
+          ref={(input) => {
+            refsMatrix.current[rowIndex]![colIndex] = input
+          }}
           onBlur={(e) => handleSubmit(e)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               // Move focus to the next input one row down in the same column
               const nextRowIndex = rowIndex + 1
-              if (nextRowIndex < refsMatrix.length) {
-                refsMatrix[nextRowIndex]![colIndex]!.current?.focus()
+              if (nextRowIndex < refsMatrix.current.length) {
+                refsMatrix.current[nextRowIndex]?.[colIndex]?.focus()
               }
             } else if (e.key === "Enter" && e.shiftKey) {
               // Move focus to the previous input one row up in the same column
               const prevRowIndex = rowIndex - 1
               if (prevRowIndex >= 0) {
-                refsMatrix[prevRowIndex]![colIndex]!.current?.focus()
+                refsMatrix.current[prevRowIndex]?.[colIndex]?.focus()
               }
             } else if (e.key === "Escape") {
               // Blur the current input
