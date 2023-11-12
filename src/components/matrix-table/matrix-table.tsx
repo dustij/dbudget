@@ -1,19 +1,17 @@
 "use client"
 
-import { useState, type FC, useRef, use, useEffect } from "react"
+import { useState, type FC } from "react"
 import { cn } from "~/lib/utils"
+import { useMatrixRefs } from "./hooks"
 
 interface MatrixTableProps {
   className?: string
 }
 
 const MatrixTable: FC<MatrixTableProps> = ({ className }) => {
-  const baseMatrix = Array.from({ length: 10 }, () =>
-    Array.from({ length: 13 }, () => useRef<HTMLInputElement>(null)),
-  )
-  const [refsMatrix, setRefsMatrix] = useState(baseMatrix)
+  const refsMatrix = useMatrixRefs(10, 13)
 
-  const [componentsMatrix, setComponentMatrix] = useState(
+  const [componentsMatrix, setComponentsMatrix] = useState(
     refsMatrix.map((row, rowIndex) =>
       row.map((cell, colIndex) => (
         <input
