@@ -18,6 +18,7 @@ const MatrixTable: FC<MatrixTableProps> = ({ className }) => {
     refsMatrix.map((row, rowIndex) =>
       row.map((cell, colIndex) => (
         <input
+          key={`${rowIndex}-${colIndex}`}
           className="w-full"
           ref={cell}
           onBlur={(e) => handleSubmit(e)}
