@@ -1,14 +1,7 @@
 import type { FC } from "react"
-import {
-  Spreadsheet,
-  SpreadsheetBody,
-  SpreadsheetHeader,
-  SpreadsheetRow,
-  SpreadsheetCell,
-  SpreadsheetHeaderCell,
-  SpreadsheetSection,
-} from "../components/spreadsheet"
-import YearPicker from "../components/year-picker"
+import MatrixTable from "~/components/matrix-table/matrix-table"
+
+import YearPicker from "~/components/year-picker"
 
 interface BudgetProps {}
 
@@ -66,55 +59,7 @@ const Budget: FC<BudgetProps> = () => {
         <YearPicker>{2021}</YearPicker>
       </div>
       <div className="relative">
-        <Spreadsheet>
-          <SpreadsheetHeader className="top-[33px]">
-            <SpreadsheetRow>
-              <SpreadsheetHeaderCell className="sticky left-0 bg-white text-left">
-                Category
-              </SpreadsheetHeaderCell>
-              <SpreadsheetHeaderCell>Jan</SpreadsheetHeaderCell>
-              <SpreadsheetHeaderCell>Feb</SpreadsheetHeaderCell>
-              <SpreadsheetHeaderCell>Mar</SpreadsheetHeaderCell>
-              <SpreadsheetHeaderCell>Apr</SpreadsheetHeaderCell>
-              <SpreadsheetHeaderCell>May</SpreadsheetHeaderCell>
-              <SpreadsheetHeaderCell>Jun</SpreadsheetHeaderCell>
-              <SpreadsheetHeaderCell>Jul</SpreadsheetHeaderCell>
-              <SpreadsheetHeaderCell>Aug</SpreadsheetHeaderCell>
-              <SpreadsheetHeaderCell>Sep</SpreadsheetHeaderCell>
-              <SpreadsheetHeaderCell>Oct</SpreadsheetHeaderCell>
-              <SpreadsheetHeaderCell>Nov</SpreadsheetHeaderCell>
-              <SpreadsheetHeaderCell>Dec</SpreadsheetHeaderCell>
-            </SpreadsheetRow>
-          </SpreadsheetHeader>
-          <SpreadsheetBody>
-            {sections.map((section, sectionIndex) => (
-              <SpreadsheetSection key={sectionIndex} name={section}>
-                {data[`${section.toLowerCase()}`]?.map((row) => (
-                  <SpreadsheetRow key={row.category}>
-                    <SpreadsheetCell
-                      className="sticky left-0 z-10 pl-3"
-                      inputType="text"
-                    >
-                      {row.category}
-                    </SpreadsheetCell>
-                    <SpreadsheetCell>{row.jan ?? 0}</SpreadsheetCell>
-                    <SpreadsheetCell>{row.feb}</SpreadsheetCell>
-                    <SpreadsheetCell>{row.mar}</SpreadsheetCell>
-                    <SpreadsheetCell>{row.apr}</SpreadsheetCell>
-                    <SpreadsheetCell>{row.may}</SpreadsheetCell>
-                    <SpreadsheetCell>{row.jun}</SpreadsheetCell>
-                    <SpreadsheetCell>{row.jul}</SpreadsheetCell>
-                    <SpreadsheetCell>{row.aug}</SpreadsheetCell>
-                    <SpreadsheetCell>{row.sep}</SpreadsheetCell>
-                    <SpreadsheetCell>{row.oct}</SpreadsheetCell>
-                    <SpreadsheetCell>{row.nov}</SpreadsheetCell>
-                    <SpreadsheetCell>{row.dec}</SpreadsheetCell>
-                  </SpreadsheetRow>
-                ))}
-              </SpreadsheetSection>
-            ))}
-          </SpreadsheetBody>
-        </Spreadsheet>
+        <MatrixTable></MatrixTable>
       </div>
     </>
   )

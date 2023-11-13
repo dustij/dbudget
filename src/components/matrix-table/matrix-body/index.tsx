@@ -1,14 +1,11 @@
-"use client"
-
 import { useState, type FC, FocusEvent } from "react"
-import { cn } from "~/lib/utils"
-import { useRefsMatrix } from "./hooks"
+import { useRefsMatrix } from "../hooks"
 
-interface MatrixTableProps {
+interface MatrixBodyProps {
   className?: string
 }
 
-const MatrixTable: FC<MatrixTableProps> = ({ className }) => {
+const MatrixBody: FC<MatrixBodyProps> = ({ className }) => {
   const refsMatrix = useRefsMatrix(10, 13)
 
   const [componentsMatrix, setComponentsMatrix] = useState(
@@ -75,25 +72,16 @@ const MatrixTable: FC<MatrixTableProps> = ({ className }) => {
   }
 
   return (
-    <form>
-      <table
-        className={cn(
-          "w-full min-w-[1070px] table-fixed border-separate border-spacing-0 text-[14px]",
-          className,
-        )}
-      >
-        <tbody>
-          {componentsMatrix.map((row, rowIndex) => (
-            <tr key={rowIndex}>
-              {row.map((cell, colIndex) => (
-                <td key={colIndex}>{cell}</td>
-              ))}
-            </tr>
+    <tbody>
+      {componentsMatrix.map((row, rowIndex) => (
+        <tr key={rowIndex}>
+          {row.map((cell, colIndex) => (
+            <td key={colIndex}>{cell}</td>
           ))}
-        </tbody>
-      </table>
-    </form>
+        </tr>
+      ))}
+    </tbody>
   )
 }
 
-export default MatrixTable
+export default MatrixBody
