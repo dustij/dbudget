@@ -1,12 +1,5 @@
 import type { FC } from "react"
-import {
-  Spreadsheet,
-  SpreadsheetBody,
-  SpreadsheetHeader,
-  SpreadsheetRow,
-  SpreadsheetCell,
-  SpreadsheetHeaderCell,
-} from "../components/spreadsheet"
+import MatrixTable from "~/components/matrix-table/matrix-table"
 
 interface JournalProps {}
 

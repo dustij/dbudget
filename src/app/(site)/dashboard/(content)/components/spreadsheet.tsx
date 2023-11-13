@@ -4,12 +4,18 @@ import React, { useState, type FC, useRef, useEffect } from "react"
 import { Input } from "~/components/ui/input"
 import { cn, formatCurrency } from "~/lib/utils"
 import { IoAddCircleOutline } from "react-icons/io5"
+import { deprecate } from "util"
 
 interface SpreadsheetProps {
   children: React.ReactNode
   className?: string
 }
 
+/**
+ *
+ *
+ * @deprecated Use the new {@link MatrixTable} base class instead.
+ */
 export const Spreadsheet: FC<SpreadsheetProps> = ({ children, className }) => {
   return (
     <table
@@ -218,7 +224,7 @@ export const SpreadsheetSection: FC<SpreadsheetSectionProps> = ({
   return (
     <>
       <SpreadsheetRow>
-        <SpreadsheetSectionCell className="sticky left-0 z-10 font-semibold hover:bg-white ">
+        <SpreadsheetSectionCell className="sticky left-0 z-10 font-semibold hover:bg-white">
           {name}
         </SpreadsheetSectionCell>
         {Array.from({ length: 12 }, (_, i) => (
