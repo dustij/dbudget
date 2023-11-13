@@ -224,7 +224,7 @@ export const SpreadsheetSection: FC<SpreadsheetSectionProps> = ({
   return (
     <>
       <SpreadsheetRow>
-        <SpreadsheetSectionCell className="sticky left-0 z-10 font-semibold hover:bg-white ">
+        <SpreadsheetSectionCell className="sticky left-0 z-10 font-semibold hover:bg-white">
           {name}
         </SpreadsheetSectionCell>
         {Array.from({ length: 12 }, (_, i) => (

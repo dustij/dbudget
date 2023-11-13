@@ -1,4 +1,4 @@
-import Header from "./components/header"
+import Header from "./header"
 import { getServerAuthSession } from "~/app/api/auth/[...nextauth]/options"
 import { redirect } from "next/navigation"
 

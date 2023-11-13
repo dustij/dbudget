@@ -1,15 +1,54 @@
 "use client"
 
-import { useState, type FC, FocusEvent } from "react"
+import { useState, type FC, FocusEvent, isValidElement } from "react"
 import { cn } from "~/lib/utils"
 import { useRefsMatrix } from "./hooks"
 
-interface MatrixTableProps {
+export interface MatrixTableProps {
   className?: string
+  children?: React.ReactNode
+  rows: number // TODO: this should be optional, and if not provided, it should be inferred from children
+  columns?: number
+  headers?: {
+    names: string[]
+    node: React.ReactNode
+  } | null
+  onSubmit?: (data: {
+    row: (HTMLInputElement | null)[] | undefined
+    header: string | undefined
+    value: string
+  }) => void
 }
 
-const MatrixTable: FC<MatrixTableProps> = ({ className }) => {
-  const refsMatrix = useRefsMatrix(10, 13)
+const MatrixTable: FC<MatrixTableProps> = ({
+  className,
+  children,
+  rows,
+  columns,
+  headers,
+  onSubmit,
+}) => {
+  if (isValidElement(headers?.node) && headers?.node?.type === "thead") {
+    if (headers.node.props.children?.type === "tr") {
+      // set columns to the number of children of the tr element
+      columns = headers.node.props.children.props.children.length
+    } else {
+      // headers.node does not have a tr element as a child
+      throw new Error(
+        "MatrixTable: headers.node must be a thead element with tr children",
+      )
+    }
+  } else {
+    // columns must be provided if headers was not, in order to build matrix
+    if (columns === undefined) {
+      throw new Error(
+        "MatrixTable: columns must be provided if headers was not provided",
+      )
+    }
+  }
+
+  // TODO: rows should be optional, and if not provided, it should be inferred from children
+  const refsMatrix = useRefsMatrix(rows, columns!)
 
   const [componentsMatrix, setComponentsMatrix] = useState(
     refsMatrix.current.map((row, rowIndex) =>
@@ -68,10 +107,12 @@ const MatrixTable: FC<MatrixTableProps> = ({ className }) => {
     loc: [number, number],
   ) => {
     e.preventDefault()
-    const category = refsMatrix.current[loc[0]]?.[0]?.value
-    const month = refsMatrix.current[0]?.[loc[1]]?.value
-    console.log(category)
-    console.log(month)
+
+    const row = refsMatrix.current[loc[0]]
+    const header = headers?.names[loc[1]]
+    const value = e.currentTarget.value
+
+    onSubmit?.({ row, header, value })
   }
 
   return (
@@ -82,14 +123,16 @@ const MatrixTable: FC<MatrixTableProps> = ({ className }) => {
           className,
         )}
       >
+        {headers && headers.node}
         <tbody>
-          {componentsMatrix.map((row, rowIndex) => (
+          {children}
+          {/* {componentsMatrix.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {row.map((cell, colIndex) => (
                 <td key={colIndex}>{cell}</td>
               ))}
             </tr>
-          ))}
+          ))} */}
         </tbody>
       </table>
     </form>

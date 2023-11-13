@@ -6,11 +6,7 @@ interface JournalProps {}
 const Journal: FC<JournalProps> = () => {
   const data = []
 
-  return (
-    <div className="flex items-center justify-center">
-      <MatrixTable></MatrixTable>
-    </div>
-  )
+  return <div className="flex items-center justify-center"></div>
 }
 
 export default Journal
