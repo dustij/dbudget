@@ -28,7 +28,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
   }
 
   const addCategory = (parentIndex: number, rowIndex: number) => {
-    console.log("add category")
     const newCategory = {
       id: Math.floor(Math.random() * 1000000),
       name: "",
@@ -39,7 +38,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
       const parent = newData[parentIndex]
       const categories = parent?.categories ?? []
       const newCategory = {
-        id: Math.floor(Math.random() * 1000000),
+        id: Math.floor(Math.random() * 1000000), // this will be replaced by the server, but we need a unique id for now
         name: "",
         monthlyAmounts: Array.from({ length: 12 }).fill(0) as number[],
       }
