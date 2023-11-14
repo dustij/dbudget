@@ -55,26 +55,18 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
                         }}
                       />
                     </td>
-                    <td>
-                      <input
-                        className="w-full"
-                        value={category.jan}
-                        ref={(input) => {
-                          refsMatrix.current[rowIndex]![1] = input
-                        }}
-                      />
-                    </td>
-                    <td>{category.feb}</td>
-                    <td>{category.mar}</td>
-                    <td>{category.apr}</td>
-                    <td>{category.may}</td>
-                    <td>{category.jun}</td>
-                    <td>{category.jul}</td>
-                    <td>{category.aug}</td>
-                    <td>{category.sep}</td>
-                    <td>{category.oct}</td>
-                    <td>{category.nov}</td>
-                    <td>{category.dec}</td>
+
+                    {category.monthlyAmounts.map((amount, i) => (
+                      <td key={i}>
+                        <input
+                          className="w-full"
+                          value={amount}
+                          ref={(input) => {
+                            refsMatrix.current[rowIndex]![1] = input
+                          }}
+                        />
+                      </td>
+                    ))}
                   </tr>
                 )
               })}

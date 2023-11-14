@@ -4,7 +4,6 @@ export interface CategoryParent {
   categories: {
     id: number
     name: string
-    jan: number
-    feb: number
+    monthlyAmounts: number[]
   }[]
 }
