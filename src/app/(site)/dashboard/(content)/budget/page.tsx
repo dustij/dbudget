@@ -25,43 +25,43 @@ const Budget: FC<BudgetProps> = () => {
       </div>
       <div className="relative">
         <BudgetTable
-          rows={9}
-          headers={{
-            names: [
-              "Category",
-              "Jan",
-              "Feb",
-              "Mar",
-              "Apr",
-              "May",
-              "Jun",
-              "Jul",
-              "Aug",
-              "Sep",
-              "Oct",
-              "Nov",
-              "Dec",
-            ],
-            node: (
-              <MatrixHeader className="top-[33px]">
-                <MatrixHeaderCell className="sticky left-0 bg-white text-left">
-                  Category
-                </MatrixHeaderCell>
-                <MatrixHeaderCell>Jan</MatrixHeaderCell>
-                <MatrixHeaderCell>Feb</MatrixHeaderCell>
-                <MatrixHeaderCell>Mar</MatrixHeaderCell>
-                <MatrixHeaderCell>Apr</MatrixHeaderCell>
-                <MatrixHeaderCell>May</MatrixHeaderCell>
-                <MatrixHeaderCell>Jun</MatrixHeaderCell>
-                <MatrixHeaderCell>Jul</MatrixHeaderCell>
-                <MatrixHeaderCell>Aug</MatrixHeaderCell>
-                <MatrixHeaderCell>Sep</MatrixHeaderCell>
-                <MatrixHeaderCell>Oct</MatrixHeaderCell>
-                <MatrixHeaderCell>Nov</MatrixHeaderCell>
-                <MatrixHeaderCell>Dec</MatrixHeaderCell>
-              </MatrixHeader>
-            ),
-          }}
+        // rows={9}
+        // headers={{
+        //   names: [
+        //     "Category",
+        //     "Jan",
+        //     "Feb",
+        //     "Mar",
+        //     "Apr",
+        //     "May",
+        //     "Jun",
+        //     "Jul",
+        //     "Aug",
+        //     "Sep",
+        //     "Oct",
+        //     "Nov",
+        //     "Dec",
+        //   ],
+        //   node: (
+        //     <MatrixHeader className="top-[33px]">
+        //       <MatrixHeaderCell className="sticky left-0 bg-white text-left">
+        //         Category
+        //       </MatrixHeaderCell>
+        //       <MatrixHeaderCell>Jan</MatrixHeaderCell>
+        //       <MatrixHeaderCell>Feb</MatrixHeaderCell>
+        //       <MatrixHeaderCell>Mar</MatrixHeaderCell>
+        //       <MatrixHeaderCell>Apr</MatrixHeaderCell>
+        //       <MatrixHeaderCell>May</MatrixHeaderCell>
+        //       <MatrixHeaderCell>Jun</MatrixHeaderCell>
+        //       <MatrixHeaderCell>Jul</MatrixHeaderCell>
+        //       <MatrixHeaderCell>Aug</MatrixHeaderCell>
+        //       <MatrixHeaderCell>Sep</MatrixHeaderCell>
+        //       <MatrixHeaderCell>Oct</MatrixHeaderCell>
+        //       <MatrixHeaderCell>Nov</MatrixHeaderCell>
+        //       <MatrixHeaderCell>Dec</MatrixHeaderCell>
+        //     </MatrixHeader>
+        //   ),
+        // }}
         />
       </div>
     </>

@@ -1,14 +1,14 @@
-"use client"
-
 import type { FC } from "react"
 import { IoAddCircleOutline } from "react-icons/io5"
 import MatrixTable, { MatrixTableProps } from "../matrix-table"
+import { CategoryParent } from "../../../../temp/categories"
+import BudgetTableClient from "./budget-table-client"
 
 const BudgetTable: FC<MatrixTableProps> = ({
   className,
-  rows,
-  columns,
-  headers,
+  // rows,
+  // columns,
+  // headers,
 }) => {
   const handleSubmit = (data: {
     row: (HTMLInputElement | null)[] | undefined
@@ -18,104 +18,91 @@ const BudgetTable: FC<MatrixTableProps> = ({
     console.log(data)
   }
 
+  // TODO: query data
+  const mockData: CategoryParent[] = [
+    {
+      id: 1,
+      name: "Fixed",
+      categories: [
+        {
+          id: 2,
+          name: "Rent",
+          jan: 1000,
+          feb: 1000,
+          mar: 1000,
+          apr: 1000,
+          may: 1000,
+          jun: 1000,
+          jul: 1000,
+          aug: 1000,
+          sep: 1000,
+          oct: 1000,
+          nov: 1000,
+          dec: 1000,
+        },
+        {
+          id: 3,
+          name: "Utilities",
+          jan: 1000,
+          feb: 1000,
+          mar: 1000,
+          apr: 1000,
+          may: 1000,
+          jun: 1000,
+          jul: 1000,
+          aug: 1000,
+          sep: 1000,
+          oct: 1000,
+          nov: 1000,
+          dec: 1000,
+        },
+      ],
+    },
+    {
+      id: 2,
+      name: "Variable",
+      categories: [
+        {
+          id: 2,
+          name: "Rent",
+          jan: 1000,
+          feb: 1000,
+          mar: 1000,
+          apr: 1000,
+          may: 1000,
+          jun: 1000,
+          jul: 1000,
+          aug: 1000,
+          sep: 1000,
+          oct: 1000,
+          nov: 1000,
+          dec: 1000,
+        },
+        {
+          id: 3,
+          name: "Utilities",
+          jan: 1000,
+          feb: 1000,
+          mar: 1000,
+          apr: 1000,
+          may: 1000,
+          jun: 1000,
+          jul: 1000,
+          aug: 1000,
+          sep: 1000,
+          oct: 1000,
+          nov: 1000,
+          dec: 1000,
+        },
+      ],
+    },
+  ]
+
   return (
-    <MatrixTable
+    <BudgetTableClient
       className={className}
-      rows={rows}
-      columns={columns}
-      headers={headers}
-      onSubmit={handleSubmit}
-    >
-      <tr>
-        <td className="sticky left-0 z-10 font-semibold hover:bg-white">
-          Fixed
-        </td>
-      </tr>
-      {/* fixed category rows */}
-      <tr>
-        <td
-          className="sticky left-0 z-10 pl-3 text-zinc-400 transition hover:cursor-pointer hover:bg-zinc-50 hover:text-zinc-900"
-          onClick={() => {
-            /* add row */
-          }}
-        >
-          <IoAddCircleOutline className="mr-1 inline-block" />
-          Add
-        </td>
-      </tr>
-
-      <tr>
-        <td className="sticky left-0 z-10 font-semibold hover:bg-white">
-          Variable
-        </td>
-      </tr>
-      {/* variable category rows */}
-      <tr>
-        <td
-          className="sticky left-0 z-10 pl-3 text-zinc-400 transition hover:cursor-pointer hover:bg-zinc-50 hover:text-zinc-900"
-          onClick={() => {
-            /* add row */
-          }}
-        >
-          <IoAddCircleOutline className="mr-1 inline-block" />
-          Add
-        </td>
-      </tr>
-
-      <tr>
-        <td className="sticky left-0 z-10 font-semibold hover:bg-white">
-          Discretionary
-        </td>
-      </tr>
-      {/* discretionary category rows */}
-      <tr>
-        <td
-          className="sticky left-0 z-10 pl-3 text-zinc-400 transition hover:cursor-pointer hover:bg-zinc-50 hover:text-zinc-900"
-          onClick={() => {
-            /* add row */
-          }}
-        >
-          <IoAddCircleOutline className="mr-1 inline-block" />
-          Add
-        </td>
-      </tr>
-
-      <tr>
-        <td className="sticky left-0 z-10 font-semibold hover:bg-white">
-          Obligations
-        </td>
-      </tr>
-      {/* obligations category rows */}
-      <tr>
-        <td
-          className="sticky left-0 z-10 pl-3 text-zinc-400 transition hover:cursor-pointer hover:bg-zinc-50 hover:text-zinc-900"
-          onClick={() => {
-            /* add row */
-          }}
-        >
-          <IoAddCircleOutline className="mr-1 inline-block" />
-          Add
-        </td>
-      </tr>
-
-      <tr>
-        <td className="sticky left-0 z-10 font-semibold hover:bg-white">
-          Leaks
-        </td>
-      </tr>
-      {/* leaks category rows */}
-      <tr>
-        <td
-          className="sticky left-0 z-10 pl-3 text-zinc-400 transition hover:cursor-pointer hover:bg-zinc-50 hover:text-zinc-900"
-          onClick={() => {
-            /* add row */
-          }}
-        >
-          <IoAddCircleOutline className="mr-1 inline-block" />
-          Add
-        </td>
-      </tr>
-    </MatrixTable>
+      data={mockData}
+    ></BudgetTableClient>
   )
 }
 
