@@ -57,6 +57,7 @@ const MatrixTable: FC<MatrixTableProps> = ({
           key={`${rowIndex}-${colIndex}`}
           className="w-full"
           ref={(input) => {
+            // https://react.dev/reference/react-dom/components/common#ref-callback
             refsMatrix.current[rowIndex]![colIndex] = input
           }}
           onBlur={(e) => handleSubmit(e, [rowIndex, colIndex])}

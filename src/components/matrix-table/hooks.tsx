@@ -1,6 +1,7 @@
 import { useRef } from "react"
 
 export const useRefsMatrix = (rows: number, cols: number) => {
+  // https://react.dev/learn/manipulating-the-dom-with-refs#how-to-manage-a-list-of-refs-using-a-ref-callback
   const refsMatrix = useRef<(HTMLInputElement | null)[][]>([])
   // initialize all refs to null
   for (const i of Array(rows).keys()) {
