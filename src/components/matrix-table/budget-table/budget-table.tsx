@@ -1,15 +1,12 @@
 import type { FC } from "react"
-import { IoAddCircleOutline } from "react-icons/io5"
-import MatrixTable, { MatrixTableProps } from "../matrix-table"
 import { CategoryParent } from "../../../../temp/categories"
 import BudgetTableClient from "./budget-table-client"
 
-const BudgetTable: FC<MatrixTableProps> = ({
-  className,
-  // rows,
-  // columns,
-  // headers,
-}) => {
+interface BudgetTableProps {
+  className?: string
+}
+
+const BudgetTable: FC<BudgetTableProps> = ({ className }) => {
   const handleSubmit = (data: {
     row: (HTMLInputElement | null)[] | undefined
     header: string | undefined
