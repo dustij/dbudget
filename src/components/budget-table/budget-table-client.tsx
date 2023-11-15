@@ -1,13 +1,6 @@
 "use client"
 
-import React, {
-  FC,
-  FocusEvent,
-  KeyboardEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react"
+import React, { FC, useEffect, useRef, useState } from "react"
 import { cn } from "~/lib/utils"
 import { IoAddCircleOutline } from "react-icons/io5"
 
@@ -64,39 +57,40 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
     })
   }
 
-  const handleSubmit = (e: FocusEvent) => {
+  const handleSubmit = (e: React.FocusEvent) => {
     e.preventDefault()
   }
 
+  // TODO: add style to first column to highlight it, makes it easier to see which category you're editing
   const handleKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
     rowIndex: number,
     colIndex: number,
   ) => {
     if ((e.key === "Enter" && !e.shiftKey) || e.key === "ArrowDown") {
-      e.preventDefault()
       // Move focus to the next input one row down in the same column
+      e.preventDefault()
       const nextRowIndex = rowIndex + 1
       if (nextRowIndex < refsMatrix.current.length) {
         refsMatrix.current[nextRowIndex]?.[colIndex]?.focus()
       }
     } else if ((e.key === "Enter" && e.shiftKey) || e.key === "ArrowUp") {
-      e.preventDefault()
       // Move focus to the previous input one row up in the same column
+      e.preventDefault()
       const prevRowIndex = rowIndex - 1
       if (prevRowIndex >= 0) {
         refsMatrix.current[prevRowIndex]?.[colIndex]?.focus()
       }
     } else if (e.key === "ArrowLeft") {
-      e.preventDefault()
       // Move focus to the previous input to the left in the same row
+      e.preventDefault()
       const prevColIndex = colIndex - 1
       if (prevColIndex >= 0) {
         refsMatrix.current[rowIndex]?.[prevColIndex]?.focus()
       }
     } else if (e.key === "ArrowRight") {
-      e.preventDefault()
       // Move focus to the next input to the right in the same row
+      e.preventDefault()
       const nextColIndex = colIndex + 1
       if (refsMatrix.current[rowIndex]?.[nextColIndex]) {
         refsMatrix.current[rowIndex]?.[nextColIndex]?.focus()
@@ -163,7 +157,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
           return (
             <React.Fragment key={parent.id}>
               <tr key={parent.id}>
-                <td>{parent.name}</td>
+                <td className="sticky left-0 z-10 text-base mobile:text-sm">
+                  {parent.name}
+                </td>
                 {Array.from({ length: 12 }).map((_, index) => (
                   <td key={index}></td>
                 ))}
@@ -174,11 +170,10 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
                 return (
                   <React.Fragment key={category.id}>
                     <tr key={category.id}>
-                      <td>
+                      <td className="sticky left-0 z-10 ">
                         <input
-                          className="w-full"
+                          className="w-full text-base mobile:text-sm"
                           defaultValue={category.name}
-                          // value={category.name}
                           ref={(input) => {
                             refsMatrix.current[currentRowIndex]![0] = input
                           }}
@@ -193,9 +188,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
                       {category.monthlyAmounts.map((amount, colIndex) => (
                         <td key={colIndex}>
                           <input
-                            className="w-full"
+                            type="number"
+                            className="w-full text-base mobile:text-sm"
                             defaultValue={amount}
-                            // value={amount}
                             ref={(input) => {
                               refsMatrix.current[currentRowIndex]![
                                 colIndex + 1
