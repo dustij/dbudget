@@ -195,14 +195,14 @@ export const amounts = mysqlTable(
 // My Relations --------------------------------------------
 
 export const rulesRelations = relations(rules, ({ one }) => ({
-  categories: one(categories, {
+  category: one(categories, {
     fields: [rules.category],
     references: [categories.name],
   }),
 }))
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
-  rules: one(rules, {
+  rule: one(rules, {
     fields: [categories.ruleId],
     references: [rules.id],
   }),
@@ -210,7 +210,7 @@ export const categoriesRelations = relations(categories, ({ one, many }) => ({
 }))
 
 export const amountsRelations = relations(amounts, ({ one }) => ({
-  categories: one(categories, {
+  category: one(categories, {
     fields: [amounts.category],
     references: [categories.name],
   }),
