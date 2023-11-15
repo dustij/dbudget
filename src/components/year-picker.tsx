@@ -72,7 +72,7 @@ const YearPicker: FC<YearPickerProps> = ({ children }) => {
         </button>
         <input
           ref={inputRef}
-          className="h-8 w-16 bg-white text-center text-base font-medium text-zinc-900 selection:bg-lime-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-lime-500"
+          className="h-8 w-16 rounded bg-white text-center text-base font-medium text-zinc-900 selection:bg-lime-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-lime-500"
           type="number"
           value={value}
           onChange={(e) => setValue(parseInt(e.target.value))}
