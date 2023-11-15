@@ -3,6 +3,7 @@
 import React, { FC, useEffect, useRef, useState } from "react"
 import { cn } from "~/lib/utils"
 import { IoAddCircleOutline } from "react-icons/io5"
+import { MyInput } from "../my-input"
 
 interface BudgetTableClientProps {
   className?: string
@@ -28,9 +29,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
   }
 
   useEffect(() => {
-    refsMatrix.current[categoryPosition?.[0] ?? 0]?.[
-      categoryPosition?.[1] ?? 0
-    ]?.focus()
+    if (categoryPosition) {
+      refsMatrix.current[categoryPosition[0]]?.[categoryPosition[1]]?.focus()
+    }
   }, [categoryPosition])
 
   const addCategory = (parentIndex: number, rowIndex: number) => {
@@ -59,6 +60,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
 
   const handleSubmit = (e: React.FocusEvent) => {
     e.preventDefault()
+    console.log("handleSubmit")
   }
 
   // TODO: add style to first column to highlight it, makes it easier to see which category you're editing
@@ -73,6 +75,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
       const nextRowIndex = rowIndex + 1
       if (nextRowIndex < refsMatrix.current.length) {
         refsMatrix.current[nextRowIndex]?.[colIndex]?.focus()
+      } else {
+        // Move focus to the first input in the next column
+        const nextColIndex = colIndex + 1
+        if (nextColIndex < refsMatrix.current[0].length) {
+          refsMatrix.current[0]?.[nextColIndex]?.focus()
+        } else {
+          // Blur the current input
+          e.currentTarget.blur()
+        }
       }
     } else if ((e.key === "Enter" && e.shiftKey) || e.key === "ArrowUp") {
       // Move focus to the previous input one row up in the same column
@@ -80,6 +91,17 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
       const prevRowIndex = rowIndex - 1
       if (prevRowIndex >= 0) {
         refsMatrix.current[prevRowIndex]?.[colIndex]?.focus()
+      } else {
+        // Move focus to the last input in the previous column
+        const prevColIndex = colIndex - 1
+        if (prevColIndex >= 0) {
+          refsMatrix.current[refsMatrix.current.length - 1]?.[
+            prevColIndex
+          ]?.focus()
+        } else {
+          // Blur the current input
+          e.currentTarget.blur()
+        }
       }
     } else if (e.key === "ArrowLeft") {
       // Move focus to the previous input to the left in the same row
@@ -87,6 +109,17 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
       const prevColIndex = colIndex - 1
       if (prevColIndex >= 0) {
         refsMatrix.current[rowIndex]?.[prevColIndex]?.focus()
+      } else {
+        // Move focus to the last input in the previous row
+        const prevRowIndex = rowIndex - 1
+        if (prevRowIndex >= 0) {
+          refsMatrix.current[prevRowIndex]?.[
+            refsMatrix.current[prevRowIndex].length - 1
+          ]?.focus()
+        } else {
+          // Blur the current input
+          e.currentTarget.blur()
+        }
       }
     } else if (e.key === "ArrowRight") {
       // Move focus to the next input to the right in the same row
@@ -94,6 +127,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
       const nextColIndex = colIndex + 1
       if (refsMatrix.current[rowIndex]?.[nextColIndex]) {
         refsMatrix.current[rowIndex]?.[nextColIndex]?.focus()
+      } else {
+        // Move focus to the first input in the next row
+        const nextRowIndex = rowIndex + 1
+        if (refsMatrix.current[nextRowIndex]?.[0]) {
+          refsMatrix.current[nextRowIndex]?.[0]?.focus()
+        } else {
+          // Blur the current input
+          e.currentTarget.blur()
+        }
       }
     } else if (e.key === "Escape") {
       // Blur the current input
@@ -105,7 +147,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
   return (
     <table
       className={cn(
-        "w-full min-w-[1070px] table-fixed border-separate border-spacing-0 text-[14px]",
+        "w-full min-w-[1070px] table-fixed border-separate border-spacing-0 bg-white text-[14px]",
         className,
       )}
     >
@@ -157,11 +199,14 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
           return (
             <React.Fragment key={parent.id}>
               <tr key={parent.id}>
-                <td className="sticky left-0 z-10 text-base mobile:text-sm">
+                <td className="sticky left-0 z-20 border-b bg-white px-1.5 text-base font-normal text-zinc-400 hover:cursor-default hover:bg-white mobile:text-sm">
                   {parent.name}
                 </td>
                 {Array.from({ length: 12 }).map((_, index) => (
-                  <td key={index}></td>
+                  <td
+                    key={index}
+                    className="border-b bg-white hover:cursor-default"
+                  ></td>
                 ))}
               </tr>
               {parent.categories.map((category, rowIndex) => {
@@ -170,10 +215,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
                 return (
                   <React.Fragment key={category.id}>
                     <tr key={category.id}>
-                      <td className="sticky left-0 z-10 ">
-                        <input
-                          className="w-full text-base mobile:text-sm"
-                          defaultValue={category.name}
+                      <td className="sticky left-0 z-20 border-b border-r bg-white p-0">
+                        <MyInput
+                          myValue={category.name}
                           ref={(input) => {
                             refsMatrix.current[currentRowIndex]![0] = input
                           }}
@@ -186,18 +230,24 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
                       </td>
 
                       {category.monthlyAmounts.map((amount, colIndex) => (
-                        <td key={colIndex}>
-                          <input
+                        <td
+                          key={colIndex}
+                          className={cn(
+                            "relative h-6 border-b border-r p-0",
+                            colIndex === 11 && "border-r-0",
+                          )}
+                        >
+                          <MyInput
                             type="number"
-                            className="w-full text-base mobile:text-sm"
-                            defaultValue={amount}
+                            step={"0.01"}
+                            myValue={amount}
                             ref={(input) => {
                               refsMatrix.current[currentRowIndex]![
                                 colIndex + 1
                               ] = input
                             }}
                             onFocus={(e) => e.currentTarget.select()}
-                            onBlur={(e) => handleSubmit(e)}
+                            onLoseFocus={(e) => handleSubmit(e)}
                             onKeyDown={(e) =>
                               handleKeyDown(e, currentRowIndex, colIndex + 1)
                             }
@@ -208,14 +258,17 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
                     {rowIndex === parent.categories.length - 1 && (
                       <tr key={`add-category-${parent.id}`}>
                         <td
-                          className="sticky left-0 z-10 pl-3 text-zinc-400 transition hover:cursor-pointer hover:bg-zinc-50 hover:text-zinc-900"
+                          className="sticky left-0 z-10 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:bg-zinc-50 hover:text-zinc-900 mobile:text-sm"
                           onClick={() => addCategory(parentIndex, rowIndex)}
                         >
-                          <IoAddCircleOutline className="mr-1 inline-block" />
+                          <IoAddCircleOutline className="mr-1 inline-block h-full pb-[2px]" />
                           Add
                         </td>
                         {Array.from({ length: 12 }).map((_, index) => (
-                          <td key={index}></td>
+                          <td
+                            key={index}
+                            className="border-b bg-white hover:cursor-default"
+                          ></td>
                         ))}
                       </tr>
                     )}

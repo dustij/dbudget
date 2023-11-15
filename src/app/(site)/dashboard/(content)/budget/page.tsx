@@ -7,7 +7,7 @@ interface BudgetProps {}
 const Budget: FC<BudgetProps> = () => {
   return (
     <>
-      <div className="sticky left-0 top-0 z-20 flex h-[33px] items-center justify-center border-b bg-white">
+      <div className="sticky left-0 top-0 z-30 flex h-[33px] items-center justify-center border-b bg-white">
         <YearPicker>{2021}</YearPicker>
       </div>
       <div className="relative">
