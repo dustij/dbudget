@@ -1,12 +1,11 @@
 import type { FC } from "react"
-import { CategoryParent } from "../../../../temp/categories"
 import BudgetTableClient from "./budget-table-client"
 
 interface BudgetTableProps {
   className?: string
 }
 
-const BudgetTable: FC<BudgetTableProps> = ({ className }) => {
+const BudgetTableServer: FC<BudgetTableProps> = ({ className }) => {
   const handleSubmit = (data: {
     row: (HTMLInputElement | null)[] | undefined
     header: string | undefined
@@ -63,12 +62,7 @@ const BudgetTable: FC<BudgetTableProps> = ({ className }) => {
     },
   ]
 
-  return (
-    <BudgetTableClient
-      className={className}
-      data={mockData}
-    ></BudgetTableClient>
-  )
+  return <BudgetTableClient className={className} data={mockData} />
 }
 
-export default BudgetTable
+export default BudgetTableServer
