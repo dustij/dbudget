@@ -5,12 +5,30 @@ import {
   primaryKey,
   varchar,
   text,
+  decimal,
+  mysqlEnum,
+  tinyint,
+  unique,
+  char,
+  index,
 } from "drizzle-orm/mysql-core"
 import type { AdapterAccount } from "@auth/core/adapters"
-import { relations } from "drizzle-orm"
+import { relations, sql } from "drizzle-orm"
+import { customAlphabet } from "nanoid"
 
 // https://orm.drizzle.team/docs/goodies#multi-project-schema
 export const mysqlTable = mysqlTableCreator((name) => `dbudget_${name}`)
+
+const NANO_ID_LENGTH = 12
+function generateNanoId() {
+  const nanoid = customAlphabet(
+    "0123456789abcdefghijklmnopqrstuvwxyz",
+    NANO_ID_LENGTH,
+  )
+  return nanoid()
+}
+
+// Auth Tables --------------------------------------------
 
 export const users = mysqlTable("user", {
   id: varchar("id", { length: 255 }).notNull().primaryKey(),
@@ -63,6 +81,8 @@ export const verificationTokens = mysqlTable(
   }),
 )
 
+// Auth Relations --------------------------------------------
+
 // https://planetscale.com/blog/working-with-related-data-using-drizzle-and-planetscale
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
@@ -80,5 +100,118 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
   users: one(users, {
     fields: [sessions.userId],
     references: [users.id],
+  }),
+}))
+
+// My tables --------------------------------------------
+
+export const rules = mysqlTable(
+  "rule",
+  {
+    id: char("id", { length: NANO_ID_LENGTH })
+      .$defaultFn(generateNanoId)
+      .primaryKey(),
+    frequency: mysqlEnum("frequency", [
+      "daily",
+      "weekly",
+      "biweekly",
+      "monthly",
+      "yearly",
+    ]).notNull(),
+    startDate: timestamp("startDate", { mode: "date" }).notNull(),
+    endDate: timestamp("endDate", { mode: "date" }),
+    weekday: mysqlEnum("weekday", [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday",
+    ]),
+    dayOfMonth: tinyint("dayOfMonth"),
+    monthOfYear: tinyint("monthOfYear"),
+    category: varchar("category", { length: 255 }).notNull(),
+  },
+  (t) => ({
+    checkEndDate: sql.raw(`CHECK (endDate > startDate OR endDate IS NULL)`),
+    uniqueCategory: unique().on(t.category),
+  }),
+)
+
+export const categories = mysqlTable("category", {
+  name: varchar("name", { length: 255 }).primaryKey(),
+  parent: mysqlEnum("parent", [
+    "income",
+    "fixed",
+    "variable",
+    "discretionary",
+    "obligation",
+    "leakage",
+    "savings",
+  ]).notNull(),
+  ruleId: char("ruleId", { length: NANO_ID_LENGTH }),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { mode: "date" })
+    .defaultNow()
+    .onUpdateNow()
+    .notNull(),
+})
+
+export const amounts = mysqlTable(
+  "amount",
+  {
+    id: char("id", { length: NANO_ID_LENGTH })
+      .$defaultFn(generateNanoId)
+      .primaryKey(),
+    amount: decimal("amount").notNull(),
+    year: tinyint("year").notNull(),
+    month: mysqlEnum("month", [
+      "january",
+      "february",
+      "march",
+      "april",
+      "may",
+      "june",
+      "july",
+      "august",
+      "september",
+      "october",
+      "november",
+      "december",
+    ]).notNull(),
+    category: varchar("category", { length: 255 }).notNull(),
+    createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date" })
+      .defaultNow()
+      .onUpdateNow()
+      .notNull(),
+  },
+  (t) => ({
+    yearMonthCategoryIdx: unique().on(t.year, t.month, t.category),
+  }),
+)
+
+// My Relations --------------------------------------------
+
+export const rulesRelations = relations(rules, ({ one }) => ({
+  categories: one(categories, {
+    fields: [rules.category],
+    references: [categories.name],
+  }),
+}))
+
+export const categoriesRelations = relations(categories, ({ one, many }) => ({
+  rules: one(rules, {
+    fields: [categories.ruleId],
+    references: [rules.id],
+  }),
+  amounts: many(amounts),
+}))
+
+export const amountsRelations = relations(amounts, ({ one }) => ({
+  categories: one(categories, {
+    fields: [amounts.category],
+    references: [categories.name],
   }),
 }))
