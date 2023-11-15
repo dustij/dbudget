@@ -78,7 +78,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
       } else {
         // Move focus to the first input in the next column
         const nextColIndex = colIndex + 1
-        if (nextColIndex < refsMatrix.current[0].length) {
+        // Can use assertion here because we know that the first row exists (because we're in it)
+        if (nextColIndex < refsMatrix.current[0]!.length) {
           refsMatrix.current[0]?.[nextColIndex]?.focus()
         } else {
           // Blur the current input
@@ -114,7 +115,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
         const prevRowIndex = rowIndex - 1
         if (prevRowIndex >= 0) {
           refsMatrix.current[prevRowIndex]?.[
-            refsMatrix.current[prevRowIndex].length - 1
+            // Can use assertion here because we know that the previous row exists (because we just checked)
+            refsMatrix.current[prevRowIndex]!.length - 1
           ]?.focus()
         } else {
           // Blur the current input
