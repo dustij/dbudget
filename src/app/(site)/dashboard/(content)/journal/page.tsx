@@ -1,5 +1,4 @@
 import type { FC } from "react"
-import MatrixTable from "~/components/matrix-table/matrix-table"
 
 interface JournalProps {}
 
