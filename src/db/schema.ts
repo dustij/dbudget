@@ -88,6 +88,9 @@ export const verificationTokens = mysqlTable(
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
   sessions: many(sessions),
+  categories: many(categories),
+  amounts: many(amounts),
+  rules: many(rules),
 }))
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -112,6 +115,7 @@ export const rules = mysqlTable(
     id: char("id", { length: NANO_ID_LENGTH })
       .$defaultFn(generateNanoId)
       .primaryKey(),
+    userId: varchar("userId", { length: 255 }).notNull(),
     frequency: mysqlEnum("frequency", [
       "daily",
       "weekly",
@@ -133,32 +137,45 @@ export const rules = mysqlTable(
     dayOfMonth: tinyint("dayOfMonth"),
     monthOfYear: tinyint("monthOfYear"),
     category: varchar("category", { length: 255 }).notNull(),
+    createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date" })
+      .defaultNow()
+      .onUpdateNow()
+      .notNull(),
   },
   (t) => ({
-    uniqueCategory: unique().on(t.category),
-    // TODO: checkEndDate
-    // checkEndDate: sql.raw(`CHECK (endDate > startDate OR endDate IS NULL)`),
+    uniqueCategoryUserId: unique().on(t.category, t.userId),
   }),
 )
 
-export const categories = mysqlTable("category", {
-  name: varchar("name", { length: 255 }).primaryKey(),
-  parent: mysqlEnum("parent", [
-    "income",
-    "fixed",
-    "variable",
-    "discretionary",
-    "obligation",
-    "leakage",
-    "savings",
-  ]).notNull(),
-  ruleId: char("ruleId", { length: NANO_ID_LENGTH }),
-  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt", { mode: "date" })
-    .defaultNow()
-    .onUpdateNow()
-    .notNull(),
-})
+export const categories = mysqlTable(
+  "category",
+  {
+    id: char("id", { length: NANO_ID_LENGTH })
+      .$defaultFn(generateNanoId)
+      .primaryKey(),
+    name: varchar("name", { length: 255 }),
+    userId: varchar("userId", { length: 255 }).notNull(),
+    parent: mysqlEnum("parent", [
+      "income",
+      "fixed",
+      "variable",
+      "discretionary",
+      "obligation",
+      "leakage",
+      "savings",
+    ]).notNull(),
+    ruleId: char("ruleId", { length: NANO_ID_LENGTH }),
+    createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date" })
+      .defaultNow()
+      .onUpdateNow()
+      .notNull(),
+  },
+  (t) => ({
+    uniqueNameUserId: unique().on(t.name, t.userId),
+  }),
+)
 
 export const amounts = mysqlTable(
   "amount",
@@ -166,6 +183,7 @@ export const amounts = mysqlTable(
     id: char("id", { length: NANO_ID_LENGTH })
       .$defaultFn(generateNanoId)
       .primaryKey(),
+    userId: varchar("userId", { length: 255 }).notNull(),
     amount: decimal("amount").notNull(),
     year: mediumint("year").notNull(),
     month: mysqlEnum("month", [
@@ -190,35 +208,47 @@ export const amounts = mysqlTable(
       .notNull(),
   },
   (t) => ({
-    yearMonthCategoryIdx: unique().on(t.year, t.month, t.category),
-    // TODO: checkYearIsReasonable
-    // checkYearIsReasonable: check(
-    //   t.year.name,
-    //   sql.raw(`year > 2000 AND year < 2100`),
-    // ),
+    uniqueYearMonthCategoryUserId: unique().on(
+      t.year,
+      t.month,
+      t.category,
+      t.userId,
+    ),
   }),
 )
 
 // My Relations --------------------------------------------
 
 export const rulesRelations = relations(rules, ({ one }) => ({
-  category: one(categories, {
+  categories: one(categories, {
     fields: [rules.category],
-    references: [categories.name],
+    references: [categories.id],
+  }),
+  users: one(users, {
+    fields: [rules.userId],
+    references: [users.id],
   }),
 }))
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
-  rule: one(rules, {
+  rules: one(rules, {
     fields: [categories.ruleId],
     references: [rules.id],
   }),
   amounts: many(amounts),
+  users: one(users, {
+    fields: [categories.userId],
+    references: [users.id],
+  }),
 }))
 
 export const amountsRelations = relations(amounts, ({ one }) => ({
-  category: one(categories, {
+  categories: one(categories, {
     fields: [amounts.category],
-    references: [categories.name],
+    references: [categories.id],
+  }),
+  users: one(users, {
+    fields: [amounts.userId],
+    references: [users.id],
   }),
 }))
