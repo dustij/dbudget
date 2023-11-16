@@ -1,69 +1,30 @@
-import type { FC } from "react"
+import { type FC } from "react"
 import BudgetTableClient from "./budget-table-client"
 import { retrieveBudget } from "~/lib/actions"
+import { getServerAuthSession } from "~/app/api/auth/[...nextauth]/options"
 
 interface BudgetTableProps {
   className?: string
 }
 
 const BudgetTableServer: FC<BudgetTableProps> = async ({ className }) => {
-  // const handleSubmit = (data: {
-  //   row: (HTMLInputElement | null)[] | undefined
-  //   header: string | undefined
-  //   value: string
-  // }) => {
-  //   console.log(data)
-  // }
+  const session = await getServerAuthSession()
 
-  // TODO: query data
-  // const mockData: AmountsModel[] = [
-  //   {
-  //     parent: "Fixed",
-  //     categories: [
-  //       {
-  //         id: 2,
-  //         name: "Rent",
-  //         monthlyAmounts: [
-  //           1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
-  //           1000,
-  //         ],
-  //       },
-  //       {
-  //         id: 3,
-  //         name: "Utilities",
-  //         monthlyAmounts: [
-  //           1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
-  //           1000,
-  //         ],
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     parent: "Variable",
-  //     categories: [
-  //       {
-  //         id: 2,
-  //         name: "Rent",
-  //         monthlyAmounts: [
-  //           1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
-  //           1000,
-  //         ],
-  //       },
-  //       {
-  //         id: 3,
-  //         name: "Utilities",
-  //         monthlyAmounts: [
-  //           1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
-  //           1000,
-  //         ],
-  //       },
-  //     ],
-  //   },
-  // ]
+  if (!session) {
+    return null
+  }
 
-  const budgetData: AmountsModel[] = await retrieveBudget(2023)
-
-  return <BudgetTableClient className={className} data={budgetData} />
+  const budgetData: AmountsModel[] = await retrieveBudget(session.user.id, 2023)
+  budgetData.forEach((item) => {
+    console.log(item)
+  })
+  return (
+    <BudgetTableClient
+      className={className}
+      data={budgetData}
+      userId={session.user.id}
+    />
+  )
 }
 
 export default BudgetTableServer

@@ -13,3 +13,12 @@ interface AmountsModel {
     monthlyAmounts: number[]
   }[]
 }
+
+type CategoryParent =
+  | "income"
+  | "fixed"
+  | "variable"
+  | "discretionary"
+  | "obligation"
+  | "leakage"
+  | "savings"

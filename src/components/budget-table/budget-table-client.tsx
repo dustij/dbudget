@@ -4,15 +4,19 @@ import React, { FC, useEffect, useRef, useState } from "react"
 import { cn } from "~/lib/utils"
 import { IoAddCircleOutline } from "react-icons/io5"
 import { MyInput } from "../my-input"
-import { revalidatePath } from "next/cache"
 import { updateBudget } from "~/lib/actions"
 
 interface BudgetTableClientProps {
   className?: string
+  userId: string
   data: AmountsModel[]
 }
 
-const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
+const BudgetTableClient: FC<BudgetTableClientProps> = ({
+  data,
+  className,
+  userId,
+}) => {
   const refsMatrix = useRef<(HTMLInputElement | null)[][]>([])
   const [budgetData, setBudgetData] = useState<AmountsModel[]>(data)
   const [categoryPosition, setCategoryPosition] = useState<
@@ -60,7 +64,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
 
   const handleSubmit = (e: React.FocusEvent) => {
     e.preventDefault()
-    updateBudget()
+    const target = e.target as HTMLInputElement
+    updateBudget(userId, target.value, "fixed", true)
   }
 
   // TODO: add style to first column to highlight it, makes it easier to see which category you're editing

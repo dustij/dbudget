@@ -22,14 +22,43 @@ import { categories as dbCategories, amounts as dbAmounts } from "~/db/schema"
 //   return result
 // }
 
-export async function updateBudget(): Promise<void> {
+export async function updateBudget(
+  userId: string,
+  category: string,
+  parent: CategoryParent,
+  isNewCategory: boolean,
+  year?: number,
+  month?: number | string,
+  amount?: number,
+): Promise<void> {
+  // Insert or update category name into categories table for this user
+  if (!category) return
+  if (isNewCategory) {
+    await db
+      .insert(dbCategories)
+      .values({
+        name: category,
+        userId: userId,
+        parent: parent,
+      })
+      .onDuplicateKeyUpdate({ set: { name: category } }) // This may not be the correct approach, insert should not be allowed if category already exists
+  } else {
+    await db
+      .update(dbCategories)
+      .set({ name: category })
+      .where(eq(dbCategories.name, category) && eq(dbCategories.userId, userId))
+  }
+
   revalidatePath("/")
 }
 
-export async function retrieveBudget(year: number): Promise<AmountsModel[]> {
+export async function retrieveBudget(
+  userId: string,
+  year: number,
+): Promise<AmountsModel[]> {
   let data: AmountsModel[] = []
 
-  const parents = [
+  const parents: CategoryParent[] = [
     "income",
     "fixed",
     "variable",
@@ -44,7 +73,10 @@ export async function retrieveBudget(year: number): Promise<AmountsModel[]> {
     const result = await db
       .select()
       .from(dbCategories)
-      .where(eq(dbCategories.parent, parent as any))
+      .where(eq(dbCategories.parent, parent) && eq(dbCategories.userId, userId))
+
+    console.log("parent", parent)
+    console.log("result", result)
 
     const categories = await Promise.all(
       result.map(async (category) => {
@@ -53,7 +85,9 @@ export async function retrieveBudget(year: number): Promise<AmountsModel[]> {
           .select()
           .from(dbAmounts)
           .where(
-            eq(dbAmounts.category, category.id) && eq(dbAmounts.year, year),
+            eq(dbAmounts.category, category.id) &&
+              eq(dbAmounts.year, year) &&
+              eq(dbAmounts.userId, userId),
           )
         for (let i = 1; i < 13; i++) {
           const amount = amounts.find((amount) => amount.month === i.toString())
