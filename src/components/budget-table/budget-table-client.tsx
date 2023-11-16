@@ -4,15 +4,17 @@ import React, { FC, useEffect, useRef, useState } from "react"
 import { cn } from "~/lib/utils"
 import { IoAddCircleOutline } from "react-icons/io5"
 import { MyInput } from "../my-input"
+import { revalidatePath } from "next/cache"
+import { updateBudget } from "~/lib/actions"
 
 interface BudgetTableClientProps {
   className?: string
-  data: CategoryParent[]
+  data: AmountsModel[]
 }
 
 const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
   const refsMatrix = useRef<(HTMLInputElement | null)[][]>([])
-  const [budgetData, setBudgetData] = useState<CategoryParent[]>(data)
+  const [budgetData, setBudgetData] = useState<AmountsModel[]>(data)
   const [categoryPosition, setCategoryPosition] = useState<
     [number, number] | null
   >(null) // [row, col]
@@ -42,14 +44,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
     }
     setBudgetData((prevData) => {
       const newData = [...prevData]
-      const parent = newData[parentIndex]
-      const categories = parent?.categories ?? []
+      const parent = newData[parentIndex]! // Can use assertion here because parentIndex is created when mapping over budgetData parents
+      const categories = parent.categories ?? []
       const newCategories = [...categories.slice(0, rowIndex + 1), newCategory]
       newData[parentIndex] = {
-        ...parent!,
+        ...parent,
         categories: newCategories,
-        id: parent?.id || Math.floor(Math.random() * 1000000),
-        name: parent?.name || "", // add a fallback value for name
       }
       const subCategories = newData.flatMap((parent) => parent.categories)
       const newRowIndex = subCategories.findIndex((cat) => cat === newCategory)
@@ -60,7 +60,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
 
   const handleSubmit = (e: React.FocusEvent) => {
     e.preventDefault()
-    console.log("handleSubmit")
+    updateBudget()
   }
 
   // TODO: add style to first column to highlight it, makes it easier to see which category you're editing
@@ -197,12 +197,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
         </tr>
       </thead>
       <tbody>
-        {budgetData.map((parent, parentIndex) => {
+        {budgetData.map((data, parentIndex) => {
           return (
-            <React.Fragment key={parent.id}>
-              <tr key={parent.id}>
+            <React.Fragment key={parentIndex}>
+              <tr key={parentIndex}>
                 <td className="sticky left-0 z-20 border-b bg-white px-1.5 text-base font-normal text-zinc-400 hover:cursor-default hover:bg-white mobile:text-sm">
-                  {parent.name}
+                  {data.parent.toUpperCase()}
                 </td>
                 {Array.from({ length: 12 }).map((_, index) => (
                   <td
@@ -211,7 +211,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
                   ></td>
                 ))}
               </tr>
-              {parent.categories.map((category, rowIndex) => {
+              {data.categories.map((category, rowIndex) => {
                 // Increment totalRowIndex for each row
                 const currentRowIndex = totalRowIndex++
                 return (
@@ -257,26 +257,26 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data, className }) => {
                         </td>
                       ))}
                     </tr>
-                    {rowIndex === parent.categories.length - 1 && (
-                      <tr key={`add-category-${parent.id}`}>
-                        <td
-                          className="sticky left-0 z-10 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm"
-                          onClick={() => addCategory(parentIndex, rowIndex)}
-                        >
-                          <IoAddCircleOutline className="mr-1 inline-block h-full pb-[2px]" />
-                          Add
-                        </td>
-                        {Array.from({ length: 12 }).map((_, index) => (
-                          <td
-                            key={index}
-                            className="border-b bg-white hover:cursor-default"
-                          ></td>
-                        ))}
-                      </tr>
-                    )}
                   </React.Fragment>
                 )
               })}
+              <tr key={`add-category-${parentIndex}`}>
+                <td
+                  className="sticky left-0 z-10 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm"
+                  onClick={() =>
+                    addCategory(parentIndex, data.categories.length - 1)
+                  }
+                >
+                  <IoAddCircleOutline className="mr-1 inline-block h-full pb-[2px]" />
+                  Add
+                </td>
+                {Array.from({ length: 12 }).map((_, index) => (
+                  <td
+                    key={index}
+                    className="border-b bg-white hover:cursor-default"
+                  ></td>
+                ))}
+              </tr>
             </React.Fragment>
           )
         })}

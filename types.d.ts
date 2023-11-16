@@ -5,11 +5,10 @@ type SessionUser = {
   id?: string | null
 }
 
-interface CategoryParent {
-  id: number
-  name: string
+interface AmountsModel {
+  parent: string
   categories: {
-    id: number
+    id: number | string
     name: string
     monthlyAmounts: number[]
   }[]

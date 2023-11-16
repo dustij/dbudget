@@ -20,6 +20,8 @@ import { customAlphabet } from "nanoid"
 // https://orm.drizzle.team/docs/goodies#multi-project-schema
 export const mysqlTable = mysqlTableCreator((name) => `dbudget_${name}`)
 
+// Constants --------------------------------------------
+
 const NANO_ID_LENGTH = 12
 function generateNanoId() {
   const nanoid = customAlphabet(
@@ -28,6 +30,54 @@ function generateNanoId() {
   )
   return nanoid()
 }
+
+const MONTHS: Readonly<[string, ...string[]]> = [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+]
+const DAYS: Readonly<[string, ...string[]]> = [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "20",
+  "21",
+  "22",
+  "23",
+  "24",
+  "25",
+  "26",
+  "27",
+  "28",
+  "29",
+  "30",
+  "31",
+]
 
 // Auth Tables --------------------------------------------
 
@@ -134,8 +184,8 @@ export const rules = mysqlTable(
       "saturday",
       "sunday",
     ]),
-    dayOfMonth: tinyint("dayOfMonth"),
-    monthOfYear: tinyint("monthOfYear"),
+    dayOfMonth: mysqlEnum("dayOfMonth", DAYS),
+    monthOfYear: mysqlEnum("monthOfYear", MONTHS),
     category: varchar("category", { length: 255 }).notNull(),
     createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
     updatedAt: timestamp("updatedAt", { mode: "date" })
@@ -154,7 +204,7 @@ export const categories = mysqlTable(
     id: char("id", { length: NANO_ID_LENGTH })
       .$defaultFn(generateNanoId)
       .primaryKey(),
-    name: varchar("name", { length: 255 }),
+    name: varchar("name", { length: 255 }).notNull(),
     userId: varchar("userId", { length: 255 }).notNull(),
     parent: mysqlEnum("parent", [
       "income",
@@ -186,20 +236,7 @@ export const amounts = mysqlTable(
     userId: varchar("userId", { length: 255 }).notNull(),
     amount: decimal("amount").notNull(),
     year: mediumint("year").notNull(),
-    month: mysqlEnum("month", [
-      "january",
-      "february",
-      "march",
-      "april",
-      "may",
-      "june",
-      "july",
-      "august",
-      "september",
-      "october",
-      "november",
-      "december",
-    ]).notNull(),
+    month: mysqlEnum("month", MONTHS).notNull(),
     category: varchar("category", { length: 255 }).notNull(),
     createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
     updatedAt: timestamp("updatedAt", { mode: "date" })
