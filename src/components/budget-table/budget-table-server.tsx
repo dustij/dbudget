@@ -15,6 +15,7 @@ const BudgetTableServer: FC<BudgetTableProps> = async ({
   userId,
 }) => {
   const getAmountsData = async (userId: string): Promise<AmountsModel[]> => {
+    // TODO: This only returns amounts that have a category. We need to return all categories, even if they don't have an amount
     const result = await db
       .select()
       .from(amounts)
