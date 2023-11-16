@@ -10,7 +10,8 @@ import {
   tinyint,
   unique,
   char,
-  index,
+  check,
+  mediumint,
 } from "drizzle-orm/mysql-core"
 import type { AdapterAccount } from "@auth/core/adapters"
 import { relations, sql } from "drizzle-orm"
@@ -134,8 +135,9 @@ export const rules = mysqlTable(
     category: varchar("category", { length: 255 }).notNull(),
   },
   (t) => ({
-    checkEndDate: sql.raw(`CHECK (endDate > startDate OR endDate IS NULL)`),
     uniqueCategory: unique().on(t.category),
+    // TODO: checkEndDate
+    // checkEndDate: sql.raw(`CHECK (endDate > startDate OR endDate IS NULL)`),
   }),
 )
 
@@ -165,7 +167,7 @@ export const amounts = mysqlTable(
       .$defaultFn(generateNanoId)
       .primaryKey(),
     amount: decimal("amount").notNull(),
-    year: tinyint("year").notNull(),
+    year: mediumint("year").notNull(),
     month: mysqlEnum("month", [
       "january",
       "february",
@@ -189,6 +191,11 @@ export const amounts = mysqlTable(
   },
   (t) => ({
     yearMonthCategoryIdx: unique().on(t.year, t.month, t.category),
+    // TODO: checkYearIsReasonable
+    // checkYearIsReasonable: check(
+    //   t.year.name,
+    //   sql.raw(`year > 2000 AND year < 2100`),
+    // ),
   }),
 )
 
