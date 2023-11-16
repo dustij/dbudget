@@ -5,18 +5,14 @@ import { cn, formatCurrency } from "~/lib/utils"
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
-  myValue?: string | number
+  myValue: string | number
   onLoseFocus?: (e: React.FocusEvent<HTMLInputElement>) => void
 }
 
 const MyInput = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, myValue, onLoseFocus, ...props }, ref) => {
     const [value, setValue] = useState(
-      myValue
-        ? type === "number"
-          ? formatCurrency(myValue, false)
-          : myValue
-        : "",
+      type === "number" ? formatCurrency(myValue, false) : myValue,
     )
 
     return (

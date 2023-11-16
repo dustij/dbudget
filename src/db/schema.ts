@@ -7,10 +7,8 @@ import {
   text,
   decimal,
   mysqlEnum,
-  tinyint,
   unique,
   char,
-  check,
   mediumint,
 } from "drizzle-orm/mysql-core"
 import type { AdapterAccount } from "@auth/core/adapters"
@@ -237,7 +235,7 @@ export const amounts = mysqlTable(
     amount: decimal("amount").notNull(),
     year: mediumint("year").notNull(),
     month: mysqlEnum("month", MONTHS).notNull(),
-    category: varchar("category", { length: 255 }).notNull(),
+    categoryId: varchar("categoryId", { length: 255 }).notNull(),
     createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
     updatedAt: timestamp("updatedAt", { mode: "date" })
       .defaultNow()
@@ -248,7 +246,7 @@ export const amounts = mysqlTable(
     uniqueYearMonthCategoryUserId: unique().on(
       t.year,
       t.month,
-      t.category,
+      t.categoryId,
       t.userId,
     ),
   }),
@@ -281,7 +279,7 @@ export const categoriesRelations = relations(categories, ({ one, many }) => ({
 
 export const amountsRelations = relations(amounts, ({ one }) => ({
   categories: one(categories, {
-    fields: [amounts.category],
+    fields: [amounts.categoryId],
     references: [categories.id],
   }),
   users: one(users, {

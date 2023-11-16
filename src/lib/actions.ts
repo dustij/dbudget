@@ -85,7 +85,7 @@ export async function retrieveBudget(
           .select()
           .from(dbAmounts)
           .where(
-            eq(dbAmounts.category, category.id) &&
+            eq(dbAmounts.categoryId, category.id) &&
               eq(dbAmounts.year, year) &&
               eq(dbAmounts.userId, userId),
           )

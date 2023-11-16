@@ -44,6 +44,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     const newCategory = {
       id: Math.floor(Math.random() * 1000000), // this is a temporary id
       name: "",
+      parent: "fixed" as CategoryParent,
       monthlyAmounts: Array.from({ length: 12 }).fill(0) as number[],
     }
     setBudgetData((prevData) => {
@@ -60,12 +61,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       setCategoryPosition([newRowIndex, 0])
       return newData
     })
-  }
-
-  const handleSubmit = (e: React.FocusEvent) => {
-    e.preventDefault()
-    const target = e.target as HTMLInputElement
-    updateBudget(userId, target.value, "fixed", true)
   }
 
   // TODO: add style to first column to highlight it, makes it easier to see which category you're editing
@@ -148,6 +143,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       // Blur the current input
       e.currentTarget.blur()
     }
+  }
+
+  const handleSubmit = (e: React.FocusEvent) => {
+    e.preventDefault()
+    // const target = e.target as HTMLInputElement
+    // updateBudget(userId, target.value, "fixed", true)
   }
 
   let totalRowIndex = 0 // track row index across different parents
