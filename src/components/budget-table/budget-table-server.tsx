@@ -4,6 +4,7 @@ import { getServerAuthSession } from "~/app/api/auth/[...nextauth]/options"
 import { amounts, amountsRelations, categories } from "~/db/schema"
 import { db } from "~/db"
 import { eq } from "drizzle-orm"
+import { revalidatePath } from "next/cache"
 
 interface BudgetTableProps {
   className?: string
@@ -84,9 +85,38 @@ const BudgetTableServer: FC<BudgetTableProps> = async ({
     return formattedResults
   }
 
+  const updateAmountsData = async (payload: {
+    userId: string
+    year: number
+    categoryId: string
+    month: string
+    amount: string
+  }): Promise<void> => {
+    "use server"
+    console.log("updateAmountsData", payload)
+    db.update(amounts)
+      .set({
+        amount: payload.amount,
+      })
+      .where(
+        eq(amounts.userId, payload.userId) &&
+          eq(amounts.categoryId, payload.categoryId) &&
+          eq(amounts.year, payload.year) &&
+          eq(amounts.month, payload.month),
+      )
+    revalidatePath("/")
+  }
+
   const data = await getAmountsData(userId)
 
-  return <BudgetTableClient className={className} userId={userId} data={data} />
+  return (
+    <BudgetTableClient
+      className={className}
+      userId={userId}
+      data={data}
+      updateData={updateAmountsData}
+    />
+  )
 }
 
 export default BudgetTableServer
