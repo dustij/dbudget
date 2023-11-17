@@ -4,7 +4,11 @@ import React, { FC, useEffect, useRef, useState } from "react"
 import { cn } from "~/lib/utils"
 import { IoAddCircleOutline } from "react-icons/io5"
 import { MyInput } from "../my-input"
-import { updateBudget } from "~/lib/actions"
+
+interface refCategoryObject {
+  element: HTMLInputElement | null
+  id: string | null
+}
 
 interface BudgetTableClientProps {
   className?: string
@@ -17,7 +21,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   className,
   userId,
 }) => {
-  const refsMatrix = useRef<(HTMLInputElement | null)[][]>([])
+  const refsMatrix = useRef<refCategoryObject[][]>([])
   const [budgetData, setBudgetData] = useState<AmountsModel[]>(data)
   const [categoryPosition, setCategoryPosition] = useState<
     [number, number] | null
@@ -30,19 +34,21 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     refsMatrix.current[rowIndex] = []
     for (const colIndex of Array(13).keys()) {
       // 13 because 12 months + 1 for category name
-      refsMatrix.current[rowIndex]![colIndex] = null
+      refsMatrix.current[rowIndex]![colIndex] = { element: null, id: null }
     }
   }
 
   useEffect(() => {
     if (categoryPosition) {
-      refsMatrix.current[categoryPosition[0]]?.[categoryPosition[1]]?.focus()
+      refsMatrix.current[categoryPosition[0]]?.[
+        categoryPosition[1]
+      ]?.element?.focus()
     }
   }, [categoryPosition])
 
   const addCategory = (parentIndex: number, rowIndex: number) => {
     const newCategory = {
-      id: Math.floor(Math.random() * 1000000), // this is a temporary id
+      id: Math.floor(Math.random() * 1000000).toString(), // this is a temporary id
       name: "",
       parent: "fixed" as CategoryParent,
       monthlyAmounts: Array.from({ length: 12 }).fill(0) as number[],
@@ -74,13 +80,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       e.preventDefault()
       const nextRowIndex = rowIndex + 1
       if (nextRowIndex < refsMatrix.current.length) {
-        refsMatrix.current[nextRowIndex]?.[colIndex]?.focus()
+        refsMatrix.current[nextRowIndex]?.[colIndex]?.element?.focus()
       } else {
         // Move focus to the first input in the next column
         const nextColIndex = colIndex + 1
         // Can use assertion here because we know that the first row exists (because we're in it)
         if (nextColIndex < refsMatrix.current[0]!.length) {
-          refsMatrix.current[0]?.[nextColIndex]?.focus()
+          refsMatrix.current[0]?.[nextColIndex]?.element?.focus()
         } else {
           // Blur the current input
           e.currentTarget.blur()
@@ -91,14 +97,14 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       e.preventDefault()
       const prevRowIndex = rowIndex - 1
       if (prevRowIndex >= 0) {
-        refsMatrix.current[prevRowIndex]?.[colIndex]?.focus()
+        refsMatrix.current[prevRowIndex]?.[colIndex]?.element?.focus()
       } else {
         // Move focus to the last input in the previous column
         const prevColIndex = colIndex - 1
         if (prevColIndex >= 0) {
           refsMatrix.current[refsMatrix.current.length - 1]?.[
             prevColIndex
-          ]?.focus()
+          ]?.element?.focus()
         } else {
           // Blur the current input
           e.currentTarget.blur()
@@ -109,7 +115,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       e.preventDefault()
       const prevColIndex = colIndex - 1
       if (prevColIndex >= 0) {
-        refsMatrix.current[rowIndex]?.[prevColIndex]?.focus()
+        refsMatrix.current[rowIndex]?.[prevColIndex]?.element?.focus()
       } else {
         // Move focus to the last input in the previous row
         const prevRowIndex = rowIndex - 1
@@ -117,7 +123,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           refsMatrix.current[prevRowIndex]?.[
             // Can use assertion here because we know that the previous row exists (because we just checked)
             refsMatrix.current[prevRowIndex]!.length - 1
-          ]?.focus()
+          ]?.element?.focus()
         } else {
           // Blur the current input
           e.currentTarget.blur()
@@ -128,12 +134,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       e.preventDefault()
       const nextColIndex = colIndex + 1
       if (refsMatrix.current[rowIndex]?.[nextColIndex]) {
-        refsMatrix.current[rowIndex]?.[nextColIndex]?.focus()
+        refsMatrix.current[rowIndex]?.[nextColIndex]?.element?.focus()
       } else {
         // Move focus to the first input in the next row
         const nextRowIndex = rowIndex + 1
         if (refsMatrix.current[nextRowIndex]?.[0]) {
-          refsMatrix.current[nextRowIndex]?.[0]?.focus()
+          refsMatrix.current[nextRowIndex]?.[0]?.element?.focus()
         } else {
           // Blur the current input
           e.currentTarget.blur()
@@ -145,10 +151,24 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     }
   }
 
-  const handleSubmit = (e: React.FocusEvent) => {
+  const handleSubmit = (
+    e: React.FocusEvent,
+    rowIndx: number,
+    colIndex: number,
+  ) => {
     e.preventDefault()
-    // const target = e.target as HTMLInputElement
-    // updateBudget(userId, target.value, "fixed", true)
+    if (colIndex === 99) {
+      // This is the category name
+    }
+    const target = e.target as HTMLInputElement
+    const payload = {
+      userId: userId,
+      categoryId: refsMatrix.current[rowIndx]![colIndex]?.id,
+      month: colIndex + 1,
+      amount: target.value,
+    }
+    console.log(payload)
+    // updateBudget(userId, target.value, "fixed", true);
   }
 
   let totalRowIndex = 0 // track row index across different parents
@@ -225,12 +245,16 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                     <tr key={category.id}>
                       <td className="sticky left-0 z-20 border-b border-r bg-white p-0">
                         <MyInput
+                          key={category.id}
                           myValue={category.name}
                           ref={(input) => {
-                            refsMatrix.current[currentRowIndex]![0] = input
+                            refsMatrix.current[currentRowIndex]![0] = {
+                              element: input,
+                              id: category.id,
+                            }
                           }}
                           onFocus={(e) => e.currentTarget.select()}
-                          onBlur={(e) => handleSubmit(e)}
+                          onBlur={(e) => handleSubmit(e, currentRowIndex, 99)} // 99 is a dummy value to signify that this is the category name
                           onKeyDown={(e) =>
                             handleKeyDown(e, currentRowIndex, 0)
                           }
@@ -252,10 +276,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                             ref={(input) => {
                               refsMatrix.current[currentRowIndex]![
                                 colIndex + 1
-                              ] = input
+                              ] = { element: input, id: category.id }
                             }}
                             onFocus={(e) => e.currentTarget.select()}
-                            onLoseFocus={(e) => handleSubmit(e)}
+                            onLoseFocus={(e) =>
+                              handleSubmit(e, currentRowIndex, colIndex)
+                            }
                             onKeyDown={(e) =>
                               handleKeyDown(e, currentRowIndex, colIndex + 1)
                             }

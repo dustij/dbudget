@@ -22,8 +22,6 @@ const BudgetTableServer: FC<BudgetTableProps> = async ({
       .leftJoin(categories, eq(amounts.categoryId, categories.id))
       .where(eq(amounts.userId, userId))
 
-    console.log(result)
-
     // Group the results by category
     const groupedResults = result.reduce(
       (acc, row) => {
@@ -58,7 +56,6 @@ const BudgetTableServer: FC<BudgetTableProps> = async ({
       },
     )
 
-    console.log(groupedResults)
     const parents: CategoryParent[] = [
       "income",
       "fixed",
@@ -83,8 +80,6 @@ const BudgetTableServer: FC<BudgetTableProps> = async ({
         })),
       }
     })
-
-    console.log(formattedResults)
 
     return formattedResults
   }

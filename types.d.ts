@@ -8,7 +8,7 @@ type SessionUser = {
 interface AmountsModel {
   parent: CategoryParent
   categories: {
-    id: number | string
+    id: string
     name: string
     parent?: CategoryParent
     monthlyAmounts: number[]
