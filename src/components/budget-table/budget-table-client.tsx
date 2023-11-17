@@ -1,9 +1,10 @@
 "use client"
 
-import React, { FC, useEffect, useRef, useState } from "react"
+import React, { FC, useCallback, useEffect, useRef, useState } from "react"
 import { cn } from "~/lib/utils"
 import { IoAddCircleOutline } from "react-icons/io5"
 import { MyInput } from "../my-input"
+import YearPicker from "../year-picker"
 
 interface refCategoryObject {
   element: HTMLInputElement | null
@@ -26,6 +27,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const [categoryPosition, setCategoryPosition] = useState<
     [number, number] | null
   >(null) // [row, col]
+  const [year, setYear] = useState<number>(2023)
 
   const subCategories = budgetData.flatMap((parent) => parent.categories)
 
@@ -37,7 +39,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       refsMatrix.current[rowIndex]![colIndex] = { element: null, id: null }
     }
   }
-
   useEffect(() => {
     if (categoryPosition) {
       refsMatrix.current[categoryPosition[0]]?.[
@@ -45,6 +46,10 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       ]?.element?.focus()
     }
   }, [categoryPosition])
+
+  const hanldeYearChange = useCallback((year: number) => {
+    setYear(year)
+  }, [])
 
   const addCategory = (parentIndex: number, rowIndex: number) => {
     const newCategory = {
@@ -163,6 +168,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     const target = e.target as HTMLInputElement
     const payload = {
       userId: userId,
+      year: year,
       categoryId: refsMatrix.current[rowIndx]![colIndex]?.id,
       month: colIndex + 1,
       amount: target.value,
@@ -173,147 +179,161 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
   let totalRowIndex = 0 // track row index across different parents
   return (
-    <table
-      className={cn(
-        "w-full min-w-[1070px] table-fixed border-separate border-spacing-0 bg-white text-[14px]",
-        className,
-      )}
-    >
-      <thead className="sticky top-[33px] z-30 h-[33px] bg-white">
-        <tr>
-          <th className="sticky left-0 cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-left text-base font-normal text-zinc-400">
-            Category
-          </th>
-          <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
-            Jan
-          </th>
-          <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
-            Feb
-          </th>
-          <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
-            Mar
-          </th>
-          <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
-            Apr
-          </th>
-          <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
-            May
-          </th>
-          <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
-            Jun
-          </th>
-          <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
-            Jul
-          </th>
-          <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
-            Aug
-          </th>
-          <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
-            Sep
-          </th>
-          <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
-            Oct
-          </th>
-          <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
-            Nov
-          </th>
-          <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b bg-white px-1.5 text-right text-base font-normal text-zinc-400">
-            Dec
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {budgetData.map((data, parentIndex) => {
-          return (
-            <React.Fragment key={parentIndex}>
-              <tr key={parentIndex}>
-                <td className="sticky left-0 z-20 border-b bg-white px-1.5 text-base font-normal text-zinc-400 hover:cursor-default hover:bg-white mobile:text-sm">
-                  {data.parent.toUpperCase()}
-                </td>
-                {Array.from({ length: 12 }).map((_, index) => (
-                  <td
-                    key={index}
-                    className="border-b bg-white hover:cursor-default"
-                  ></td>
-                ))}
-              </tr>
-              {data.categories.map((category, rowIndex) => {
-                // Increment totalRowIndex for each row
-                const currentRowIndex = totalRowIndex++
-                return (
-                  <React.Fragment key={category.id}>
-                    <tr key={category.id}>
-                      <td className="sticky left-0 z-20 border-b border-r bg-white p-0">
-                        <MyInput
-                          key={category.id}
-                          myValue={category.name}
-                          ref={(input) => {
-                            refsMatrix.current[currentRowIndex]![0] = {
-                              element: input,
-                              id: category.id,
-                            }
-                          }}
-                          onFocus={(e) => e.currentTarget.select()}
-                          onBlur={(e) => handleSubmit(e, currentRowIndex, 99)} // 99 is a dummy value to signify that this is the category name
-                          onKeyDown={(e) =>
-                            handleKeyDown(e, currentRowIndex, 0)
-                          }
-                        />
-                      </td>
+    <>
+      <div className="sticky left-0 top-0 z-30 flex h-[33px] items-center justify-center border-b bg-white">
+        <YearPicker onYearChange={hanldeYearChange}>{2021}</YearPicker>
+      </div>
+      <div className="relative">
+        <table
+          className={cn(
+            "w-full min-w-[1070px] table-fixed border-separate border-spacing-0 bg-white text-[14px]",
+            className,
+          )}
+        >
+          <thead className="sticky top-[33px] z-30 h-[33px] bg-white">
+            <tr>
+              <th className="sticky left-0 cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-left text-base font-normal text-zinc-400">
+                Category
+              </th>
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+                Jan
+              </th>
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+                Feb
+              </th>
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+                Mar
+              </th>
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+                Apr
+              </th>
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+                May
+              </th>
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+                Jun
+              </th>
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+                Jul
+              </th>
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+                Aug
+              </th>
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+                Sep
+              </th>
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+                Oct
+              </th>
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+                Nov
+              </th>
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+                Dec
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {budgetData.map((data, parentIndex) => {
+              return (
+                <React.Fragment key={parentIndex}>
+                  <tr key={parentIndex}>
+                    <td className="sticky left-0 z-20 border-b bg-white px-1.5 text-base font-normal text-zinc-400 hover:cursor-default hover:bg-white mobile:text-sm">
+                      {data.parent.charAt(0).toUpperCase() +
+                        data.parent.slice(1)}
+                    </td>
+                    {Array.from({ length: 12 }).map((_, index) => (
+                      <td
+                        key={index}
+                        className="border-b bg-white hover:cursor-default"
+                      ></td>
+                    ))}
+                  </tr>
+                  {data.categories.map((category, rowIndex) => {
+                    // Increment totalRowIndex for each row
+                    const currentRowIndex = totalRowIndex++
+                    return (
+                      <React.Fragment key={category.id}>
+                        <tr key={category.id}>
+                          <td className="sticky left-0 z-20 border-b border-r bg-white p-0">
+                            <MyInput
+                              key={category.id}
+                              myValue={category.name}
+                              ref={(input) => {
+                                refsMatrix.current[currentRowIndex]![0] = {
+                                  element: input,
+                                  id: category.id,
+                                }
+                              }}
+                              onFocus={(e) => e.currentTarget.select()}
+                              onBlur={(e) =>
+                                handleSubmit(e, currentRowIndex, 99)
+                              } // 99 is a dummy value to signify that this is the category name
+                              onKeyDown={(e) =>
+                                handleKeyDown(e, currentRowIndex, 0)
+                              }
+                            />
+                          </td>
 
-                      {category.monthlyAmounts.map((amount, colIndex) => (
-                        <td
-                          key={colIndex}
-                          className={cn(
-                            "relative h-6 border-b border-r p-0",
-                            colIndex === 11 && "border-r-0",
-                          )}
-                        >
-                          <MyInput
-                            type="number"
-                            step={"0.01"}
-                            myValue={amount}
-                            ref={(input) => {
-                              refsMatrix.current[currentRowIndex]![
-                                colIndex + 1
-                              ] = { element: input, id: category.id }
-                            }}
-                            onFocus={(e) => e.currentTarget.select()}
-                            onLoseFocus={(e) =>
-                              handleSubmit(e, currentRowIndex, colIndex)
-                            }
-                            onKeyDown={(e) =>
-                              handleKeyDown(e, currentRowIndex, colIndex + 1)
-                            }
-                          />
-                        </td>
-                      ))}
-                    </tr>
-                  </React.Fragment>
-                )
-              })}
-              <tr key={`add-category-${parentIndex}`}>
-                <td
-                  className="sticky left-0 z-10 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm"
-                  onClick={() =>
-                    addCategory(parentIndex, data.categories.length - 1)
-                  }
-                >
-                  <IoAddCircleOutline className="mr-1 inline-block h-full pb-[2px]" />
-                  Add
-                </td>
-                {Array.from({ length: 12 }).map((_, index) => (
-                  <td
-                    key={index}
-                    className="border-b bg-white hover:cursor-default"
-                  ></td>
-                ))}
-              </tr>
-            </React.Fragment>
-          )
-        })}
-      </tbody>
-    </table>
+                          {category.monthlyAmounts.map((amount, colIndex) => (
+                            <td
+                              key={colIndex}
+                              className={cn(
+                                "relative h-6 border-b border-r p-0",
+                                colIndex === 11 && "border-r-0",
+                              )}
+                            >
+                              <MyInput
+                                type="number"
+                                step={"0.01"}
+                                myValue={amount}
+                                ref={(input) => {
+                                  refsMatrix.current[currentRowIndex]![
+                                    colIndex + 1
+                                  ] = { element: input, id: category.id }
+                                }}
+                                onFocus={(e) => e.currentTarget.select()}
+                                onLoseFocus={(e) =>
+                                  handleSubmit(e, currentRowIndex, colIndex)
+                                }
+                                onKeyDown={(e) =>
+                                  handleKeyDown(
+                                    e,
+                                    currentRowIndex,
+                                    colIndex + 1,
+                                  )
+                                }
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      </React.Fragment>
+                    )
+                  })}
+                  <tr key={`add-category-${parentIndex}`}>
+                    <td
+                      className="sticky left-0 z-10 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm"
+                      onClick={() =>
+                        addCategory(parentIndex, data.categories.length - 1)
+                      }
+                    >
+                      <IoAddCircleOutline className="mr-1 inline-block h-full pb-[2px]" />
+                      Add
+                    </td>
+                    {Array.from({ length: 12 }).map((_, index) => (
+                      <td
+                        key={index}
+                        className="border-b bg-white hover:cursor-default"
+                      ></td>
+                    ))}
+                  </tr>
+                </React.Fragment>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
   )
 }
 

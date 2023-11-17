@@ -12,16 +12,7 @@ const Budget: FC<BudgetProps> = async () => {
     return null
   }
 
-  return (
-    <>
-      <div className="sticky left-0 top-0 z-30 flex h-[33px] items-center justify-center border-b bg-white">
-        <YearPicker>{2021}</YearPicker>
-      </div>
-      <div className="relative">
-        <BudgetTableServer userId={session.user.id} />
-      </div>
-    </>
-  )
+  return <BudgetTableServer userId={session.user.id} />
 }
 
 export default Budget
