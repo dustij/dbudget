@@ -16,12 +16,11 @@ const BudgetTableServer: FC<BudgetTableProps> = async ({
   userId,
 }) => {
   const getAmountsData = async (userId: string): Promise<AmountsModel[]> => {
-    // TODO: This only returns amounts that have a category. We need to return all categories, even if they don't have an amount
     const result = await db
       .select()
-      .from(amounts)
-      .leftJoin(categories, eq(amounts.categoryId, categories.id))
-      .where(eq(amounts.userId, userId))
+      .from(categories)
+      .leftJoin(amounts, eq(amounts.categoryId, categories.id))
+      .where(eq(categories.userId, userId))
 
     // Group the results by category
     const groupedResults = result.reduce(
@@ -37,6 +36,8 @@ const BudgetTableServer: FC<BudgetTableProps> = async ({
             monthlyAmounts: Array.from({ length: 12 }).fill(0) as number[],
           }
         }
+
+        if (!row.amount) return acc // If there's no amount, we can return early
 
         const monthIndex = parseInt(row.amount.month) - 1 //  Months are stored as 1-12, so we need to subtract 1 to get the correct index
 
@@ -94,7 +95,8 @@ const BudgetTableServer: FC<BudgetTableProps> = async ({
   }): Promise<void> => {
     "use server"
     console.log("updateAmountsData", payload)
-    db.update(amounts)
+    const res = await db
+      .update(amounts)
       .set({
         amount: payload.amount,
       })
@@ -104,7 +106,23 @@ const BudgetTableServer: FC<BudgetTableProps> = async ({
           eq(amounts.year, payload.year) &&
           eq(amounts.month, payload.month),
       )
+    console.log("res", res)
     revalidatePath("/")
+  }
+
+  const insertCategory = async (payload: {
+    userId: string
+    name: string
+    parent: CategoryParent
+  }): Promise<void> => {
+    "use server"
+    console.log("addCategory", payload)
+    const res = await db.insert(categories).values({
+      name: payload.name,
+      parent: payload.parent,
+      userId: payload.userId,
+    })
+    console.log("res", res)
   }
 
   const data = await getAmountsData(userId)
@@ -114,7 +132,8 @@ const BudgetTableServer: FC<BudgetTableProps> = async ({
       className={className}
       userId={userId}
       data={data}
-      updateData={updateAmountsData}
+      updateAmountsInDb={updateAmountsData}
+      insertCategoryInDb={insertCategory}
     />
   )
 }

@@ -15,18 +15,24 @@ interface BudgetTableClientProps {
   className?: string
   userId: string
   data: AmountsModel[]
-  updateData: (payload: {
+  updateAmountsInDb: (payload: {
     userId: string
     year: number
     categoryId: string
     month: string
     amount: string
   }) => Promise<void>
+  insertCategoryInDb: (payload: {
+    userId: string
+    name: string
+    parent: CategoryParent
+  }) => Promise<void>
 }
 
 const BudgetTableClient: FC<BudgetTableClientProps> = ({
   data,
-  updateData,
+  updateAmountsInDb,
+  insertCategoryInDb,
   className,
   userId,
 }) => {
@@ -47,6 +53,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       refsMatrix.current[rowIndex]![colIndex] = { element: null, id: null }
     }
   }
+
   useEffect(() => {
     if (categoryPosition) {
       refsMatrix.current[categoryPosition[0]]?.[
@@ -63,12 +70,14 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     const newCategory = {
       id: `temp_${Math.random() * 100000000}`,
       name: "",
-      parent: "fixed" as CategoryParent,
+      parent: "" as CategoryParent,
       monthlyAmounts: Array.from({ length: 12 }).fill(0) as number[],
     }
+    let newRowIndex = 0
     setBudgetData((prevData) => {
       const newData = [...prevData]
       const parent = newData[parentIndex]! // Can use assertion here because parentIndex is created when mapping over budgetData parents (which are guaranteed to exist)
+      newCategory.parent = parent.parent
       const categories = parent.categories ?? []
       const newCategories = [...categories.slice(0, rowIndex + 1), newCategory]
       newData[parentIndex] = {
@@ -76,10 +85,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         categories: newCategories,
       }
       const subCategories = newData.flatMap((parent) => parent.categories)
-      const newRowIndex = subCategories.findIndex((cat) => cat === newCategory)
+      newRowIndex = subCategories.findIndex((cat) => cat === newCategory)
       setCategoryPosition([newRowIndex, 0])
+      console.log("finished setCategoryPosition =====================")
+      console.log("refsMatrix.current", refsMatrix.current)
       return newData
     })
+    console.log("finished setBudgetData =====================")
+    console.log("refsMatrix.current", refsMatrix.current)
+    console.log("=============================================")
   }
 
   const handleKeyDown = (
@@ -92,6 +106,19 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       e.preventDefault()
       const nextRowIndex = rowIndex + 1
       if (nextRowIndex < refsMatrix.current.length) {
+        console.log("nextRowIndex", nextRowIndex)
+        console.log("colIndex", colIndex)
+        console.log("refsMatrix.current", refsMatrix.current)
+        console.log(
+          "refsMatrix.current[nextRowIndex]",
+          refsMatrix.current[nextRowIndex]?.forEach((ref, i) =>
+            console.log(i, ":", ref),
+          ),
+        )
+        console.log(
+          "refsMatrix.current[nextRowIndex]?.[colIndex]",
+          refsMatrix.current[nextRowIndex]?.[colIndex],
+        )
         refsMatrix.current[nextRowIndex]?.[colIndex]?.element?.focus()
       } else {
         // Move focus to the first input in the next column
@@ -163,46 +190,63 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     }
   }
 
-  const handleSubmit = (e: React.FocusEvent, categoryId?: string) => {
-    e.preventDefault()
+  const handleSubmit = (
+    e: React.FocusEvent,
+    parent: CategoryParent,
+    categoryId: string, // For some reason this needs to be optional for the key events to work
+  ) => {
     const target = e.target as HTMLInputElement
     const value = target.value.trim()
     const month = target.dataset.month
+    const isAmount = target.dataset.isamount === "true"
+
+    console.log("isAmount", isAmount)
+    console.log("categoryId", categoryId)
 
     // Handle newly added category
-    const isTempCategory = categoryId?.startsWith("temp_")
-    if (isTempCategory) {
-      if (!value) {
-        console.log("handleSubmit - value is empty")
-        // Remove the category from the table
-        setBudgetData((prevData) => {
-          const newData = [...prevData]
-          const parentIndex = newData.findIndex(
-            (parent) =>
-              parent.categories?.findIndex((cat) => cat.id === categoryId) !==
-              -1,
-          )
-          const parent = newData[parentIndex]! // Can use assertion here because parentIndex is created when mapping over budgetData parents (which are guaranteed to exist)
-          const categories = parent.categories ?? []
-          const newCategories = categories.filter(
-            (cat) => cat.id !== categoryId,
-          )
-          newData[parentIndex] = {
-            ...parent,
-            categories: newCategories,
-          }
-          return newData
-        })
+    if (!isAmount) {
+      const isTempCategory = categoryId?.startsWith("temp_")
+      if (isTempCategory) {
+        if (!value) {
+          console.log("handleSubmit - value is empty")
+          // Remove the category from the table
+          setBudgetData((prevData) => {
+            const newData = [...prevData]
+            const parentIndex = newData.findIndex(
+              (parent) =>
+                parent.categories?.findIndex((cat) => cat.id === categoryId) !==
+                -1,
+            )
+            const parent = newData[parentIndex]! // Can use assertion here because parentIndex is created when mapping over budgetData parents (which are guaranteed to exist)
+            const categories = parent.categories ?? []
+            const newCategories = categories.filter(
+              (cat) => cat.id !== categoryId,
+            )
+            newData[parentIndex] = {
+              ...parent,
+              categories: newCategories,
+            }
+            return newData
+          })
+        } else {
+          console.log("handleSubmit - value is not empty => ", value)
+          // Add the category to the database
+          console.log({ name: value, parent: parent, userId: userId })
+          insertCategoryInDb({ name: value, parent: parent, userId: userId })
+        }
       } else {
-        console.log("handleSubmit - value is not empty => ", value)
+        console.log("handleSubmit - is not temp category")
+        // Handle existing category name change
       }
+
+      // Handle existing category name change
+    } else if (isAmount && month) {
+      console.log("handleSubmit - isAmount && month", value)
+
+      // Handle existing category new amount
+
+      // Handle existing category existing amount change
     }
-
-    // Handle existing category name change
-
-    // Handle existing category new amount
-
-    // Handle existing category existing amount change
   }
 
   let totalRowIndex = 0 // track row index across different parents
@@ -287,6 +331,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                             <MyInput
                               key={category.id}
                               myValue={category.name}
+                              data-isamount={false}
                               ref={(input) => {
                                 refsMatrix.current[currentRowIndex]![0] = {
                                   element: input,
@@ -294,7 +339,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                 }
                               }}
                               onFocus={(e) => e.currentTarget.select()}
-                              onBlur={(e) => handleSubmit(e, category.id)}
+                              onBlur={(e) =>
+                                handleSubmit(e, data.parent, category.id)
+                              }
                               onKeyDown={(e) =>
                                 handleKeyDown(e, currentRowIndex, 0)
                               }
@@ -313,6 +360,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                 type="number"
                                 step={"0.01"}
                                 data-month={colIndex + 1}
+                                data-isamount={true}
                                 myValue={amount}
                                 ref={(input) => {
                                   refsMatrix.current[currentRowIndex]![
@@ -321,7 +369,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                 }}
                                 onFocus={(e) => e.currentTarget.select()}
                                 onLoseFocus={(e) =>
-                                  handleSubmit(e, category.id)
+                                  handleSubmit(e, data.parent, category.id)
                                 }
                                 onKeyDown={(e) =>
                                   handleKeyDown(
