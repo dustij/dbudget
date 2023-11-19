@@ -15,10 +15,10 @@ interface ICategory {
 
 interface IYearData {
   year: number
-  amounts: IAmounts
+  amounts: IAmount[]
 }
 
-interface IAmounts {
+interface IAmount {
   parent: CategoryParent
   categories: IExtendedCategory[]
 }
@@ -35,3 +35,8 @@ type CategoryParent =
   | "obligation"
   | "leakage"
   | "savings"
+
+interface ICategoryRef {
+  element: HTMLInputElement | null
+  category: ICategory
+}

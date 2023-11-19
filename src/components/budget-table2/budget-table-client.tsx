@@ -1,13 +1,15 @@
 "use client"
 
-import React, { useCallback, type FC, useState, useEffect } from "react"
+import React, { useCallback, type FC, useState, useEffect, useRef } from "react"
 import { cn, toTitleCase } from "~/lib/utils"
 import YearPicker from "../year-picker"
 import { IoAddCircleOutline } from "react-icons/io5"
+import { CATEGORY_PARENTS } from "~/lib/constants"
+import { MyInput } from "../my-input"
 
 interface BudgetTableClientProps {
   className?: string
-  budget: Promise<IBudget>
+  budget: IBudget
 }
 
 const BudgetTableClient: FC<BudgetTableClientProps> = ({
@@ -15,25 +17,21 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   budget,
 }) => {
   const [year, setYear] = useState<number>(2023)
-  const categoryParents: CategoryParent[] = [
-    "income",
-    "fixed",
-    "variable",
-    "discretionary",
-    "obligation",
-    "leakage",
-    "savings",
-  ]
+  const [yearData, setYearData] = useState<IYearData | null>(
+    budget.yearData.find((yearData) => yearData.year === year) || null,
+  )
+  const refsMatrix = useRef<ICategoryRef[][]>([])
 
   useEffect(() => {
     console.log({ year: year })
-  }, [year])
+    console.log({ yearDataAmounts: yearData?.amounts })
+  }, [year, yearData])
 
   const hanldeYearChange = useCallback((year: number) => {
     setYear(year)
   }, [])
 
-  const addCategoryRow = () => {
+  const handleAddRow = () => {
     console.log("add category row")
   }
 
@@ -99,7 +97,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
             </tr>
           </thead>
           <tbody>
-            {categoryParents.map((categoryParent, parentIndex) => {
+            {CATEGORY_PARENTS.map((categoryParent, parentIndex) => {
               // Increment totalRowIndex for each row
               const currentRowIndex = totalRowIndex++
               return (
@@ -118,12 +116,50 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                   </tr>
 
                   {/* Child Categories */}
+                  {// get amount data for each child in current parent category
+                  yearData?.amounts
+                    .filter(
+                      (data) =>
+                        data.parent === categoryParent &&
+                        data.categories.length > 0,
+                    )
+                    .map((amount) => {
+                      return amount.categories.map((category) => {
+                        console.log({ category: category })
+                        return (
+                          <tr key={category.id}>
+                            <td className="sticky left-0 z-20 border-b border-r bg-white p-0">
+                              <MyInput
+                                key={category.id}
+                                myValue={category.name}
+                              />
+                            </td>
+                            {category.monthlyAmounts.map((amount, index) => (
+                              <td
+                                key={index}
+                                className={cn(
+                                  "relative h-6 border-b border-r p-0",
+                                  index === 11 && "border-r-0",
+                                )}
+                              >
+                                <MyInput
+                                  key={index}
+                                  type="number"
+                                  step={"0.01"}
+                                  myValue={amount}
+                                />
+                              </td>
+                            ))}
+                          </tr>
+                        )
+                      })
+                    })}
 
                   {/* Add Button Row */}
                   <tr key={`add-category-${parentIndex}`}>
                     <td
                       className="sticky left-0 z-10 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm"
-                      onClick={() => addCategoryRow()}
+                      onClick={() => handleAddRow()}
                     >
                       <IoAddCircleOutline className="mr-1 inline-block h-full pb-[2px]" />
                       Add
