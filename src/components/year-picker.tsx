@@ -21,10 +21,10 @@ const YearPicker: FC<YearPickerProps> = ({ children, onYearChange }) => {
         inputRef.current.select()
       } else {
         inputRef.current.blur()
-        onYearChange(parseInt(inputRef.current.value))
+        onYearChange(value)
       }
     }
-  }, [isEditing, onYearChange])
+  }, [isEditing, onYearChange, value])
 
   const submitEditing = () => {
     setIsEditing(false)
