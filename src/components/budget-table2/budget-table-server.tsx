@@ -4,20 +4,12 @@ import { cn } from "~/lib/utils"
 import BudgetTableClient from "./budget-table-client"
 
 interface BudgetTableServerProps {
-  className?: string
   userId: string
 }
 
-const BudgetTableServer: FC<BudgetTableServerProps> = ({
-  className,
-  userId,
-}) => {
+const BudgetTableServer: FC<BudgetTableServerProps> = ({ userId }) => {
   const budget = getBudgetData(userId)
-  return (
-    <div className={cn(className)}>
-      <BudgetTableClient budget={budget} />
-    </div>
-  )
+  return <BudgetTableClient budget={budget} />
 }
 
 export default BudgetTableServer

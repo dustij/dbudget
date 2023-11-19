@@ -1,8 +1,9 @@
 "use client"
 
-import { useCallback, type FC, useState, useEffect } from "react"
-import { cn } from "~/lib/utils"
+import React, { useCallback, type FC, useState, useEffect } from "react"
+import { cn, toTitleCase } from "~/lib/utils"
 import YearPicker from "../year-picker"
+import { IoAddCircleOutline } from "react-icons/io5"
 
 interface BudgetTableClientProps {
   className?: string
@@ -14,6 +15,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   budget,
 }) => {
   const [year, setYear] = useState<number>(2023)
+  const categoryParents: CategoryParent[] = [
+    "income",
+    "fixed",
+    "variable",
+    "discretionary",
+    "obligation",
+    "leakage",
+    "savings",
+  ]
 
   useEffect(() => {
     console.log({ year: year })
@@ -23,6 +33,11 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     setYear(year)
   }, [])
 
+  const addCategoryRow = () => {
+    console.log("add category row")
+  }
+
+  let totalRowIndex = 0 // track row index across different parents
   return (
     <>
       <div
@@ -83,6 +98,47 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
               </th>
             </tr>
           </thead>
+          <tbody>
+            {categoryParents.map((categoryParent, parentIndex) => {
+              // Increment totalRowIndex for each row
+              const currentRowIndex = totalRowIndex++
+              return (
+                <React.Fragment key={parentIndex}>
+                  {/* Parent Category Row */}
+                  <tr key={parentIndex}>
+                    <td className="sticky left-0 z-20 border-b bg-white px-1.5 text-base font-normal text-zinc-400 hover:cursor-default hover:bg-white mobile:text-sm">
+                      {toTitleCase(categoryParent)}
+                    </td>
+                    {Array.from({ length: 12 }).map((_, index) => (
+                      <td
+                        key={index}
+                        className="border-b bg-white hover:cursor-default"
+                      ></td>
+                    ))}
+                  </tr>
+
+                  {/* Child Categories */}
+
+                  {/* Add Button Row */}
+                  <tr key={`add-category-${parentIndex}`}>
+                    <td
+                      className="sticky left-0 z-10 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm"
+                      onClick={() => addCategoryRow()}
+                    >
+                      <IoAddCircleOutline className="mr-1 inline-block h-full pb-[2px]" />
+                      Add
+                    </td>
+                    {Array.from({ length: 12 }).map((_, index) => (
+                      <td
+                        key={index}
+                        className="border-b bg-white hover:cursor-default"
+                      ></td>
+                    ))}
+                  </tr>
+                </React.Fragment>
+              )
+            })}
+          </tbody>
         </table>
       </div>
     </>
