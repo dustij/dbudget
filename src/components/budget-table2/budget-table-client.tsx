@@ -22,17 +22,36 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   )
   const refsMatrix = useRef<ICategoryRef[][]>([])
 
-  useEffect(() => {
-    console.log({ year: year })
-    console.log({ yearDataAmounts: yearData?.amounts })
-  }, [year, yearData])
+  // useEffect(() => {
+  //   console.log({ year: year })
+  //   console.log({ yearDataAmounts: yearData?.amounts })
+  // }, [year, yearData])
 
   const hanldeYearChange = useCallback((year: number) => {
     setYear(year)
   }, [])
 
-  const handleAddRow = () => {
-    console.log("add category row")
+  const handleAddRow = (categoryParent: CategoryParent) => {
+    const newCategory: IExtendedCategory = {
+      id: "new-category",
+      name: "",
+      parent: categoryParent,
+      monthlyAmounts: Array.from({ length: 12 }).map(() => 0),
+      userId: "",
+      ruleId: "",
+      createdAt: "",
+      updatedAt: "",
+    }
+
+    setYearData((prev) => {
+      if (!prev) return null
+      const newAmounts = [
+        ...prev.amounts,
+        { parent: categoryParent, categories: [newCategory] },
+      ]
+
+      return { ...prev, amounts: newAmounts }
+    })
   }
 
   let totalRowIndex = 0 // track row index across different parents
@@ -116,8 +135,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                   </tr>
 
                   {/* Child Categories */}
-                  {// get amount data for each child in current parent category
-                  yearData?.amounts
+                  {yearData?.amounts
                     .filter(
                       (data) =>
                         data.parent === categoryParent &&
@@ -125,7 +143,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                     )
                     .map((amount) => {
                       return amount.categories.map((category) => {
-                        console.log({ category: category })
                         return (
                           <tr key={category.id}>
                             <td className="sticky left-0 z-20 border-b border-r bg-white p-0">
@@ -159,7 +176,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                   <tr key={`add-category-${parentIndex}`}>
                     <td
                       className="sticky left-0 z-10 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm"
-                      onClick={() => handleAddRow()}
+                      onClick={() => handleAddRow(categoryParent)}
                     >
                       <IoAddCircleOutline className="mr-1 inline-block h-full pb-[2px]" />
                       Add
