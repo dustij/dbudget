@@ -1,26 +1,30 @@
-type BudgetModel = {
-  year: number
-  amounts: AmountsModel[]
+interface IBudget {
+  categories: ICategory[] | []
+  yearData: IYearData[] | []
 }
 
-type AmountsModel = {
+interface ICategory {
+  id: string
+  name: string
+  userId: string
   parent: CategoryParent
-  categories: {
-    id: string
-    name: string
-    parent?: CategoryParent
-    monthlyAmounts: number[]
-  }[]
+  ruleId: string | null
+  createdAt: Date
+  updatedAt: Date
 }
 
-type ReducedData = {
-  [year: string]: {
-    [categoryId: string]: {
-      name: string
-      parent: CategoryParent
-      monthlyAmounts: number[]
-    }
-  }
+interface IYearData {
+  year: number
+  amounts: IAmounts
+}
+
+interface IAmounts {
+  parent: CategoryParent
+  categories: IExtendedCategory[]
+}
+
+interface IExtendedCategory extends ICategory {
+  monthlyAmounts: number[]
 }
 
 type CategoryParent =
