@@ -12,14 +12,19 @@ interface BudgetTableClientProps {
   budget: IBudget
 }
 
+// TODO: Look into useTranstion when performing revalidation, https://react.dev/reference/react/useTransition
 const BudgetTableClient: FC<BudgetTableClientProps> = ({
   className,
   budget,
 }) => {
   const [year, setYear] = useState<number>(2023)
   const [yearData, setYearData] = useState<IYearData | null>(
-    budget.yearData.find((yearData) => yearData.year === year) || null,
+    budget.yearData.find((data) => data.year === year) || null,
   )
+  const [categoryData, setCategoryData] = useState<ICategory[] | null>(
+    budget.categories || null,
+  )
+  const [isDirty, setIsDirty] = useState<boolean>(false) // track if any input has been changed, used to determine if we should revalidate (this was suggested be copilot, should i implement it?)
   const refsMatrix = useRef<ICategoryRef[][]>([])
 
   // Initialize refsMatrix
@@ -32,9 +37,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     }
   }
 
-  useEffect(() => {
-    console.log(refsMatrix.current)
-  }, [yearData, refsMatrix])
+  console.log(refsMatrix.current)
 
   const hanldeYearChange = useCallback((year: number) => {
     setYear(year)
@@ -125,11 +128,11 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
             </tr>
           </thead>
           <tbody>
-            {CATEGORY_PARENTS.map((categoryParent, parentIndex) => {
+            {CATEGORY_PARENTS.map((categoryParent) => {
               return (
-                <React.Fragment key={parentIndex}>
+                <React.Fragment key={categoryParent}>
                   {/* Parent Category Row */}
-                  <tr key={parentIndex}>
+                  <tr key={categoryParent}>
                     <td className="sticky left-0 z-20 border-b bg-white px-1.5 text-base font-normal text-zinc-400 hover:cursor-default hover:bg-white mobile:text-sm">
                       {toTitleCase(categoryParent)}
                     </td>
@@ -196,7 +199,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                       })}
 
                   {/* Add Button Row */}
-                  <tr key={`add-category-${parentIndex}`}>
+                  <tr key={`add-category-${categoryParent}`}>
                     <td
                       className="sticky left-0 z-10 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm"
                       onClick={() => handleAddRow(categoryParent)}
