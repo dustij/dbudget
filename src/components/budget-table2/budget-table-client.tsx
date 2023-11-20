@@ -54,11 +54,25 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     })
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    row: number,
+    col: number,
+  ) => {
+    if (e.shiftKey && e.key === "Enter") {
       e.preventDefault()
       e.stopPropagation()
-      console.log("Enter pressed >>>")
+      refsMatrix.current
+        ?.get(row - 1)
+        ?.get(col)
+        ?.input?.focus()
+    } else if (e.key === "Enter") {
+      e.preventDefault()
+      e.stopPropagation()
+      refsMatrix.current
+        ?.get(row + 1)
+        ?.get(col)
+        ?.input?.focus()
     }
   }
 
@@ -179,7 +193,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                       })
                                     }
                                   }}
-                                  onKeyDown={handleKeyDown}
+                                  onKeyDown={(e) => handleKeyDown(e, row, 0)}
                                 />
                               </td>
                               {Array.from({ length: 12 }).map((_, col) => (
@@ -208,6 +222,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                         })
                                       }
                                     }}
+                                    onKeyDown={(e) =>
+                                      handleKeyDown(e, row, col + 1)
+                                    }
                                   />
                                 </td>
                               ))}
@@ -241,6 +258,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                       })
                                     }
                                   }}
+                                  onKeyDown={(e) => handleKeyDown(e, row, 0)}
                                 />
                               </td>
                               {monthlyAmounts!.map((amount, col) => (
@@ -269,6 +287,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                         })
                                       }
                                     }}
+                                    onKeyDown={(e) =>
+                                      handleKeyDown(e, row, col + 1)
+                                    }
                                   />
                                 </td>
                               ))}
