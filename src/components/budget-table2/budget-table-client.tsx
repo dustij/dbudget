@@ -25,20 +25,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     budget.categories || null,
   )
   const [isDirty, setIsDirty] = useState<boolean>(false) // track if any input has been changed, used to determine if we should revalidate (this was suggested by copilot, should I implement it?)
-  const refsMatrix = useRef<ICategoryRef[][]>([])
-
-  // Initialize refsMatrix
-  for (const row of Array(categoryData?.length).keys()) {
-    refsMatrix.current[row] = []
-    for (const col of Array(13).keys()) {
-      refsMatrix.current[row]![col] = { input: null, category: null }
-    }
-  }
+  const refsMatrix = useRef<Map<number, Map<number, ICategoryRef>> | null>(null)
 
   useEffect(() => {
     console.log("categoryData changed >>>")
     console.log("\trefsMatrix.current")
-    console.log(refsMatrix.current)
+    console.log("\t ", refsMatrix.current)
   }, [categoryData])
 
   const hanldeYearChange = useCallback((year: number) => {
@@ -68,6 +60,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       e.stopPropagation()
       console.log("Enter pressed >>>")
     }
+  }
+
+  const getMap = () => {
+    if (!refsMatrix.current) {
+      refsMatrix.current = new Map<number, Map<number, ICategoryRef>>()
+    }
+    return refsMatrix.current
   }
 
   let totalRowIndex = 0 // track row index across different parents
@@ -169,9 +168,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   key={category.id}
                                   myValue={category.name}
                                   ref={(input) => {
-                                    refsMatrix.current[row]![0] = {
-                                      input,
-                                      category,
+                                    if (input) {
+                                      const map = getMap()
+                                      if (!map.has(row)) {
+                                        map.set(row, new Map())
+                                      }
+                                      map.get(row)!.set(0, {
+                                        input,
+                                        category,
+                                      })
                                     }
                                   }}
                                   onKeyDown={handleKeyDown}
@@ -192,9 +197,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                     step={"0.01"}
                                     myValue={0}
                                     ref={(input) => {
-                                      refsMatrix.current[row]![col + 1] = {
-                                        input,
-                                        category,
+                                      if (input) {
+                                        const map = getMap()
+                                        if (!map.has(row)) {
+                                          map.set(row, new Map())
+                                        }
+                                        map.get(row)!.set(col + 1, {
+                                          input,
+                                          category,
+                                        })
                                       }
                                     }}
                                   />
@@ -219,9 +230,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   key={category.id}
                                   myValue={category.name}
                                   ref={(input) => {
-                                    refsMatrix.current[row]![0] = {
-                                      input,
-                                      category,
+                                    if (input) {
+                                      const map = getMap()
+                                      if (!map.has(row)) {
+                                        map.set(row, new Map())
+                                      }
+                                      map.get(row)!.set(0, {
+                                        input,
+                                        category,
+                                      })
                                     }
                                   }}
                                 />
@@ -241,9 +258,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                     step={"0.01"}
                                     myValue={amount}
                                     ref={(input) => {
-                                      refsMatrix.current[row]![col + 1] = {
-                                        input,
-                                        category,
+                                      if (input) {
+                                        const map = getMap()
+                                        if (!map.has(row)) {
+                                          map.set(row, new Map())
+                                        }
+                                        map.get(row)!.set(col + 1, {
+                                          input,
+                                          category,
+                                        })
                                       }
                                     }}
                                   />
