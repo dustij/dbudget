@@ -12,29 +12,30 @@ interface BudgetTableClientProps {
   budget: IBudget
 }
 
+// TODO: Look into useTranstion when performing revalidation, https://react.dev/reference/react/useTransition
 const BudgetTableClient: FC<BudgetTableClientProps> = ({
   className,
   budget,
 }) => {
   const [year, setYear] = useState<number>(2023)
   const [yearData, setYearData] = useState<IYearData | null>(
-    budget.yearData.find((yearData) => yearData.year === year) || null,
+    budget.yearData.find((data) => data.year === year) || null,
   )
+  const [categoryData, setCategoryData] = useState<ICategory[] | null>(
+    budget.categories || null,
+  )
+  const [isDirty, setIsDirty] = useState<boolean>(false) // track if any input has been changed, used to determine if we should revalidate (this was suggested be copilot, should i implement it?)
   const refsMatrix = useRef<ICategoryRef[][]>([])
 
   // Initialize refsMatrix
-  const childCategories =
-    yearData?.amounts.flatMap((amount) => amount.categories) || []
-  for (const row of Array(childCategories.length).keys()) {
+  for (const row of Array(categoryData?.length).keys()) {
     refsMatrix.current[row] = []
     for (const col of Array(13).keys()) {
       refsMatrix.current[row]![col] = { input: null, category: null }
     }
   }
 
-  useEffect(() => {
-    console.log(refsMatrix.current)
-  }, [yearData, refsMatrix])
+  console.log(refsMatrix.current)
 
   const hanldeYearChange = useCallback((year: number) => {
     setYear(year)
@@ -125,11 +126,11 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
             </tr>
           </thead>
           <tbody>
-            {CATEGORY_PARENTS.map((categoryParent, parentIndex) => {
+            {CATEGORY_PARENTS.map((categoryParent) => {
               return (
-                <React.Fragment key={parentIndex}>
+                <React.Fragment key={categoryParent}>
                   {/* Parent Category Row */}
-                  <tr key={parentIndex}>
+                  <tr key={categoryParent}>
                     <td className="sticky left-0 z-20 border-b bg-white px-1.5 text-base font-normal text-zinc-400 hover:cursor-default hover:bg-white mobile:text-sm">
                       {toTitleCase(categoryParent)}
                     </td>
@@ -142,15 +143,17 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                   </tr>
 
                   {/* Child Category Rows */}
-                  {yearData &&
-                    yearData.amounts
-                      .filter(
-                        (data) =>
-                          data.parent === categoryParent &&
-                          data.categories.length > 0,
-                      )
-                      .map((amount) => {
-                        return amount.categories.map((category, rowIndex) => {
+                  {categoryData &&
+                    categoryData
+                      .filter((cData) => cData.parent === categoryParent)
+                      .map((category) => {
+                        const categoryAmounts = yearData?.amounts.find(
+                          (amount) =>
+                            amount.categories.find((c) => c.id === category.id),
+                        )
+
+                        // If no amount data for this category id, add a row with 0s
+                        if (!categoryAmounts) {
                           const row = totalRowIndex++
                           return (
                             <tr key={category.id}>
@@ -167,7 +170,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   }}
                                 />
                               </td>
-                              {category.monthlyAmounts.map((amount, col) => (
+                              {Array.from({ length: 12 }).map((_, col) => (
                                 <td
                                   key={col}
                                   className={cn(
@@ -177,7 +180,56 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                 >
                                   <MyInput
                                     id={`${category.id}-${col}`}
-                                    key={col}
+                                    key={`${category.id}-${col}`}
+                                    type="number"
+                                    step={"0.01"}
+                                    myValue={0}
+                                    ref={(input) => {
+                                      refsMatrix.current[row]![col + 1] = {
+                                        input,
+                                        category,
+                                      }
+                                    }}
+                                  />
+                                </td>
+                              ))}
+                            </tr>
+                          )
+                        } else {
+                          const row = totalRowIndex++
+
+                          // Monthly amounts will exist if we made it here
+                          const monthlyAmounts =
+                            categoryAmounts.categories.find(
+                              (c) => c.id === category.id,
+                            )?.monthlyAmounts
+
+                          return (
+                            <tr key={category.id}>
+                              <td className="sticky left-0 z-20 border-b border-r bg-white p-0">
+                                <MyInput
+                                  id={category.id}
+                                  key={category.id}
+                                  myValue={category.name}
+                                  ref={(input) => {
+                                    refsMatrix.current[row]![0] = {
+                                      input,
+                                      category,
+                                    }
+                                  }}
+                                />
+                              </td>
+                              {monthlyAmounts!.map((amount, col) => (
+                                <td
+                                  key={col}
+                                  className={cn(
+                                    "relative h-6 border-b border-r p-0",
+                                    col === 11 && "border-r-0",
+                                  )}
+                                >
+                                  <MyInput
+                                    id={`${category.id}-${col}`}
+                                    key={`${category.id}-${col}`}
                                     type="number"
                                     step={"0.01"}
                                     myValue={amount}
@@ -192,11 +244,11 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                               ))}
                             </tr>
                           )
-                        })
+                        }
                       })}
 
                   {/* Add Button Row */}
-                  <tr key={`add-category-${parentIndex}`}>
+                  <tr key={`add-category-${categoryParent}`}>
                     <td
                       className="sticky left-0 z-10 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm"
                       onClick={() => handleAddRow(categoryParent)}
