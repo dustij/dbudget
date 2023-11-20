@@ -22,3 +22,10 @@ export function formatCurrency(
   if (dollarSign) return USD.format(amount)
   return USD.format(amount).replace("$", "").replace(",", "")
 }
+
+export function toTitleCase(str: string) {
+  return str.replace(
+    /\w\S*/g,
+    (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase(),
+  )
+}

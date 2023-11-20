@@ -1,13 +1,14 @@
 "use client"
 
-import { useState, type FC, useRef, useEffect } from "react"
+import { useState, type FC, useRef, useEffect, useCallback } from "react"
 import { cn } from "~/lib/utils"
 
 interface YearPickerProps {
   children: number
+  onYearChange: (year: number) => void
 }
 
-const YearPicker: FC<YearPickerProps> = ({ children }) => {
+const YearPicker: FC<YearPickerProps> = ({ children, onYearChange }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [isMouseDown, setIsMouseDown] = useState(false)
   const [value, setValue] = useState(children)
@@ -20,14 +21,10 @@ const YearPicker: FC<YearPickerProps> = ({ children }) => {
         inputRef.current.select()
       } else {
         inputRef.current.blur()
+        onYearChange(value)
       }
     }
-  }, [isEditing])
-
-  const cancelEditing = () => {
-    setIsEditing(false)
-    setValue(children)
-  }
+  }, [isEditing, onYearChange, value])
 
   const submitEditing = () => {
     setIsEditing(false)
@@ -71,16 +68,17 @@ const YearPicker: FC<YearPickerProps> = ({ children }) => {
           </svg>
         </button>
         <input
+          id="year-picker"
           ref={inputRef}
-          className="h-8 w-16 rounded bg-white text-center text-base font-medium text-zinc-900 selection:bg-lime-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-lime-500"
+          className="h-8 w-16 rounded bg-white text-center text-base font-medium text-zinc-900 selection:bg-lime-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-lime-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           type="number"
           value={value}
           onChange={(e) => setValue(parseInt(e.target.value))}
           onKeyDown={(e) => {
             if (e.key === "Enter") submitEditing()
-            if (e.key === "Escape") cancelEditing()
+            if (e.key === "Escape") submitEditing()
           }}
-          onBlur={() => cancelEditing()}
+          onBlur={() => submitEditing()}
           onFocus={() => setIsEditing(true)}
         />
         <button
