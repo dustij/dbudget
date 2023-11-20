@@ -141,7 +141,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                     ))}
                   </tr>
 
-                  {/* Child Categories */}
+                  {/* Child Category Rows */}
                   {yearData &&
                     yearData.amounts
                       .filter(
@@ -156,6 +156,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                             <tr key={category.id}>
                               <td className="sticky left-0 z-20 border-b border-r bg-white p-0">
                                 <MyInput
+                                  id={category.id}
                                   key={category.id}
                                   myValue={category.name}
                                   ref={(input) => {
@@ -175,6 +176,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   )}
                                 >
                                   <MyInput
+                                    id={`${category.id}-${col}`}
                                     key={col}
                                     type="number"
                                     step={"0.01"}
