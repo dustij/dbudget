@@ -160,7 +160,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   key={category.id}
                                   myValue={category.name}
                                   ref={(input) => {
-                                    refsMatrix.current[row][0] = {
+                                    refsMatrix.current[row]![0] = {
                                       input,
                                       category,
                                     }
@@ -182,7 +182,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                     step={"0.01"}
                                     myValue={amount}
                                     ref={(input) => {
-                                      refsMatrix.current[row][col + 1] = {
+                                      refsMatrix.current[row]![col + 1] = {
                                         input,
                                         category,
                                       }
