@@ -35,32 +35,28 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     }
   }
 
-  console.log(refsMatrix.current)
+  useEffect(() => {
+    console.log(refsMatrix.current), [refsMatrix, categoryData]
+  })
 
   const hanldeYearChange = useCallback((year: number) => {
     setYear(year)
   }, [])
 
   const handleAddRow = (categoryParent: CategoryParent) => {
-    const newCategory: IExtendedCategory = {
+    const newCategory: ICategory = {
       id: "new-category",
       name: "",
       parent: categoryParent,
-      monthlyAmounts: Array.from({ length: 12 }).map(() => 0),
       userId: "",
       ruleId: "",
       createdAt: "",
       updatedAt: "",
     }
 
-    setYearData((prev) => {
-      if (!prev) return null
-      const newAmounts = [
-        ...prev.amounts,
-        { parent: categoryParent, categories: [newCategory] },
-      ]
-
-      return { ...prev, amounts: newAmounts }
+    setCategoryData((prev) => {
+      if (!prev) return [newCategory]
+      return [...prev, newCategory]
     })
   }
 
@@ -163,6 +159,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   key={category.id}
                                   myValue={category.name}
                                   ref={(input) => {
+                                    console.log(
+                                      "input ref for",
+                                      category.name,
+                                      "with no amount",
+                                    )
+                                    console.log(input)
                                     refsMatrix.current[row]![0] = {
                                       input,
                                       category,
