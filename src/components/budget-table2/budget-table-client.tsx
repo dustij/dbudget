@@ -28,9 +28,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const refsMatrix = useRef<ICategoryRef[][]>([])
 
   // Initialize refsMatrix
-  const childCategories =
-    yearData?.amounts.flatMap((amount) => amount.categories) || []
-  for (const row of Array(childCategories.length).keys()) {
+  for (const row of Array(categoryData?.length).keys()) {
     refsMatrix.current[row] = []
     for (const col of Array(13).keys()) {
       refsMatrix.current[row]![col] = { input: null, category: null }
@@ -145,15 +143,17 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                   </tr>
 
                   {/* Child Category Rows */}
-                  {yearData &&
-                    yearData.amounts
-                      .filter(
-                        (data) =>
-                          data.parent === categoryParent &&
-                          data.categories.length > 0,
-                      )
-                      .map((amount) => {
-                        return amount.categories.map((category, rowIndex) => {
+                  {categoryData &&
+                    categoryData
+                      .filter((cData) => cData.parent === categoryParent)
+                      .map((category) => {
+                        const categoryAmounts = yearData?.amounts.find(
+                          (amount) =>
+                            amount.categories.find((c) => c.id === category.id),
+                        )
+
+                        // If no amount data for this category id, add a row with 0s
+                        if (!categoryAmounts) {
                           const row = totalRowIndex++
                           return (
                             <tr key={category.id}>
@@ -170,7 +170,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   }}
                                 />
                               </td>
-                              {category.monthlyAmounts.map((amount, col) => (
+                              {Array.from({ length: 12 }).map((_, col) => (
                                 <td
                                   key={col}
                                   className={cn(
@@ -180,7 +180,56 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                 >
                                   <MyInput
                                     id={`${category.id}-${col}`}
-                                    key={col}
+                                    key={`${category.id}-${col}`}
+                                    type="number"
+                                    step={"0.01"}
+                                    myValue={0}
+                                    ref={(input) => {
+                                      refsMatrix.current[row]![col + 1] = {
+                                        input,
+                                        category,
+                                      }
+                                    }}
+                                  />
+                                </td>
+                              ))}
+                            </tr>
+                          )
+                        } else {
+                          const row = totalRowIndex++
+
+                          // Monthly amounts will exist if we made it here
+                          const monthlyAmounts =
+                            categoryAmounts.categories.find(
+                              (c) => c.id === category.id,
+                            )?.monthlyAmounts
+
+                          return (
+                            <tr key={category.id}>
+                              <td className="sticky left-0 z-20 border-b border-r bg-white p-0">
+                                <MyInput
+                                  id={category.id}
+                                  key={category.id}
+                                  myValue={category.name}
+                                  ref={(input) => {
+                                    refsMatrix.current[row]![0] = {
+                                      input,
+                                      category,
+                                    }
+                                  }}
+                                />
+                              </td>
+                              {monthlyAmounts!.map((amount, col) => (
+                                <td
+                                  key={col}
+                                  className={cn(
+                                    "relative h-6 border-b border-r p-0",
+                                    col === 11 && "border-r-0",
+                                  )}
+                                >
+                                  <MyInput
+                                    id={`${category.id}-${col}`}
+                                    key={`${category.id}-${col}`}
                                     type="number"
                                     step={"0.01"}
                                     myValue={amount}
@@ -195,7 +244,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                               ))}
                             </tr>
                           )
-                        })
+                        }
                       })}
 
                   {/* Add Button Row */}

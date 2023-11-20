@@ -16,7 +16,7 @@ export async function getBudgetData(userId: string): Promise<IBudget> {
         const { category, amount } = row
 
         // Add category id to array of categories if it doesn't exist
-        if (!acc.categories.includes(category)) {
+        if (!acc.categories.find((c) => c.id === category.id)) {
           acc.categories.push(category)
         }
 
@@ -85,13 +85,7 @@ export async function getBudgetData(userId: string): Promise<IBudget> {
       } as IBudget
     })()
 
-    console.log(
-      "Formatted data for user",
-      userId,
-      "\n⌄⌄⌄⌄⌄⌄⌄⌄⌄⌄\n",
-      JSON.stringify(formattedData, null, 2),
-      "\n",
-    )
+    console.log("formattedData >", JSON.stringify(formattedData, null, 2))
 
     return formattedData
   } catch (error) {
