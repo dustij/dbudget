@@ -24,13 +24,31 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const [categoryData, setCategoryData] = useState<ICategory[] | null>(
     budget.categories || null,
   )
+  const [newRowIndex, setNewRowIndex] = useState<number | null>(null) // track row index of new row (used to focus on the first input of the new row)
   const [isDirty, setIsDirty] = useState<boolean>(false) // track if any input has been changed, used to determine if we should revalidate (this was suggested by copilot, should I implement it?)
   const refsMatrix = useRef<Map<number, Map<number, ICategoryRef>> | null>(null)
 
   useEffect(() => {
-    console.log("categoryData changed >>>")
-    console.log("\trefsMatrix.current")
-    console.log("\t ", refsMatrix.current)
+    if (isDirty) {
+      console.log("revalidate")
+      setIsDirty(false)
+    }
+  }, [isDirty])
+
+  useEffect(() => {
+    if (newRowIndex) {
+      refsMatrix.current?.get(newRowIndex)?.get(0)?.input?.focus()
+      setNewRowIndex(null)
+    }
+  }, [newRowIndex])
+
+  useEffect(() => {
+    // find ICategoryRef with id 'new-category' and focus on it
+    const newCategoryRef = Array.from(refsMatrix.current?.values() || [])
+      .flat()
+      .find((ref) => ref.values().next().value.category.id === "new-category")
+
+    newCategoryRef?.get(0)?.input?.focus()
   }, [categoryData])
 
   const hanldeYearChange = useCallback((year: number) => {
@@ -40,7 +58,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const handleAddRow = (categoryParent: CategoryParent) => {
     const newCategory: ICategory = {
       id: "new-category",
-      name: "*** DEBUG ME ***",
+      name: "",
       parent: categoryParent,
       userId: "",
       ruleId: "",
@@ -73,6 +91,10 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         ?.get(row + 1)
         ?.get(col)
         ?.input?.focus()
+    } else if (e.key === "Escape") {
+      e.preventDefault()
+      e.stopPropagation()
+      refsMatrix.current?.get(row)?.get(col)?.input?.blur()
     }
   }
 
@@ -194,6 +216,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                     }
                                   }}
                                   onKeyDown={(e) => handleKeyDown(e, row, 0)}
+                                  onFocus={(e) => e.target.select()}
                                 />
                               </td>
                               {Array.from({ length: 12 }).map((_, col) => (
@@ -225,6 +248,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                     onKeyDown={(e) =>
                                       handleKeyDown(e, row, col + 1)
                                     }
+                                    onFocus={(e) => e.target.select()}
                                   />
                                 </td>
                               ))}
@@ -259,6 +283,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                     }
                                   }}
                                   onKeyDown={(e) => handleKeyDown(e, row, 0)}
+                                  onFocus={(e) => e.target.select()}
                                 />
                               </td>
                               {monthlyAmounts!.map((amount, col) => (
@@ -290,6 +315,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                     onKeyDown={(e) =>
                                       handleKeyDown(e, row, col + 1)
                                     }
+                                    onFocus={(e) => e.target.select()}
                                   />
                                 </td>
                               ))}
