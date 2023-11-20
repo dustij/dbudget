@@ -24,44 +24,85 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const [categoryData, setCategoryData] = useState<ICategory[] | null>(
     budget.categories || null,
   )
-  const [isDirty, setIsDirty] = useState<boolean>(false) // track if any input has been changed, used to determine if we should revalidate (this was suggested be copilot, should i implement it?)
-  const refsMatrix = useRef<ICategoryRef[][]>([])
+  const [newRowIndex, setNewRowIndex] = useState<number | null>(null) // track row index of new row (used to focus on the first input of the new row)
+  const [isDirty, setIsDirty] = useState<boolean>(false) // track if any input has been changed, used to determine if we should revalidate (this was suggested by copilot, should I implement it?)
+  const refsMatrix = useRef<Map<number, Map<number, ICategoryRef>> | null>(null)
 
-  // Initialize refsMatrix
-  for (const row of Array(categoryData?.length).keys()) {
-    refsMatrix.current[row] = []
-    for (const col of Array(13).keys()) {
-      refsMatrix.current[row]![col] = { input: null, category: null }
+  useEffect(() => {
+    if (isDirty) {
+      console.log("revalidate")
+      setIsDirty(false)
     }
-  }
+  }, [isDirty])
 
-  console.log(refsMatrix.current)
+  useEffect(() => {
+    if (newRowIndex) {
+      refsMatrix.current?.get(newRowIndex)?.get(0)?.input?.focus()
+      setNewRowIndex(null)
+    }
+  }, [newRowIndex])
+
+  useEffect(() => {
+    // find ICategoryRef with id 'new-category' and focus on it
+    const newCategoryRef = Array.from(refsMatrix.current?.values() || [])
+      .flat()
+      .find((ref) => ref.values().next().value.category.id === "new-category")
+
+    newCategoryRef?.get(0)?.input?.focus()
+  }, [categoryData])
 
   const hanldeYearChange = useCallback((year: number) => {
     setYear(year)
   }, [])
 
   const handleAddRow = (categoryParent: CategoryParent) => {
-    const newCategory: IExtendedCategory = {
+    const newCategory: ICategory = {
       id: "new-category",
       name: "",
       parent: categoryParent,
-      monthlyAmounts: Array.from({ length: 12 }).map(() => 0),
       userId: "",
       ruleId: "",
       createdAt: "",
       updatedAt: "",
     }
 
-    setYearData((prev) => {
-      if (!prev) return null
-      const newAmounts = [
-        ...prev.amounts,
-        { parent: categoryParent, categories: [newCategory] },
-      ]
-
-      return { ...prev, amounts: newAmounts }
+    setCategoryData((prev) => {
+      if (!prev) return [newCategory]
+      return [...prev, newCategory]
     })
+  }
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    row: number,
+    col: number,
+  ) => {
+    if (e.shiftKey && e.key === "Enter") {
+      e.preventDefault()
+      e.stopPropagation()
+      refsMatrix.current
+        ?.get(row - 1)
+        ?.get(col)
+        ?.input?.focus()
+    } else if (e.key === "Enter") {
+      e.preventDefault()
+      e.stopPropagation()
+      refsMatrix.current
+        ?.get(row + 1)
+        ?.get(col)
+        ?.input?.focus()
+    } else if (e.key === "Escape") {
+      e.preventDefault()
+      e.stopPropagation()
+      refsMatrix.current?.get(row)?.get(col)?.input?.blur()
+    }
+  }
+
+  const getMap = () => {
+    if (!refsMatrix.current) {
+      refsMatrix.current = new Map<number, Map<number, ICategoryRef>>()
+    }
+    return refsMatrix.current
   }
 
   let totalRowIndex = 0 // track row index across different parents
@@ -163,11 +204,19 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   key={category.id}
                                   myValue={category.name}
                                   ref={(input) => {
-                                    refsMatrix.current[row]![0] = {
-                                      input,
-                                      category,
+                                    if (input) {
+                                      const map = getMap()
+                                      if (!map.has(row)) {
+                                        map.set(row, new Map())
+                                      }
+                                      map.get(row)!.set(0, {
+                                        input,
+                                        category,
+                                      })
                                     }
                                   }}
+                                  onKeyDown={(e) => handleKeyDown(e, row, 0)}
+                                  onFocus={(e) => e.target.select()}
                                 />
                               </td>
                               {Array.from({ length: 12 }).map((_, col) => (
@@ -185,11 +234,21 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                     step={"0.01"}
                                     myValue={0}
                                     ref={(input) => {
-                                      refsMatrix.current[row]![col + 1] = {
-                                        input,
-                                        category,
+                                      if (input) {
+                                        const map = getMap()
+                                        if (!map.has(row)) {
+                                          map.set(row, new Map())
+                                        }
+                                        map.get(row)!.set(col + 1, {
+                                          input,
+                                          category,
+                                        })
                                       }
                                     }}
+                                    onKeyDown={(e) =>
+                                      handleKeyDown(e, row, col + 1)
+                                    }
+                                    onFocus={(e) => e.target.select()}
                                   />
                                 </td>
                               ))}
@@ -212,11 +271,19 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   key={category.id}
                                   myValue={category.name}
                                   ref={(input) => {
-                                    refsMatrix.current[row]![0] = {
-                                      input,
-                                      category,
+                                    if (input) {
+                                      const map = getMap()
+                                      if (!map.has(row)) {
+                                        map.set(row, new Map())
+                                      }
+                                      map.get(row)!.set(0, {
+                                        input,
+                                        category,
+                                      })
                                     }
                                   }}
+                                  onKeyDown={(e) => handleKeyDown(e, row, 0)}
+                                  onFocus={(e) => e.target.select()}
                                 />
                               </td>
                               {monthlyAmounts!.map((amount, col) => (
@@ -234,11 +301,21 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                     step={"0.01"}
                                     myValue={amount}
                                     ref={(input) => {
-                                      refsMatrix.current[row]![col + 1] = {
-                                        input,
-                                        category,
+                                      if (input) {
+                                        const map = getMap()
+                                        if (!map.has(row)) {
+                                          map.set(row, new Map())
+                                        }
+                                        map.get(row)!.set(col + 1, {
+                                          input,
+                                          category,
+                                        })
                                       }
                                     }}
+                                    onKeyDown={(e) =>
+                                      handleKeyDown(e, row, col + 1)
+                                    }
+                                    onFocus={(e) => e.target.select()}
                                   />
                                 </td>
                               ))}
