@@ -24,7 +24,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const [categoryData, setCategoryData] = useState<ICategory[] | null>(
     budget.categories || null,
   )
-  const [isDirty, setIsDirty] = useState<boolean>(false) // track if any input has been changed, used to determine if we should revalidate (this was suggested be copilot, should i implement it?)
+  const [isDirty, setIsDirty] = useState<boolean>(false) // track if any input has been changed, used to determine if we should revalidate (this was suggested by copilot, should I implement it?)
   const refsMatrix = useRef<ICategoryRef[][]>([])
 
   // Initialize refsMatrix
@@ -36,8 +36,10 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   }
 
   useEffect(() => {
-    console.log(refsMatrix.current), [refsMatrix, categoryData]
-  })
+    console.log("categoryData changed >>>")
+    console.log("\trefsMatrix.current")
+    console.log(refsMatrix.current)
+  }, [categoryData])
 
   const hanldeYearChange = useCallback((year: number) => {
     setYear(year)
@@ -46,7 +48,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const handleAddRow = (categoryParent: CategoryParent) => {
     const newCategory: ICategory = {
       id: "new-category",
-      name: "",
+      name: "*** DEBUG ME ***",
       parent: categoryParent,
       userId: "",
       ruleId: "",
@@ -58,6 +60,14 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       if (!prev) return [newCategory]
       return [...prev, newCategory]
     })
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      e.stopPropagation()
+      console.log("Enter pressed >>>")
+    }
   }
 
   let totalRowIndex = 0 // track row index across different parents
@@ -159,17 +169,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   key={category.id}
                                   myValue={category.name}
                                   ref={(input) => {
-                                    console.log(
-                                      "input ref for",
-                                      category.name,
-                                      "with no amount",
-                                    )
-                                    console.log(input)
                                     refsMatrix.current[row]![0] = {
                                       input,
                                       category,
                                     }
                                   }}
+                                  onKeyDown={handleKeyDown}
                                 />
                               </td>
                               {Array.from({ length: 12 }).map((_, col) => (
