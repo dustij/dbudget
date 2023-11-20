@@ -37,6 +37,6 @@ type CategoryParent =
   | "savings"
 
 interface ICategoryRef {
-  element: HTMLInputElement | null
-  category: ICategory
+  input: HTMLInputElement | null
+  category: ICategory | null
 }

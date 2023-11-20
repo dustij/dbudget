@@ -22,10 +22,20 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   )
   const refsMatrix = useRef<ICategoryRef[][]>([])
 
-  // useEffect(() => {
-  //   console.log({ year: year })
-  //   console.log({ yearDataAmounts: yearData?.amounts })
-  // }, [year, yearData])
+  // Initialize refsMatrix
+  const childCategories =
+    yearData?.amounts.flatMap((amount) => amount.categories) || []
+  for (const row of Array(childCategories.length).keys()) {
+    refsMatrix.current[row] = []
+    for (const col of Array(13).keys()) {
+      refsMatrix.current[row]![col] = { input: null, category: null }
+    }
+  }
+
+  useEffect(() => {
+    // console.log(JSON.stringify(refsMatrix.current, null, 2))
+    console.log(refsMatrix.current)
+  }, [])
 
   const hanldeYearChange = useCallback((year: number) => {
     setYear(year)
@@ -117,8 +127,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           </thead>
           <tbody>
             {CATEGORY_PARENTS.map((categoryParent, parentIndex) => {
-              // Increment totalRowIndex for each row
-              const currentRowIndex = totalRowIndex++
               return (
                 <React.Fragment key={parentIndex}>
                   {/* Parent Category Row */}
@@ -135,42 +143,56 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                   </tr>
 
                   {/* Child Categories */}
-                  {yearData?.amounts
-                    .filter(
-                      (data) =>
-                        data.parent === categoryParent &&
-                        data.categories.length > 0,
-                    )
-                    .map((amount) => {
-                      return amount.categories.map((category) => {
-                        return (
-                          <tr key={category.id}>
-                            <td className="sticky left-0 z-20 border-b border-r bg-white p-0">
-                              <MyInput
-                                key={category.id}
-                                myValue={category.name}
-                              />
-                            </td>
-                            {category.monthlyAmounts.map((amount, index) => (
-                              <td
-                                key={index}
-                                className={cn(
-                                  "relative h-6 border-b border-r p-0",
-                                  index === 11 && "border-r-0",
-                                )}
-                              >
+                  {yearData &&
+                    yearData.amounts
+                      .filter(
+                        (data) =>
+                          data.parent === categoryParent &&
+                          data.categories.length > 0,
+                      )
+                      .map((amount) => {
+                        return amount.categories.map((category, rowIndex) => {
+                          const row = totalRowIndex++
+                          return (
+                            <tr key={category.id}>
+                              <td className="sticky left-0 z-20 border-b border-r bg-white p-0">
                                 <MyInput
-                                  key={index}
-                                  type="number"
-                                  step={"0.01"}
-                                  myValue={amount}
+                                  key={category.id}
+                                  myValue={category.name}
+                                  ref={(input) => {
+                                    refsMatrix.current[row]![0] = {
+                                      input,
+                                      category,
+                                    }
+                                  }}
                                 />
                               </td>
-                            ))}
-                          </tr>
-                        )
-                      })
-                    })}
+                              {category.monthlyAmounts.map((amount, col) => (
+                                <td
+                                  key={col}
+                                  className={cn(
+                                    "relative h-6 border-b border-r p-0",
+                                    col === 11 && "border-r-0",
+                                  )}
+                                >
+                                  <MyInput
+                                    key={col}
+                                    type="number"
+                                    step={"0.01"}
+                                    myValue={amount}
+                                    ref={(input) => {
+                                      refsMatrix.current[row]![col + 1] = {
+                                        input,
+                                        category,
+                                      }
+                                    }}
+                                  />
+                                </td>
+                              ))}
+                            </tr>
+                          )
+                        })
+                      })}
 
                   {/* Add Button Row */}
                   <tr key={`add-category-${parentIndex}`}>
