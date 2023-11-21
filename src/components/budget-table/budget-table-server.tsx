@@ -33,7 +33,7 @@ const CategorySchema = z.object({
 const AmountSchema = z.object({
   id: z.string(),
   userId: z.string(),
-  amount: z.coerce.number(),
+  amount: z.coerce.number(), // TODO: validate as int because saving as cents
   year: z.coerce.number().refine((value) => value.toString().length === 4, {
     message: "Year must be a 4-digit number",
   }),
