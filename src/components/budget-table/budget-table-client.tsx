@@ -10,12 +10,17 @@ import { MyInput } from "../my-input"
 interface BudgetTableClientProps {
   className?: string
   budget: IBudget
+  actions: {
+    updateBudget: () => Promise<{ success: boolean }>
+    insertIntoBudget: () => Promise<{ success: boolean; id: string | null }>
+  }
 }
 
 // TODO: Look into useTranstion when performing revalidation, https://react.dev/reference/react/useTransition
 const BudgetTableClient: FC<BudgetTableClientProps> = ({
   className,
   budget,
+  actions,
 }) => {
   const [year, setYear] = useState<number>(2023)
   const [yearData, setYearData] = useState<IYearData | null>(
@@ -25,15 +30,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     budget.categories || null,
   )
   const [newRowIndex, setNewRowIndex] = useState<number | null>(null) // track row index of new row (used to focus on the first input of the new row)
-  const [isDirty, setIsDirty] = useState<boolean>(false) // track if any input has been changed, used to determine if we should revalidate (this was suggested by copilot, should I implement it?)
   const refsMatrix = useRef<Map<number, Map<number, ICategoryRef>> | null>(null)
-
-  useEffect(() => {
-    if (isDirty) {
-      console.log("revalidate")
-      setIsDirty(false)
-    }
-  }, [isDirty])
 
   useEffect(() => {
     if (newRowIndex) {
@@ -78,24 +75,84 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     col: number,
   ) => {
     if (e.shiftKey && e.key === "Enter") {
+      /**
+       * If shift + enter, move focus backwards
+       */
       e.preventDefault()
       e.stopPropagation()
+      // If we're on the first row
+      if (row === 0) {
+        // If we're on the first column, blur the input
+        if (col === 0) {
+          refsMatrix.current?.get(row)?.get(col)?.input?.blur()
+          return
+        }
+        // Move focus to the last input of the previous column
+        refsMatrix.current
+          ?.get(totalRowIndex - 1)
+          ?.get(col - 1)
+          ?.input?.focus()
+        return
+      }
+      // Move focus to the input above
       refsMatrix.current
         ?.get(row - 1)
         ?.get(col)
         ?.input?.focus()
     } else if (e.key === "Enter") {
+      /**
+       * If enter, move focus forwards
+       */
       e.preventDefault()
       e.stopPropagation()
+      // If we're on the last row
+      if (row === totalRowIndex - 1) {
+        // If we're on the last column, blur the input
+        if (col === 11) {
+          refsMatrix.current?.get(row)?.get(col)?.input?.blur()
+          return
+        }
+        // Move focus to the first input of the next column
+        refsMatrix.current
+          ?.get(0)
+          ?.get(col + 1)
+          ?.input?.focus()
+        return
+      }
+      // Move focus to the input below
       refsMatrix.current
         ?.get(row + 1)
         ?.get(col)
         ?.input?.focus()
     } else if (e.key === "Escape") {
+      /**
+       * If escape, blur the input
+       */
       e.preventDefault()
       e.stopPropagation()
       refsMatrix.current?.get(row)?.get(col)?.input?.blur()
     }
+  }
+
+  const hanldeInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (e.target.id === "new-category") {
+      const newCategoryName = e.target.value.trim()
+      if (!newCategoryName) {
+        setCategoryData((prev) => {
+          if (!prev) return null
+          return prev.filter((c) => c.id !== "new-category")
+        })
+        return
+      } else {
+        actions.insertIntoBudget().then((res) => {
+          if (res.success) {
+            console.log("Successfully inserted into budget, new id: ", res.id)
+          }
+        })
+        return
+      }
+    }
+    actions.updateBudget()
   }
 
   const getMap = () => {
@@ -217,6 +274,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   }}
                                   onKeyDown={(e) => handleKeyDown(e, row, 0)}
                                   onFocus={(e) => e.target.select()}
+                                  onBlur={(e) => hanldeInputBlur(e)}
                                 />
                               </td>
                               {Array.from({ length: 12 }).map((_, col) => (
@@ -249,6 +307,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                       handleKeyDown(e, row, col + 1)
                                     }
                                     onFocus={(e) => e.target.select()}
+                                    onBlur={(e) => hanldeInputBlur(e)}
                                   />
                                 </td>
                               ))}
@@ -284,6 +343,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   }}
                                   onKeyDown={(e) => handleKeyDown(e, row, 0)}
                                   onFocus={(e) => e.target.select()}
+                                  onBlur={(e) => hanldeInputBlur(e)}
                                 />
                               </td>
                               {monthlyAmounts!.map((amount, col) => (
@@ -316,6 +376,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                       handleKeyDown(e, row, col + 1)
                                     }
                                     onFocus={(e) => e.target.select()}
+                                    onBlur={(e) => hanldeInputBlur(e)}
                                   />
                                 </td>
                               ))}
