@@ -232,7 +232,7 @@ export const amounts = mysqlTable(
       .$defaultFn(generateNanoId)
       .primaryKey(),
     userId: varchar("userId", { length: 255 }).notNull(),
-    amount: decimal("amount").notNull(),
+    amount: decimal("amount").notNull(), // TODO: change to int, will save amounts in cents
     year: mediumint("year").notNull(),
     month: mysqlEnum("month", MONTHS).notNull(),
     categoryId: varchar("categoryId", { length: 255 }).notNull(),

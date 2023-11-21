@@ -435,7 +435,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                   {/* Add Button Row */}
                   <tr key={`add-category-${categoryParent}`}>
                     <td
-                      className="sticky left-0 z-10 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm"
+                      className="sticky left-0 z-10 h-6 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm"
                       onClick={() => handleAddRow(categoryParent)}
                     >
                       <IoAddCircleOutline className="mr-1 inline-block h-full pb-[2px]" />
