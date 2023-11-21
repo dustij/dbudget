@@ -8,17 +8,44 @@ import { CATEGORY_PARENTS } from "~/lib/constants"
 import { MyInput } from "../my-input"
 
 interface BudgetTableClientProps {
-  className?: string
+  userId: string
   budget: IBudget
   actions: {
-    updateBudget: () => Promise<{ success: boolean }>
-    insertIntoBudget: () => Promise<{ success: boolean; id: string | null }>
+    insertAmount: ({
+      userId,
+      amount,
+      year,
+      month,
+      categoryId,
+    }: {
+      userId: string
+      amount: number | string
+      year: number | string
+      month: number | string
+      categoryId: string
+    }) => Promise<{
+      success: boolean
+      id: string | null
+    }>
+    updateAmount: () => Promise<{ success: boolean }>
+    insertCategory: ({
+      userId,
+      name,
+      parent,
+    }: {
+      userId: string
+      name: string
+      parent: CategoryParent
+    }) => Promise<{
+      success: boolean
+      id: string | null
+    }>
+    updateCategory: () => Promise<{ success: boolean }>
   }
 }
 
-// TODO: Look into useTranstion when performing revalidation, https://react.dev/reference/react/useTransition
 const BudgetTableClient: FC<BudgetTableClientProps> = ({
-  className,
+  userId,
   budget,
   actions,
 }) => {
@@ -29,15 +56,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const [categoryData, setCategoryData] = useState<ICategory[] | null>(
     budget.categories || null,
   )
-  const [newRowIndex, setNewRowIndex] = useState<number | null>(null) // track row index of new row (used to focus on the first input of the new row)
   const refsMatrix = useRef<Map<number, Map<number, ICategoryRef>> | null>(null)
-
-  useEffect(() => {
-    if (newRowIndex) {
-      refsMatrix.current?.get(newRowIndex)?.get(0)?.input?.focus()
-      setNewRowIndex(null)
-    }
-  }, [newRowIndex])
 
   useEffect(() => {
     // find ICategoryRef with id 'new-category' and focus on it
@@ -74,9 +93,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     row: number,
     col: number,
   ) => {
-    if (e.shiftKey && e.key === "Enter") {
+    if (e.shiftKey && e.key === "Tab") {
       /**
-       * If shift + enter, move focus backwards
+       * If shift + tab, move focus upwards
        */
       e.preventDefault()
       e.stopPropagation()
@@ -99,9 +118,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         ?.get(row - 1)
         ?.get(col)
         ?.input?.focus()
-    } else if (e.key === "Enter") {
+    } else if (e.key === "Tab") {
       /**
-       * If enter, move focus forwards
+       * If tab, move focus downards
        */
       e.preventDefault()
       e.stopPropagation()
@@ -124,6 +143,56 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         ?.get(row + 1)
         ?.get(col)
         ?.input?.focus()
+    } else if (e.shiftKey && e.key === "Enter") {
+      /**
+       * If shift + enter, move focus backwards
+       */
+      e.preventDefault()
+      e.stopPropagation()
+      // If we're on the first column
+      if (col === 0) {
+        // If we're on the first row, blur the input
+        if (row === 0) {
+          refsMatrix.current?.get(row)?.get(col)?.input?.blur()
+          return
+        }
+        // Move focus to the last input of the previous column
+        refsMatrix.current
+          ?.get(row - 1)
+          ?.get(11)
+          ?.input?.focus()
+        return
+      }
+      // Move focus to the input to the left
+      refsMatrix.current
+        ?.get(row)
+        ?.get(col - 1)
+        ?.input?.focus()
+    } else if (e.key === "Enter") {
+      /**
+       * If enter, move focus forwards
+       */
+      e.preventDefault()
+      e.stopPropagation()
+      // If we're on the last column
+      if (col === 11) {
+        // If we're on the last row, blur the input
+        if (row === totalRowIndex - 1) {
+          refsMatrix.current?.get(row)?.get(col)?.input?.blur()
+          return
+        }
+        // Move focus to the first input of the next column
+        refsMatrix.current
+          ?.get(row + 1)
+          ?.get(0)
+          ?.input?.focus()
+        return
+      }
+      // Move focus to the input to the right
+      refsMatrix.current
+        ?.get(row)
+        ?.get(col + 1)
+        ?.input?.focus()
     } else if (e.key === "Escape") {
       /**
        * If escape, blur the input
@@ -144,15 +213,41 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         })
         return
       } else {
-        actions.insertIntoBudget().then((res) => {
-          if (res.success) {
-            console.log("Successfully inserted into budget, new id: ", res.id)
-          }
-        })
+        // Insert new category
+        actions
+          .insertCategory({
+            userId,
+            name: newCategoryName,
+            parent: e.target.dataset.parent as CategoryParent,
+          })
+          .then(({ success, id }) => {
+            if (success && id) {
+              return setCategoryData((prev) => {
+                if (!prev) return null
+                return prev.map((c) => {
+                  if (c.id === "new-category") {
+                    return {
+                      ...c,
+                      id,
+                      name: newCategoryName,
+                    }
+                  }
+                  return c
+                })
+              })
+            }
+            console.error(`! Error inserting category: ${newCategoryName}`)
+            alert(
+              `Error inserting category: ${newCategoryName} (replace with with a toast)`,
+            )
+            setCategoryData((prev) => {
+              if (!prev) return null
+              return prev.filter((c) => c.id !== "new-category")
+            })
+          })
         return
       }
     }
-    actions.updateBudget()
   }
 
   const getMap = () => {
@@ -166,19 +261,17 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   return (
     <>
       <div
-        className={cn(
-          "sticky left-0 top-0 z-30 flex h-[33px] items-center justify-center border-b bg-white",
-          className,
-        )}
+        className={
+          "sticky left-0 top-0 z-30 flex h-[33px] items-center justify-center border-b bg-white"
+        }
       >
         <YearPicker onYearChange={hanldeYearChange}>{year}</YearPicker>
       </div>
       <div className="relative">
         <table
-          className={cn(
-            "w-full min-w-[1070px] table-fixed border-separate border-spacing-0 bg-white text-[14px]",
-            className,
-          )}
+          className={
+            "w-full min-w-[1070px] table-fixed border-separate border-spacing-0 bg-white text-[14px]"
+          }
         >
           <thead className="sticky top-[33px] z-30 h-[33px] bg-white">
             <tr>
@@ -260,6 +353,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   id={category.id}
                                   key={category.id}
                                   myValue={category.name}
+                                  data-parent={category.parent}
                                   ref={(input) => {
                                     if (input) {
                                       const map = getMap()
@@ -291,6 +385,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                     type="number"
                                     step={"0.01"}
                                     myValue={0}
+                                    data-parent={category.parent}
                                     ref={(input) => {
                                       if (input) {
                                         const map = getMap()
@@ -329,6 +424,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   id={category.id}
                                   key={category.id}
                                   myValue={category.name}
+                                  data-parent={category.parent}
                                   ref={(input) => {
                                     if (input) {
                                       const map = getMap()
@@ -360,6 +456,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                     type="number"
                                     step={"0.01"}
                                     myValue={amount}
+                                    data-parent={category.parent}
                                     ref={(input) => {
                                       if (input) {
                                         const map = getMap()
