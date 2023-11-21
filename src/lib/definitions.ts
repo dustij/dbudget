@@ -24,7 +24,12 @@ interface IAmount {
 }
 
 interface IExtendedCategory extends ICategory {
-  monthlyAmounts: number[]
+  monthlyAmounts: IMonthlyAmount[]
+}
+
+interface IMonthlyAmount {
+  id: string | null
+  amount: number
 }
 
 type CategoryParent =

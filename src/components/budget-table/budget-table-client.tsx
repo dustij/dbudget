@@ -49,6 +49,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   budget,
   actions,
 }) => {
+  // TODO: should I optimistically update the UI? https://react.dev/reference/react/useOptimistic#noun-labs-1201738-(2)
   const [year, setYear] = useState<number>(2023)
   const [yearData, setYearData] = useState<IYearData | null>(
     budget.yearData.find((data) => data.year === year) || null,
@@ -330,8 +331,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   )}
                                 >
                                   <MyInput
-                                    id={`${category.id}-${col}`}
-                                    key={`${category.id}-${col}`}
+                                    id={`null-${category.id}-${col}`}
+                                    key={`null-${category.id}-${col}`}
                                     type="number"
                                     step={"0.01"}
                                     myValue={0}
@@ -401,11 +402,11 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   )}
                                 >
                                   <MyInput
-                                    id={`${category.id}-${col}`}
-                                    key={`${category.id}-${col}`}
+                                    id={`${amount.id}`}
+                                    key={`${amount.id}`}
                                     type="number"
                                     step={"0.01"}
-                                    myValue={amount}
+                                    myValue={amount.amount}
                                     data-parent={category.parent}
                                     ref={(input) => {
                                       if (input) {
