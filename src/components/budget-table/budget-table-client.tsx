@@ -93,9 +93,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     row: number,
     col: number,
   ) => {
-    if (e.shiftKey && e.key === "Tab") {
+    if (e.shiftKey && e.key === "Enter") {
       /**
-       * If shift + tab, move focus upwards
+       * If shift + enter, move focus upwards
        */
       e.preventDefault()
       e.stopPropagation()
@@ -118,9 +118,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         ?.get(row - 1)
         ?.get(col)
         ?.input?.focus()
-    } else if (e.key === "Tab") {
+    } else if (e.key === "Enter") {
       /**
-       * If tab, move focus downards
+       * If enter, move focus downwards
        */
       e.preventDefault()
       e.stopPropagation()
@@ -142,56 +142,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       refsMatrix.current
         ?.get(row + 1)
         ?.get(col)
-        ?.input?.focus()
-    } else if (e.shiftKey && e.key === "Enter") {
-      /**
-       * If shift + enter, move focus backwards
-       */
-      e.preventDefault()
-      e.stopPropagation()
-      // If we're on the first column
-      if (col === 0) {
-        // If we're on the first row, blur the input
-        if (row === 0) {
-          refsMatrix.current?.get(row)?.get(col)?.input?.blur()
-          return
-        }
-        // Move focus to the last input of the previous column
-        refsMatrix.current
-          ?.get(row - 1)
-          ?.get(11)
-          ?.input?.focus()
-        return
-      }
-      // Move focus to the input to the left
-      refsMatrix.current
-        ?.get(row)
-        ?.get(col - 1)
-        ?.input?.focus()
-    } else if (e.key === "Enter") {
-      /**
-       * If enter, move focus forwards
-       */
-      e.preventDefault()
-      e.stopPropagation()
-      // If we're on the last column
-      if (col === 11) {
-        // If we're on the last row, blur the input
-        if (row === totalRowIndex - 1) {
-          refsMatrix.current?.get(row)?.get(col)?.input?.blur()
-          return
-        }
-        // Move focus to the first input of the next column
-        refsMatrix.current
-          ?.get(row + 1)
-          ?.get(0)
-          ?.input?.focus()
-        return
-      }
-      // Move focus to the input to the right
-      refsMatrix.current
-        ?.get(row)
-        ?.get(col + 1)
         ?.input?.focus()
     } else if (e.key === "Escape") {
       /**
