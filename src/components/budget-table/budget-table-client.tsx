@@ -60,6 +60,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   )
   const refsMatrix = useRef<Map<number, Map<number, ICategoryRef>> | null>(null)
 
+  let totalRowIndex = 0 // track row index across different parents
+
   useEffect(() => {
     // find ICategoryRef with id 'new-category' and focus on it
     const newCategoryRef = Array.from(refsMatrix.current?.values() || [])
@@ -202,7 +204,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     }
   }
 
-  const hanldeInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handleFocusOut = (e: React.FocusEvent<HTMLInputElement>) => {
     if (e.target.id === "new-category") {
       const newCategoryName = e.target.value.trim()
       if (!newCategoryName) {
@@ -329,7 +331,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     return refsMatrix.current
   }
 
-  let totalRowIndex = 0 // track row index across different parents
   return (
     <>
       <div
@@ -440,12 +441,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   }}
                                   onKeyDown={(e) => handleKeyDown(e, row, 0)}
                                   onFocus={(e) => e.target.select()}
-                                  onBlur={(e) => hanldeInputBlur(e)}
+                                  onBlur={(e) => handleFocusOut(e)}
                                 />
                               </td>
                               {Array.from({ length: 12 }).map((_, col) => (
                                 <td
-                                  key={col}
+                                  key={`${row}-${col}`}
                                   className={cn(
                                     "relative h-6 border-b border-r p-0",
                                     col === 11 && "border-r-0",
@@ -477,7 +478,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                       handleKeyDown(e, row, col + 1)
                                     }
                                     onFocus={(e) => e.target.select()}
-                                    onBlur={(e) => hanldeInputBlur(e)}
+                                    onFocusOut={(e) => handleFocusOut(e)}
                                   />
                                 </td>
                               ))}
@@ -514,7 +515,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   }}
                                   onKeyDown={(e) => handleKeyDown(e, row, 0)}
                                   onFocus={(e) => e.target.select()}
-                                  onBlur={(e) => hanldeInputBlur(e)}
+                                  onBlur={(e) => handleFocusOut(e)}
                                 />
                               </td>
                               {monthlyAmounts!.map((amount, col) => (
@@ -555,7 +556,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                       handleKeyDown(e, row, col + 1)
                                     }
                                     onFocus={(e) => e.target.select()}
-                                    onBlur={(e) => hanldeInputBlur(e)}
+                                    onFocusOut={(e) => handleFocusOut(e)}
                                   />
                                 </td>
                               ))}

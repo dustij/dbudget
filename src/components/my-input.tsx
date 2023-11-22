@@ -6,11 +6,11 @@ import { cn, formatCurrency } from "~/lib/utils"
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   myValue: string | number
-  onLoseFocus?: (e: React.FocusEvent<HTMLInputElement>) => void
+  onFocusOut?: (e: React.FocusEvent<HTMLInputElement>) => void
 }
 
 const MyInput = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, myValue, onLoseFocus, ...props }, ref) => {
+  ({ className, type, myValue, onFocusOut, ...props }, ref) => {
     const [value, setValue] = useState(
       type === "number" ? formatCurrency(myValue, false) : myValue,
     )
@@ -28,7 +28,7 @@ const MyInput = React.forwardRef<HTMLInputElement, InputProps>(
         onChange={(e) => setValue(e.target.value)}
         onBlur={(e) => {
           type === "number" && setValue(formatCurrency(value, false))
-          onLoseFocus?.(e)
+          onFocusOut?.(e)
         }}
         {...props}
       />
