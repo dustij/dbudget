@@ -6,6 +6,7 @@ import YearPicker from "../year-picker"
 import { IoAddCircleOutline } from "react-icons/io5"
 import { CATEGORY_PARENTS } from "~/lib/constants"
 import { MyInput } from "../my-input"
+import { parse } from "path"
 
 interface BudgetTableClientProps {
   userId: string
@@ -125,7 +126,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       // If we're on the last row
       if (row === totalRowIndex - 1) {
         // If we're on the last column, blur the input
-        if (col === 11) {
+        if (col === 12) {
           refsMatrix.current?.get(row)?.get(col)?.input?.blur()
           return
         }
@@ -140,6 +141,56 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       refsMatrix.current
         ?.get(row + 1)
         ?.get(col)
+        ?.input?.focus()
+    } else if (e.shiftKey && e.key === "Tab") {
+      /**
+       * If shift + tab, move focus to the previous input
+       */
+      e.preventDefault()
+      e.stopPropagation()
+      // If we're on the first column
+      if (col === 0) {
+        // If we're on the first row, blur the input
+        if (row === 0) {
+          refsMatrix.current?.get(row)?.get(col)?.input?.blur()
+          return
+        }
+        // Move focus to the last input of the previous row
+        refsMatrix.current
+          ?.get(row - 1)
+          ?.get(12)
+          ?.input?.focus()
+        return
+      }
+      // Move focus to the previous input
+      refsMatrix.current
+        ?.get(row)
+        ?.get(col - 1)
+        ?.input?.focus()
+    } else if (e.key === "Tab") {
+      /**
+       * If tab, move focus to the next input
+       */
+      e.preventDefault()
+      e.stopPropagation()
+      // If we're on the last column
+      if (col === 12) {
+        // If we're on the last row, blur the input
+        if (row === totalRowIndex - 1) {
+          refsMatrix.current?.get(row)?.get(col)?.input?.blur()
+          return
+        }
+        // Move focus to the first input of the next row
+        refsMatrix.current
+          ?.get(row + 1)
+          ?.get(0)
+          ?.input?.focus()
+        return
+      }
+      // Move focus to the next input
+      refsMatrix.current
+        ?.get(row)
+        ?.get(col + 1)
         ?.input?.focus()
     } else if (e.key === "Escape") {
       /**
@@ -188,7 +239,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
             alert(
               `Error inserting category: ${newCategoryName} (replace with with a toast)`,
             )
-            setCategoryData((prev) => {
+            return setCategoryData((prev) => {
               if (!prev) return null
               return prev.filter((c) => c.id !== "new-category")
             })
@@ -198,7 +249,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     } else if (e.target.id.startsWith("new-amount")) {
       // Insert new amount
       const newAmount = e.target.value.trim()
-      if (!newAmount) {
+      if (!newAmount || parseFloat(newAmount) === 0) {
         return
       }
       const categoryId = e.target.dataset.categoryId
@@ -230,28 +281,36 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           if (success && id) {
             return setYearData((prev) => {
               if (!prev) return null
+              // Set input id to the id of the amount
+              e.target.id = id
+              const updatedAmounts = prev.amounts.map((amount) => {
+                // If the parent matches, update the corresponding category
+                if (amount.parent === parent) {
+                  return {
+                    ...amount,
+                    categories: amount.categories.map((category) => {
+                      // If the category matches, update its monthlyAmounts
+                      if (category.id === categoryId) {
+                        return {
+                          ...category,
+                          monthlyAmounts: [
+                            ...category.monthlyAmounts,
+                            {
+                              id,
+                              amount: amountInCents,
+                            },
+                          ],
+                        }
+                      }
+                      return category
+                    }),
+                  }
+                }
+                return amount
+              })
               return {
                 ...prev,
-                amounts: [
-                  ...prev.amounts,
-                  {
-                    parent,
-                    categories: [
-                      {
-                        id: categoryId,
-                        userId,
-                        name: categoryName,
-                        parent,
-                        monthlyAmounts: [
-                          {
-                            id,
-                            amount: amountInCents,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
+                amounts: updatedAmounts,
               }
             })
           }
@@ -360,7 +419,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                         if (!categoryAmounts) {
                           const row = totalRowIndex++
                           return (
-                            <tr key={category.id}>
+                            <tr key={row}>
                               <td className="sticky left-0 z-20 border-b border-r bg-white p-0">
                                 <MyInput
                                   id={category.id}
@@ -393,8 +452,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   )}
                                 >
                                   <MyInput
-                                    id={`new-amount-${category.id}-${col}`}
-                                    key={`new-amount-${category.id}-${col}`}
+                                    id={`new-amount-${row}-${col}`}
+                                    key={`new-amount-${row}-${col}`}
                                     type="number"
                                     step={"0.01"}
                                     myValue={0}
@@ -470,7 +529,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                     id={
                                       amount.id
                                         ? `${amount.id}`
-                                        : `new-amount-${category.id}-${col}`
+                                        : `new-amount-${row}-${col}`
                                     }
                                     key={`${amount.id}`}
                                     type="number"
