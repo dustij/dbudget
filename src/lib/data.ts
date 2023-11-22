@@ -43,7 +43,7 @@ export async function getBudgetData(userId: string): Promise<IBudget> {
 
         // Add amount to monthlyAmounts
         acc.yearData[amount.year]![category.id]!.monthlyAmounts[
-          parseInt(amount.month) - 1
+          amount.month - 1
         ] = { id: amount.id, amount: Number(amount.amount) }
 
         return acc

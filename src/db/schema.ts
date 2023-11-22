@@ -5,7 +5,7 @@ import {
   primaryKey,
   varchar,
   text,
-  decimal,
+  tinyint,
   mysqlEnum,
   unique,
   char,
@@ -28,54 +28,6 @@ function generateNanoId() {
   )
   return nanoid()
 }
-
-const MONTHS: Readonly<[string, ...string[]]> = [
-  "1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "11",
-  "12",
-]
-const DAYS: Readonly<[string, ...string[]]> = [
-  "1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "11",
-  "12",
-  "13",
-  "14",
-  "15",
-  "16",
-  "17",
-  "18",
-  "19",
-  "20",
-  "21",
-  "22",
-  "23",
-  "24",
-  "25",
-  "26",
-  "27",
-  "28",
-  "29",
-  "30",
-  "31",
-]
 
 // Auth Tables --------------------------------------------
 
@@ -182,8 +134,8 @@ export const rules = mysqlTable(
       "saturday",
       "sunday",
     ]),
-    dayOfMonth: mysqlEnum("dayOfMonth", DAYS),
-    monthOfYear: mysqlEnum("monthOfYear", MONTHS),
+    dayOfMonth: tinyint("dayOfMonth"),
+    monthOfYear: tinyint("monthOfYear"),
     category: varchar("category", { length: 255 }).notNull(),
     createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
     updatedAt: timestamp("updatedAt", { mode: "date" })
@@ -232,9 +184,9 @@ export const amounts = mysqlTable(
       .$defaultFn(generateNanoId)
       .primaryKey(),
     userId: varchar("userId", { length: 255 }).notNull(),
-    amount: decimal("amount").notNull(), // TODO: change to int, will save amounts in cents
+    amount: mediumint("amount").notNull(),
     year: mediumint("year").notNull(),
-    month: mysqlEnum("month", MONTHS).notNull(),
+    month: tinyint("month").notNull(),
     categoryId: varchar("categoryId", { length: 255 }).notNull(),
     createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
     updatedAt: timestamp("updatedAt", { mode: "date" })
