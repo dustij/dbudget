@@ -75,12 +75,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const handleAddRow = (categoryParent: CategoryParent) => {
     const newCategory: ICategory = {
       id: "new-category",
+      userId,
       name: "",
       parent: categoryParent,
-      userId: "",
-      ruleId: "",
-      createdAt: "",
-      updatedAt: "",
     }
 
     setCategoryData((prev) => {
@@ -198,6 +195,71 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           })
         return
       }
+    } else if (e.target.id.startsWith("new-amount")) {
+      // Insert new amount
+      const newAmount = e.target.value.trim()
+      if (!newAmount) {
+        return
+      }
+      const categoryId = e.target.dataset.categoryId
+      const categoryName = e.target.dataset.categoryName
+      const month = e.target.dataset.month
+      const parent = e.target.dataset.parent as CategoryParent
+
+      if (!categoryId || !categoryName || !month || !parent) {
+        console.error(
+          `! Error inserting amount: ${newAmount} (missing data attributes)`,
+        )
+        alert(
+          `Error inserting amount: ${newAmount} (replace with with a toast)`,
+        )
+        return
+      }
+
+      const amountInCents = parseFloat(newAmount) * 100
+
+      actions
+        .insertAmount({
+          userId,
+          amount: amountInCents,
+          year,
+          month,
+          categoryId,
+        })
+        .then(({ success, id }) => {
+          if (success && id) {
+            return setYearData((prev) => {
+              if (!prev) return null
+              return {
+                ...prev,
+                amounts: [
+                  ...prev.amounts,
+                  {
+                    parent,
+                    categories: [
+                      {
+                        id: categoryId,
+                        userId,
+                        name: categoryName,
+                        parent,
+                        monthlyAmounts: [
+                          {
+                            id,
+                            amount: amountInCents,
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              }
+            })
+          }
+          console.error(`! Error inserting amount: ${newAmount}`)
+          alert(
+            `Error inserting amount: ${newAmount} (replace with with a toast)`,
+          )
+        })
     }
   }
 
@@ -331,12 +393,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   )}
                                 >
                                   <MyInput
-                                    id={`null-${category.id}-${col}`}
-                                    key={`null-${category.id}-${col}`}
+                                    id={`new-amount-${category.id}-${col}`}
+                                    key={`new-amount-${category.id}-${col}`}
                                     type="number"
                                     step={"0.01"}
                                     myValue={0}
                                     data-parent={category.parent}
+                                    data-category-id={category.id}
+                                    data-category-name={category.name}
+                                    data-month={col + 1}
                                     ref={(input) => {
                                       if (input) {
                                         const map = getMap()
@@ -402,12 +467,19 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   )}
                                 >
                                   <MyInput
-                                    id={`${amount.id}`}
+                                    id={
+                                      amount.id
+                                        ? `${amount.id}`
+                                        : `new-amount-${category.id}-${col}`
+                                    }
                                     key={`${amount.id}`}
                                     type="number"
                                     step={"0.01"}
-                                    myValue={amount.amount}
+                                    myValue={amount.amount / 100} // convert cents to dollars
                                     data-parent={category.parent}
+                                    data-category-id={category.id}
+                                    data-category-name={category.name}
+                                    data-month={col + 1}
                                     ref={(input) => {
                                       if (input) {
                                         const map = getMap()

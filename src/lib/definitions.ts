@@ -8,9 +8,9 @@ interface ICategory {
   name: string
   userId: string
   parent: CategoryParent
-  ruleId: string | null
-  createdAt: Date | string
-  updatedAt: Date | string
+  ruleId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 interface IYearData {
