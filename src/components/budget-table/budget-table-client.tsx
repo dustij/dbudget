@@ -76,14 +76,33 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   }, [])
 
   const handleAddRow = (categoryParent: CategoryParent) => {
+    console.log(
+      "\nhandleAddRow()",
+      `${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()}`,
+    )
+    // Check if a new category already exists
+    const isNewCategoryPresent = categoryData?.some(
+      (category) => category.id === "new-category",
+    )
+
+    // Prevent adding a new row if a new category is already present
+    if (isNewCategoryPresent) {
+      console.log("\thandleAddRow() -> new category already present")
+      return
+    }
+
     const newCategory: ICategory = {
       id: "new-category",
       userId,
       name: "",
       parent: categoryParent,
-    }
+    } // FIXME: if focus is on new-category input, and add row is clicked, new row will copy the value of new-category input
 
     setCategoryData((prev) => {
+      console.log(
+        "\thandleAddRow() -> setCategoryData() -> new category id:",
+        newCategory.id,
+      )
       if (!prev) return [newCategory]
       return [...prev, newCategory]
     })
@@ -205,6 +224,11 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   }
 
   const handleFocusOut = (e: React.FocusEvent<HTMLInputElement>) => {
+    console.log(
+      "\nhandleFocusOut()",
+      `${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()}`,
+    )
+    console.log("\thandleFocusOut() -> e.target.id:", e.target.id)
     if (e.target.id === "new-category") {
       const newCategoryName = e.target.value.trim()
       if (!newCategoryName) {
@@ -224,6 +248,10 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           .then(({ success, id }) => {
             if (success && id) {
               return setCategoryData((prev) => {
+                console.log(
+                  "\thandleFocusOut() -> setCategoryData() -> new category id:",
+                  id,
+                )
                 if (!prev) return null
                 return prev.map((c) => {
                   if (c.id === "new-category") {
