@@ -45,7 +45,7 @@ const YearPicker: FC<YearPickerProps> = ({ children, onYearChange }) => {
       <div className="flex flex-row items-center justify-center">
         <button
           className={cn(
-            "flex h-8 w-8 flex-row items-center justify-center border-x bg-white text-sm font-medium text-zinc-400 transition hover:bg-zinc-50 hover:text-zinc-900",
+            "flex h-8 w-8 flex-row items-center justify-center border-x bg-white text-sm font-medium text-zinc-400 transition hover:bg-zinc-50 hover:text-zinc-900 ",
             isMouseDown && "hover:bg-opacity-70 hover:text-opacity-70",
           )}
           type="button"
