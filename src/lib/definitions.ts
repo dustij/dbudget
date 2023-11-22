@@ -8,9 +8,9 @@ interface ICategory {
   name: string
   userId: string
   parent: CategoryParent
-  ruleId: string | null
-  createdAt: Date | string
-  updatedAt: Date | string
+  ruleId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 interface IYearData {
@@ -24,7 +24,12 @@ interface IAmount {
 }
 
 interface IExtendedCategory extends ICategory {
-  monthlyAmounts: number[]
+  monthlyAmounts: IMonthlyAmount[]
+}
+
+interface IMonthlyAmount {
+  id: string | null
+  amount: number
 }
 
 type CategoryParent =

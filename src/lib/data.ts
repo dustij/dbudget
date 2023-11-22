@@ -34,14 +34,17 @@ export async function getBudgetData(userId: string): Promise<IBudget> {
         if (!acc.yearData[amount.year]![category.id]) {
           acc.yearData[amount.year]![category.id] = {
             ...category,
-            monthlyAmounts: Array.from({ length: 12 }).fill(0) as number[],
+            monthlyAmounts: Array.from({ length: 12 }).fill({
+              id: null,
+              amount: 0,
+            }) as IMonthlyAmount[],
           }
         }
 
         // Add amount to monthlyAmounts
         acc.yearData[amount.year]![category.id]!.monthlyAmounts[
-          parseInt(amount.month) - 1
-        ] = Number(amount.amount)
+          amount.month - 1
+        ] = { id: amount.id, amount: Number(amount.amount) }
 
         return acc
       },
@@ -85,7 +88,7 @@ export async function getBudgetData(userId: string): Promise<IBudget> {
       } as IBudget
     })()
 
-    // console.log("formattedData >", JSON.stringify(formattedData, null, 2))
+    console.log("formattedData >", JSON.stringify(formattedData, null, 2))
 
     return formattedData
   } catch (error) {

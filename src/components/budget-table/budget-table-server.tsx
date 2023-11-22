@@ -33,14 +33,20 @@ const CategorySchema = z.object({
 const AmountSchema = z.object({
   id: z.string(),
   userId: z.string(),
-  amount: z.coerce.number(), // TODO: validate as int because saving as cents
-  year: z.coerce.number().refine((value) => value.toString().length === 4, {
-    message: "Year must be a 4-digit number",
-  }),
-  month: z.coerce.number().refine((value) => value >= 1 && value <= 12, {
-    message: "Month must be a number between 1 and 12",
-  }),
   categoryId: z.string(),
+  amount: z.coerce.number().int(), // int because saving amounts in cents
+  year: z.coerce
+    .number()
+    .int()
+    .refine((value) => value.toString().length === 4, {
+      message: "Year must be a 4-digit integer",
+    }),
+  month: z.coerce
+    .number()
+    .int()
+    .refine((value) => value >= 1 && value <= 12, {
+      message: "Month must be an integer between 1 and 12",
+    }),
 })
 
 const CreateCategory = CategorySchema.omit({ id: true })
@@ -55,44 +61,59 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
 
   const insertAmount = async ({
     userId,
+    categoryId,
     amount,
     year,
     month,
-    categoryId,
   }: {
     userId: string
+    categoryId: string
     amount: number | string
     year: number | string
     month: number | string
-    categoryId: string
   }): Promise<{
     success: boolean
     id: string | null
   }> => {
     "use server"
-    console.log("Insert amount into budget...")
     const data = CreateAmount.parse({
       userId,
+      categoryId,
       amount,
       year,
       month,
-      categoryId,
     })
-    console.log(data)
-    return { success: false, id: null }
+
+    try {
+      await db.insert(amounts).values(data)
+      try {
+        const amount = await db
+          .select()
+          .from(amounts)
+          .where(
+            eq(amounts.userId, data.userId) &&
+              eq(amounts.categoryId, data.categoryId) &&
+              eq(amounts.year, data.year) &&
+              eq(amounts.month, data.month),
+          )
+        if (amount[0]) {
+          return { success: true, id: amount[0].id }
+        } else {
+          throw new Error("Amount not found")
+        }
+      } catch (error) {
+        console.error(`Error retrieving amount (${data.amount}): ${error}`)
+        return { success: false, id: null }
+      }
+    } catch (error) {
+      console.error(`Error inserting amount (${data.amount}): ${error}`)
+      return { success: false, id: null }
+    }
   }
 
   const updateAmount = async (): Promise<{ success: boolean }> => {
     "use server"
     console.log("Updating budget amount...")
-    /*
-    - Extract data
-    - Validate and prepare data
-      - Type validation and coercion
-      - Storing values as cents
-    - Insert data into database
-    - Return success or error
-     */
     return { success: false }
   }
 
