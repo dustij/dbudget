@@ -63,11 +63,21 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   let totalRowIndex = 0 // track row index across different parents
 
   useEffect(() => {
+    console.log(
+      "\nuseEffect()",
+      `${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()}`,
+    )
+    console.log("\tuseEffect() -> categoryData:", categoryData)
     // find ICategoryRef with id 'new-category' and focus on it
     const newCategoryRef = Array.from(refsMatrix.current?.values() || [])
       .flat()
       .find((ref) => ref.values().next().value.category.id === "new-category")
 
+    console.log(
+      "\tuseEffect() -> refsMatrix.current number of rows",
+      refsMatrix.current?.size,
+    )
+    console.log("\tuseEffect() -> newCategoryRef:", newCategoryRef)
     newCategoryRef?.get(0)?.input?.focus()
   }, [categoryData])
 
@@ -229,99 +239,104 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       `${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()}`,
     )
     console.log("\thandleFocusOut() -> e.target.id:", e.target.id)
+
     if (e.target.id === "new-category") {
-      const newCategoryName = e.target.value.trim()
-      if (!newCategoryName) {
-        setCategoryData((prev) => {
-          if (!prev) return null
-          return prev.filter((c) => c.id !== "new-category")
-        })
-        return
-      } else {
-        // Insert new category
-        actions
-          .insertCategory({
-            userId,
-            name: newCategoryName,
-            parent: e.target.dataset.parent as CategoryParent,
-          })
-          .then(({ success, id }) => {
-            if (success && id) {
-              return setCategoryData((prev) => {
-                console.log(
-                  "\thandleFocusOut() -> setCategoryData() -> new category id:",
-                  id,
-                )
-                if (!prev) return null
-                return prev.map((c) => {
-                  if (c.id === "new-category") {
-                    return {
-                      ...c,
-                      id,
-                      name: newCategoryName,
-                    }
-                  }
-                  return c
-                })
-              })
-            }
-            console.error(`! Error inserting category: ${newCategoryName}`)
-            alert(
-              `Error inserting category: ${newCategoryName} (replace with with a toast)`,
-            )
-            return setCategoryData((prev) => {
-              if (!prev) return null
-              return prev.filter((c) => c.id !== "new-category")
-            })
-          })
-        return
-      }
+      handleNewCategoryFocusOut(e)
     } else if (e.target.id.startsWith("new-amount")) {
-      // Insert new amount
-      const newAmount = e.target.value.trim()
-      if (!newAmount || parseFloat(newAmount) === 0) {
-        return
-      }
-      const categoryId = e.target.dataset.categoryId
-      const categoryName = e.target.dataset.categoryName
-      const month = e.target.dataset.month
-      const parent = e.target.dataset.parent as CategoryParent
+      handleNewAmountFocusOut(e)
+    }
+  }
 
-      if (!categoryId || !categoryName || !month || !parent) {
-        console.error(
-          `! Error inserting amount: ${newAmount} (missing data attributes)`,
-        )
-        alert(
-          `Error inserting amount: ${newAmount} (replace with with a toast)`,
-        )
-        return
-      }
+  const handleNewCategoryFocusOut = async (
+    e: React.FocusEvent<HTMLInputElement>,
+  ) => {
+    const newCategoryName = e.target.value.trim()
+    if (!newCategoryName) {
+      console.log("\thandleNewCategoryFocusOut() -> no new category name")
+      console.log("\thandleNewCategoryFocusOut() -> setCategoryData()")
+      setCategoryData((prev) =>
+        prev ? prev.filter((c) => c.id !== "new-category") : null,
+      )
+      return
+    }
 
-      const amountInCents = parseFloat(newAmount) * 100
+    try {
+      const { success, id } = await actions.insertCategory({
+        userId,
+        name: newCategoryName,
+        parent: e.target.dataset.parent as CategoryParent,
+      })
 
-      actions
-        .insertAmount({
-          userId,
-          amount: amountInCents,
-          year,
-          month,
-          categoryId,
+      if (success && id) {
+        setCategoryData((prev) => {
+          console.log(
+            "\thandleNewCategoryFocusOut() -> setCategoryData() -> new category id:",
+            id,
+          )
+          if (!prev) return null
+          return prev.map((c) =>
+            c.id === "new-category" ? { ...c, id, name: newCategoryName } : c,
+          )
         })
-        .then(({ success, id }) => {
-          if (success && id) {
-            return setYearData((prev) => {
-              if (!prev) return null
-              // Set input id to the id of the amount
-              e.target.id = id
-              const updatedAmounts = prev.amounts.map((amount) => {
-                // If the parent matches, update the corresponding category
-                if (amount.parent === parent) {
-                  return {
-                    ...amount,
-                    categories: amount.categories.map((category) => {
-                      // If the category matches, update its monthlyAmounts
-                      if (category.id === categoryId) {
-                        return {
+      } else {
+        console.error(`! Error inserting category: ${newCategoryName}`)
+        alert(
+          `Error inserting category: ${newCategoryName} (replace with a toast)`,
+        )
+        console.log("\thandleNewCategoryFocusOut() -> setCategoryData()")
+        setCategoryData((prev) =>
+          prev ? prev.filter((c) => c.id !== "new-category") : null,
+        )
+      }
+    } catch (error) {
+      console.error("! Error inserting category:", error)
+      alert("Error inserting category (replace with a toast)")
+    }
+  }
+
+  const handleNewAmountFocusOut = async (
+    e: React.FocusEvent<HTMLInputElement>,
+  ) => {
+    const newAmount = e.target.value.trim()
+    if (!newAmount || parseFloat(newAmount) === 0) {
+      return
+    }
+
+    const categoryId = e.target.dataset.categoryId
+    const categoryName = e.target.dataset.categoryName
+    const month = e.target.dataset.month
+    const parent = e.target.dataset.parent as CategoryParent
+
+    if (!categoryId || !categoryName || !month || !parent) {
+      console.error(
+        `! Error inserting amount: ${newAmount} (missing data attributes)`,
+      )
+      alert(`Error inserting amount: ${newAmount} (replace with a toast)`)
+      return
+    }
+
+    const amountInCents = parseFloat(newAmount) * 100
+
+    try {
+      const { success, id } = await actions.insertAmount({
+        userId,
+        amount: amountInCents,
+        year,
+        month,
+        categoryId,
+      })
+
+      if (success && id) {
+        setYearData((prev) => {
+          if (!prev) return null
+          e.target.id = id // Set input id to the id of the amount
+          const updatedAmounts = prev.amounts.map((amount) =>
+            amount.parent === parent
+              ? {
+                  ...amount,
+                  categories: amount.categories.map((category) =>
+                    category.id === categoryId
+                      ? {
                           ...category,
                           monthlyAmounts: [
                             ...category.monthlyAmounts,
@@ -331,24 +346,23 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                             },
                           ],
                         }
-                      }
-                      return category
-                    }),
-                  }
+                      : category,
+                  ),
                 }
-                return amount
-              })
-              return {
-                ...prev,
-                amounts: updatedAmounts,
-              }
-            })
-          }
-          console.error(`! Error inserting amount: ${newAmount}`)
-          alert(
-            `Error inserting amount: ${newAmount} (replace with with a toast)`,
+              : amount,
           )
+          return {
+            ...prev,
+            amounts: updatedAmounts,
+          }
         })
+      } else {
+        console.error(`! Error inserting amount: ${newAmount}`)
+        alert(`Error inserting amount: ${newAmount} (replace with a toast)`)
+      }
+    } catch (error) {
+      console.error("! Error inserting amount:", error)
+      alert("Error inserting amount (replace with a toast)")
     }
   }
 
