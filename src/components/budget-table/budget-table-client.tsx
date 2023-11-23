@@ -113,6 +113,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
     // If the category name is empty, delete the category
     if (newCategoryName === "") {
+      console.log("DELETE CATEGORY")
       setCategoryData((prev) => {
         return prev!.filter((c) => c.id !== category.id)
       })
@@ -125,33 +126,35 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     }
 
     // If the category id is empty, insert a new category
-    try {
-      const { success, id } = await actions.insertCategory({
-        userId,
-        name: newCategoryName,
-        parent: category.parent,
-      })
+    if (category.id === "") {
+      try {
+        const { success, id } = await actions.insertCategory({
+          userId,
+          name: newCategoryName,
+          parent: category.parent,
+        })
 
-      if (success && id) {
-        setCategoryData((prev) => {
-          if (!prev) return null
-          return prev.map((c) => {
-            if (c.id === category.id) {
-              return { ...c, id, name: newCategoryName }
-            } else {
-              return c
-            }
+        if (success && id) {
+          setCategoryData((prev) => {
+            if (!prev) return null
+            return prev.map((c) => {
+              if (c.id === category.id) {
+                return { ...c, id, name: newCategoryName }
+              } else {
+                return c
+              }
+            })
           })
-        })
-      } else {
-        setCategoryData((prev) => {
-          return prev!.filter((c) => c.id !== category.id)
-        })
-        throw new Error("Failed to insert category")
+        } else {
+          setCategoryData((prev) => {
+            return prev!.filter((c) => c.id !== category.id)
+          })
+          throw new Error("Failed to insert category")
+        }
+      } catch (err) {
+        console.error(err)
+        alert("Failed to insert category (replace with toast)")
       }
-    } catch (err) {
-      console.error(err)
-      alert("Failed to insert category (replace with toast)")
     }
   }
 
@@ -181,52 +184,53 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     }
 
     // If the amount id is empty, insert a new amount
-    try {
-      const { success, id } = await actions.insertAmount({
-        userId,
-        amount: newAmount,
-        year,
-        month: col,
-        categoryId: category.id,
-      })
-
-      console.log("SUCCESS:", success)
-      if (success && id) {
-        setYearData((prev) => {
-          if (!prev) return null
-          e.target.id = id // Set input id to the id of the amount
-          const updatedAmounts = prev.amounts.map((amount) =>
-            amount.parent === category.parent
-              ? {
-                  ...amount,
-                  categories: amount.categories.map((c) =>
-                    c.id === category.id
-                      ? {
-                          ...c,
-                          monthlyAmounts: [
-                            ...c.monthlyAmounts,
-                            {
-                              id,
-                              amount: newAmount,
-                            },
-                          ],
-                        }
-                      : c,
-                  ),
-                }
-              : amount,
-          )
-          return {
-            ...prev,
-            amounts: updatedAmounts,
-          }
+    if (input.id === "") {
+      try {
+        const { success, id } = await actions.insertAmount({
+          userId,
+          amount: newAmount,
+          year,
+          month: col,
+          categoryId: category.id,
         })
-      } else {
-        throw new Error("Failed to insert amount")
+
+        if (success && id) {
+          setYearData((prev) => {
+            if (!prev) return null
+            e.target.id = id // Set input id to the id of the amount
+            const updatedAmounts = prev.amounts.map((amount) =>
+              amount.parent === category.parent
+                ? {
+                    ...amount,
+                    categories: amount.categories.map((c) =>
+                      c.id === category.id
+                        ? {
+                            ...c,
+                            monthlyAmounts: [
+                              ...c.monthlyAmounts,
+                              {
+                                id,
+                                amount: newAmount,
+                              },
+                            ],
+                          }
+                        : c,
+                    ),
+                  }
+                : amount,
+            )
+            return {
+              ...prev,
+              amounts: updatedAmounts,
+            }
+          })
+        } else {
+          throw new Error("Failed to insert amount")
+        }
+      } catch (err) {
+        console.error(err)
+        alert("Failed to insert amount (replace with toast)")
       }
-    } catch (err) {
-      console.error(err)
-      alert("Failed to insert amount (replace with toast)")
     }
   }
 
@@ -542,7 +546,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   }}
                                   onKeyDown={(e) => handleKeyDown(e, row, 0)}
                                   onFocus={(e) => e.target.select()}
-                                  // onBlur={(e) => handleFocusOut(e)}
+                                  onBlur={(e) => handleCategoryFocusOut(e)}
                                 />
                               </td>
                               {monthlyAmounts!.map((amount, col) => (
@@ -554,11 +558,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   )}
                                 >
                                   <MyInput
-                                    id={
-                                      amount.id
-                                        ? `${amount.id}`
-                                        : `new-amount-${row}-${col}`
-                                    }
+                                    id={amount.id ?? ""}
                                     key={`${amount.id}`}
                                     type="number"
                                     step={"0.01"}
