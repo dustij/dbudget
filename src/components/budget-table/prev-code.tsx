@@ -1,13 +1,12 @@
 "use client"
 
-import React, { type FC, useState, useEffect, useRef } from "react"
+import React, { useCallback, type FC, useState, useEffect, useRef } from "react"
 import { cn, toTitleCase } from "~/lib/utils"
 import YearPicker from "../year-picker"
 import { IoAddCircleOutline } from "react-icons/io5"
 import { CATEGORY_PARENTS } from "~/lib/constants"
 import { MyInput } from "../my-input"
 import { parse } from "path"
-import { set } from "zod"
 
 interface BudgetTableClientProps {
   userId: string
@@ -64,181 +63,59 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   let totalRowIndex = 0 // track row index across different parents
 
   useEffect(() => {
-    console.log("USE EFFECT [categoryData] @", new Date().toLocaleTimeString())
-    if (refsMatrix.current && categoryData) {
-      if (refsMatrix.current.size > categoryData.length) {
-        const lastRow = refsMatrix.current.size - 1
-        refsMatrix.current.delete(lastRow)
-      }
+    console.log(
+      "\nuseEffect()",
+      `${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()}`,
+    )
+    console.log("\tuseEffect() -> categoryData:", categoryData)
+    // find ICategoryRef with id 'new-category' and focus on it
+    const newCategoryRef = Array.from(refsMatrix.current?.values() || [])
+      .flat()
+      .find((ref) => ref.values().next().value.category.id === "new-category")
 
-      const emptyCategory = categoryData?.find((c) => c.name === "")
-      if (emptyCategory) {
-        const row = categoryData.indexOf(emptyCategory)
-        refsMatrix.current?.get(row)?.get(0)?.input?.focus()
-      }
-    }
+    console.log(
+      "\tuseEffect() -> refsMatrix.current number of rows",
+      refsMatrix.current?.size,
+    )
+    console.log("\tuseEffect() -> newCategoryRef:", newCategoryRef)
+    newCategoryRef?.get(0)?.input?.focus()
+  }, [categoryData, refsMatrix])
 
-    console.log(`\tcategoryData:`, categoryData)
-    console.log(`\trefsMatrix:`, refsMatrix.current)
-  }, [categoryData])
-
-  const hanldeYearChange = (year: number) => {
+  const hanldeYearChange = useCallback((year: number) => {
     setYear(year)
-  }
+  }, [])
 
   const handleAddRow = (categoryParent: CategoryParent) => {
-    console.log("HANDLE ADD ROW @", new Date().toLocaleTimeString())
+    console.log(
+      "\nhandleAddRow()",
+      `${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()}`,
+    )
+    // Check if a new category already exists
+    const isNewCategoryPresent = categoryData?.some(
+      (category) => category.id === "new-category",
+    )
+
+    // Prevent adding a new row if a new category is already present
+    if (isNewCategoryPresent) {
+      console.log("\thandleAddRow() -> new category already present")
+      return
+    }
+
+    const newCategory: ICategory = {
+      id: "new-category",
+      userId,
+      name: "",
+      parent: categoryParent,
+    } // FIXME: if focus is on new-category input, and add row is clicked, new row will copy the value of new-category input
+
     setCategoryData((prev) => {
-      const newCategory = {
-        userId,
-        id: "",
-        name: "",
-        parent: categoryParent,
-      }
-      return prev ? [...prev, newCategory] : [newCategory]
+      console.log(
+        "\thandleAddRow() -> setCategoryData() -> new category id:",
+        newCategory.id,
+      )
+      if (!prev) return [newCategory]
+      return [...prev, newCategory]
     })
-    console.log(`\tcategoryData:`, categoryData)
-  }
-
-  const handleCategoryFocusOut = async (
-    e: React.FocusEvent<HTMLInputElement>,
-  ) => {
-    console.log("HANDLE CATEGORY FOCUS OUT @", new Date().toLocaleTimeString())
-    const input = e.target
-    const row = parseInt(input.dataset.row!)
-    const col = parseInt(input.dataset.col!)
-    const category = refsMatrix.current!.get(row)!.get(col)!.category! // will always exist, assigned to map in render
-    const newCategoryName = input.value.trim()
-    const oldCategoryName = category.name
-
-    // If the category name is empty, delete the category
-    if (newCategoryName === "") {
-      console.log("DELETE CATEGORY")
-      setCategoryData((prev) => {
-        return prev!.filter((c) => c.id !== category.id)
-      })
-      return
-    }
-
-    // If the category name is unchanged, do nothing
-    if (newCategoryName === oldCategoryName) {
-      return
-    }
-
-    // If the category id is empty, insert a new category
-    if (category.id === "") {
-      try {
-        const { success, id } = await actions.insertCategory({
-          userId,
-          name: newCategoryName,
-          parent: category.parent,
-        })
-
-        if (success && id) {
-          setCategoryData((prev) => {
-            if (!prev) return null
-            return prev.map((c) => {
-              if (c.id === category.id) {
-                return { ...c, id, name: newCategoryName }
-              } else {
-                return c
-              }
-            })
-          })
-        } else {
-          setCategoryData((prev) => {
-            return prev!.filter((c) => c.id !== category.id)
-          })
-          throw new Error("Failed to insert category")
-        }
-      } catch (err) {
-        console.error(err)
-        alert("Failed to insert category (replace with toast)")
-      }
-    }
-  }
-
-  const handleAmountFocusOut = async (
-    e: React.FocusEvent<HTMLInputElement>,
-  ) => {
-    console.log("HANDLE AMOUNT FOCUS OUT @", new Date().toLocaleTimeString())
-    const input = e.target
-    const row = parseInt(input.dataset.row!)
-    const col = parseInt(input.dataset.col!)
-    const category = refsMatrix.current!.get(row)!.get(col)!
-      .category! as IExtendedCategory // will always exist, assigned to map in render
-    const newAmount = parseInt((parseFloat(input.value) * 100).toFixed(0)) // convert dollars to cents
-    const oldAmount = yearData?.amounts
-      .find((amount) => amount.categories.find((c) => c.id === category.id))
-      ?.categories.find((c) => c.id === category.id)?.monthlyAmounts[col - 1]
-      ?.amount
-
-    // If the amount is empty or 0, delete the amount
-    if (newAmount === 0) {
-      return
-    }
-
-    // If the amount is unchanged, do nothing
-    if (newAmount === oldAmount) {
-      return
-    }
-
-    // If the amount id is empty, insert a new amount
-    if (input.id === "") {
-      try {
-        const { success, id } = await actions.insertAmount({
-          userId,
-          amount: newAmount,
-          year,
-          month: col,
-          categoryId: category.id,
-        })
-
-        if (success && id) {
-          setYearData((prev) => {
-            if (!prev) return null
-            e.target.id = id // Set input id to the id of the amount
-            const updatedAmounts = prev.amounts.map((amount) =>
-              amount.parent === category.parent
-                ? {
-                    ...amount,
-                    categories: amount.categories.map((c) =>
-                      c.id === category.id
-                        ? {
-                            ...c,
-                            monthlyAmounts: [
-                              ...c.monthlyAmounts,
-                              {
-                                id,
-                                amount: newAmount,
-                              },
-                            ],
-                          }
-                        : c,
-                    ),
-                  }
-                : amount,
-            )
-            return {
-              ...prev,
-              amounts: updatedAmounts,
-            }
-          })
-        } else {
-          throw new Error("Failed to insert amount")
-        }
-      } catch (err) {
-        console.error(err)
-        alert("Failed to insert amount (replace with toast)")
-      }
-    }
-  }
-
-  const getMap = () => {
-    if (!refsMatrix.current) {
-      refsMatrix.current = new Map<number, Map<number, ICategoryRef>>()
-    }
-    return refsMatrix.current
   }
 
   const handleKeyDown = (
@@ -246,7 +123,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     row: number,
     col: number,
   ) => {
-    // TODO: ignore shift + enter on mobile
     if (e.shiftKey && e.key === "Enter") {
       /**
        * If shift + enter, move focus upwards
@@ -357,13 +233,159 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     }
   }
 
+  const handleFocusOut = (e: React.FocusEvent<HTMLInputElement>) => {
+    console.log(
+      "\nhandleFocusOut()",
+      `${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()}`,
+    )
+    console.log("\thandleFocusOut() -> e.target.id:", e.target.id)
+
+    if (e.target.id === "new-category") {
+      handleNewCategoryFocusOut(e)
+    } else if (e.target.id.startsWith("new-amount")) {
+      handleNewAmountFocusOut(e)
+    }
+  }
+
+  const handleNewCategoryFocusOut = async (
+    e: React.FocusEvent<HTMLInputElement>,
+  ) => {
+    const newCategoryName = e.target.value.trim()
+    if (!newCategoryName) {
+      console.log("\thandleNewCategoryFocusOut() -> no new category name")
+      console.log("\thandleNewCategoryFocusOut() -> setCategoryData()")
+      setCategoryData((prev) =>
+        prev ? prev.filter((c) => c.id !== "new-category") : null,
+      )
+      // Handle the removal from refsMatrix
+      const row = Array.from(refsMatrix.current?.keys() || []).find(
+        (row) =>
+          refsMatrix.current?.get(row)?.get(0)?.category?.id === "new-category",
+      )
+      if (row) {
+        refsMatrix.current?.delete(row)
+      }
+
+      return
+    }
+
+    try {
+      const { success, id } = await actions.insertCategory({
+        userId,
+        name: newCategoryName,
+        parent: e.target.dataset.parent as CategoryParent,
+      })
+
+      if (success && id) {
+        setCategoryData((prev) => {
+          console.log(
+            "\thandleNewCategoryFocusOut() -> setCategoryData() -> new category id:",
+            id,
+          )
+          if (!prev) return null
+          return prev.map((c) =>
+            c.id === "new-category" ? { ...c, id, name: newCategoryName } : c,
+          )
+        })
+      } else {
+        console.error(`! Error inserting category: ${newCategoryName}`)
+        alert(
+          `Error inserting category: ${newCategoryName} (replace with a toast)`,
+        )
+        console.log("\thandleNewCategoryFocusOut() -> setCategoryData()")
+        setCategoryData((prev) =>
+          prev ? prev.filter((c) => c.id !== "new-category") : null,
+        )
+      }
+    } catch (error) {
+      console.error("! Error inserting category:", error)
+      alert("Error inserting category (replace with a toast)")
+    }
+  }
+
+  const handleNewAmountFocusOut = async (
+    e: React.FocusEvent<HTMLInputElement>,
+  ) => {
+    const newAmount = e.target.value.trim()
+    if (!newAmount || parseFloat(newAmount) === 0) {
+      return
+    }
+
+    const categoryId = e.target.dataset.categoryId
+    const categoryName = e.target.dataset.categoryName
+    const month = e.target.dataset.month
+    const parent = e.target.dataset.parent as CategoryParent
+
+    if (!categoryId || !categoryName || !month || !parent) {
+      console.error(
+        `! Error inserting amount: ${newAmount} (missing data attributes)`,
+      )
+      alert(`Error inserting amount: ${newAmount} (replace with a toast)`)
+      return
+    }
+
+    const amountInCents = parseFloat(newAmount) * 100
+
+    try {
+      const { success, id } = await actions.insertAmount({
+        userId,
+        amount: amountInCents,
+        year,
+        month,
+        categoryId,
+      })
+
+      if (success && id) {
+        setYearData((prev) => {
+          if (!prev) return null
+          e.target.id = id // Set input id to the id of the amount
+          const updatedAmounts = prev.amounts.map((amount) =>
+            amount.parent === parent
+              ? {
+                  ...amount,
+                  categories: amount.categories.map((category) =>
+                    category.id === categoryId
+                      ? {
+                          ...category,
+                          monthlyAmounts: [
+                            ...category.monthlyAmounts,
+                            {
+                              id,
+                              amount: amountInCents,
+                            },
+                          ],
+                        }
+                      : category,
+                  ),
+                }
+              : amount,
+          )
+          return {
+            ...prev,
+            amounts: updatedAmounts,
+          }
+        })
+      } else {
+        console.error(`! Error inserting amount: ${newAmount}`)
+        alert(`Error inserting amount: ${newAmount} (replace with a toast)`)
+      }
+    } catch (error) {
+      console.error("! Error inserting amount:", error)
+      alert("Error inserting amount (replace with a toast)")
+    }
+  }
+
+  const getMap = () => {
+    if (!refsMatrix.current) {
+      refsMatrix.current = new Map<number, Map<number, ICategoryRef>>()
+    }
+    return refsMatrix.current
+  }
+
   return (
     <>
-      {console.log("RENDER @", new Date().toLocaleTimeString())}
+      {console.log("RENDER")}
       {console.log(`\tcategoryData:`, categoryData)}
-      {console.log(`\trefsMatrix:`, refsMatrix.current)}
-      {console.log(`\tyearData:`, yearData)}
-
       <div
         className={
           "sticky left-0 top-0 z-30 flex h-[33px] items-center justify-center border-b bg-white"
@@ -457,8 +479,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   id={category.id}
                                   key={category.id}
                                   myValue={category.name}
-                                  data-row={row}
-                                  data-col={0}
+                                  data-parent={category.parent}
                                   ref={(input) => {
                                     if (input) {
                                       const map = getMap()
@@ -473,7 +494,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   }}
                                   onKeyDown={(e) => handleKeyDown(e, row, 0)}
                                   onFocus={(e) => e.target.select()}
-                                  onBlur={(e) => handleCategoryFocusOut(e)}
+                                  onBlur={(e) => handleFocusOut(e)}
                                 />
                               </td>
                               {Array.from({ length: 12 }).map((_, col) => (
@@ -490,8 +511,10 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                     type="number"
                                     step={"0.01"}
                                     myValue={0}
-                                    data-row={row}
-                                    data-col={col + 1}
+                                    data-parent={category.parent}
+                                    data-category-id={category.id}
+                                    data-category-name={category.name}
+                                    data-month={col + 1}
                                     ref={(input) => {
                                       if (input) {
                                         const map = getMap()
@@ -508,7 +531,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                       handleKeyDown(e, row, col + 1)
                                     }
                                     onFocus={(e) => e.target.select()}
-                                    onFocusOut={(e) => handleAmountFocusOut(e)}
+                                    onFocusOut={(e) => handleFocusOut(e)}
                                   />
                                 </td>
                               ))}
@@ -530,8 +553,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   id={category.id}
                                   key={category.id}
                                   myValue={category.name}
-                                  data-row={row}
-                                  data-col={0}
+                                  data-parent={category.parent}
                                   ref={(input) => {
                                     if (input) {
                                       const map = getMap()
@@ -546,7 +568,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   }}
                                   onKeyDown={(e) => handleKeyDown(e, row, 0)}
                                   onFocus={(e) => e.target.select()}
-                                  onBlur={(e) => handleCategoryFocusOut(e)}
+                                  onBlur={(e) => handleFocusOut(e)}
                                 />
                               </td>
                               {monthlyAmounts!.map((amount, col) => (
@@ -558,13 +580,19 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   )}
                                 >
                                   <MyInput
-                                    id={amount.id ?? ""}
+                                    id={
+                                      amount.id
+                                        ? `${amount.id}`
+                                        : `new-amount-${row}-${col}`
+                                    }
                                     key={`${amount.id}`}
                                     type="number"
                                     step={"0.01"}
                                     myValue={amount.amount / 100} // convert cents to dollars
-                                    data-row={row}
-                                    data-col={col + 1}
+                                    data-parent={category.parent}
+                                    data-category-id={category.id}
+                                    data-category-name={category.name}
+                                    data-month={col + 1}
                                     ref={(input) => {
                                       if (input) {
                                         const map = getMap()
@@ -581,7 +609,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                       handleKeyDown(e, row, col + 1)
                                     }
                                     onFocus={(e) => e.target.select()}
-                                    onFocusOut={(e) => handleAmountFocusOut(e)}
+                                    onFocusOut={(e) => handleFocusOut(e)}
                                   />
                                 </td>
                               ))}
