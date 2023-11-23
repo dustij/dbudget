@@ -24,11 +24,12 @@ const Modal: FC<ModalProps> = ({
           className="
           fixed
           inset-0
-          bg-neutral-900/90
+          z-50
+          bg-neutral-900/60
           backdrop-blur-sm
         "
         />
-        <Dialog.Content></Dialog.Content>
+        <Dialog.Content className="sm:max-w-[425px]">{children}</Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
   )

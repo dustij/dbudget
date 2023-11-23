@@ -1,7 +1,7 @@
 "use client"
 
 import React, { type FC, useState, useEffect, useRef } from "react"
-import { cn, toTitleCase } from "~/lib/utils"
+import { cn, formatCurrency, toTitleCase } from "~/lib/utils"
 import YearPicker from "../year-picker"
 import { IoAddCircleOutline } from "react-icons/io5"
 import { CATEGORY_PARENTS } from "~/lib/constants"
@@ -192,6 +192,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       ?.categories.find((c) => c.id === category.id)?.monthlyAmounts[col - 1]
       ?.amount
 
+    console.log(newAmount, oldAmount)
+
     // If the amount is empty or 0, delete the amount
     if (newAmount === 0) {
       return
@@ -202,8 +204,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       return
     }
 
-    // If the amount id is empty, insert a new amount
-    if (input.id === "") {
+    // If the amount has no id, insert a new amount
+    if (!input.id) {
       try {
         const { success, id } = await actions.insertAmount({
           userId,
@@ -215,9 +217,10 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
         if (success && id) {
           addLog(
-            `[${new Date().toLocaleTimeString()}] Inserted amount ${
-              newAmount / 100
-            } for category ${category.name}`,
+            `[${new Date().toLocaleTimeString()}] Inserted amount ${formatCurrency(
+              newAmount / 100,
+              false,
+            )} for category "${category.name}"`,
           )
           setYearData((prev) => {
             if (!prev) return null
@@ -254,9 +257,10 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       } catch (err) {
         console.error(err)
         addLog(
-          `[${new Date().toLocaleTimeString()}] Error: Failed to insert amount ${
-            newAmount / 100
-          } for category ${category.name}`,
+          `[${new Date().toLocaleTimeString()}] Error: Failed to insert amount ${formatCurrency(
+            newAmount / 100,
+            false,
+          )} for category "${category.name}"`,
         )
       }
     }
@@ -513,7 +517,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   )}
                                 >
                                   <MyInput
-                                    id={`new-amount-${row}-${col}`}
                                     key={`new-amount-${row}-${col}`}
                                     type="number"
                                     step={"0.01"}
