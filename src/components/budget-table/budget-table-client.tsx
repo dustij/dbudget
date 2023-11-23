@@ -6,8 +6,6 @@ import YearPicker from "../year-picker"
 import { IoAddCircleOutline } from "react-icons/io5"
 import { CATEGORY_PARENTS } from "~/lib/constants"
 import { MyInput } from "../my-input"
-import { parse } from "path"
-import { set } from "zod"
 
 interface BudgetTableClientProps {
   userId: string
