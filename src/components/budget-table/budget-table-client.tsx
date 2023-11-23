@@ -69,15 +69,10 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         const lastRow = refsMatrix.current.size - 1
         refsMatrix.current.delete(lastRow)
       }
-      const emptyCategory = categoryData?.find((c) => c.id === "")
-      if (emptyCategory) {
-        // find catetgory in refsMatrix.current categories and focus on the input
-        const row = Array.from(refsMatrix.current.keys()).find(
-          (row) => refsMatrix.current?.get(row)?.get(0)?.category?.id === "",
-        )
-        if (row) {
-          refsMatrix.current?.get(row)?.get(0)?.input?.focus()
-        }
+      // focus on input without id
+      const inputWithoutId = findInputWithoutId()
+      if (inputWithoutId) {
+        inputWithoutId.focus()
       }
     }
 
@@ -85,12 +80,28 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     console.log(`\trefsMatrix:`, refsMatrix.current)
   }, [categoryData])
 
+  const findInputWithoutId = () => {
+    if (refsMatrix.current) {
+      for (const [, columnsMap] of refsMatrix.current.entries()) {
+        for (const [, { input }] of columnsMap.entries()) {
+          if (input && !input.id) {
+            // You found an input without an id
+            return input
+          }
+        }
+      }
+    }
+    // No input without an id found
+    return null
+  }
+
   const hanldeYearChange = (year: number) => {
     setYear(year)
   }
 
   const handleAddRow = (categoryParent: CategoryParent) => {
     console.log("HANDLE ADD ROW @", new Date().toLocaleTimeString())
+    if (findInputWithoutId()) return // prevents duplicating row when input value is not empty for new category name and add row is clicked
     setCategoryData((prev) => {
       const newCategory = {
         userId,
@@ -203,6 +214,11 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         })
 
         if (success && id) {
+          addLog(
+            `[${new Date().toLocaleTimeString()}] Inserted amount ${
+              newAmount / 100
+            } for category ${category.name}`,
+          )
           setYearData((prev) => {
             if (!prev) return null
             e.target.id = id // Set input id to the id of the amount
@@ -237,7 +253,11 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         }
       } catch (err) {
         console.error(err)
-        alert("Failed to insert amount (replace with toast)")
+        addLog(
+          `[${new Date().toLocaleTimeString()}] Error: Failed to insert amount ${
+            newAmount / 100
+          } for category ${category.name}`,
+        )
       }
     }
   }
