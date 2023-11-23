@@ -6,6 +6,7 @@ import YearPicker from "../year-picker"
 import { IoAddCircleOutline } from "react-icons/io5"
 import { CATEGORY_PARENTS } from "~/lib/constants"
 import { MyInput } from "../my-input"
+import { useLogContext } from "~/context/log-context"
 
 interface BudgetTableClientProps {
   userId: string
@@ -49,7 +50,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   budget,
   actions,
 }) => {
-  // TODO: should I optimistically update the UI? https://react.dev/reference/react/useOptimistic#noun-labs-1201738-(2)
   const [year, setYear] = useState<number>(2023)
   const [yearData, setYearData] = useState<IYearData | null>(
     budget.yearData.find((data) => data.year === year) || null,
@@ -58,6 +58,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     budget.categories || null,
   )
   const refsMatrix = useRef<Map<number, Map<number, ICategoryRef>> | null>(null)
+  const { addLog } = useLogContext()
 
   let totalRowIndex = 0 // track row index across different parents
 
@@ -68,11 +69,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         const lastRow = refsMatrix.current.size - 1
         refsMatrix.current.delete(lastRow)
       }
-
-      const emptyCategory = categoryData?.find((c) => c.name === "")
+      const emptyCategory = categoryData?.find((c) => c.id === "")
       if (emptyCategory) {
-        const row = categoryData.indexOf(emptyCategory)
-        refsMatrix.current?.get(row)?.get(0)?.input?.focus()
+        // find catetgory in refsMatrix.current categories and focus on the input
+        const row = Array.from(refsMatrix.current.keys()).find(
+          (row) => refsMatrix.current?.get(row)?.get(0)?.category?.id === "",
+        )
+        if (row) {
+          refsMatrix.current?.get(row)?.get(0)?.input?.focus()
+        }
       }
     }
 
@@ -133,6 +138,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         })
 
         if (success && id) {
+          addLog(
+            `[${new Date().toLocaleTimeString()}] Inserted category ${newCategoryName}`,
+          )
           setCategoryData((prev) => {
             if (!prev) return null
             return prev.map((c) => {
@@ -151,7 +159,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         }
       } catch (err) {
         console.error(err)
-        alert("Failed to insert category (replace with toast)")
+        addLog(
+          `[${new Date().toLocaleTimeString()}] Error: Failed to insert category ${newCategoryName}`,
+        )
       }
     }
   }

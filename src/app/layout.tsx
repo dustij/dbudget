@@ -2,6 +2,7 @@ import "./globals.css"
 
 import type { Metadata } from "next"
 import { GeistSans } from "geist/font"
+import { LogProvider } from "~/context/log-context"
 
 export const metadata: Metadata = {
   title: "Dbudget",
@@ -15,7 +16,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={GeistSans.className}>{children}</body>
+      <LogProvider>
+        <body className={GeistSans.className}>{children}</body>
+      </LogProvider>
     </html>
   )
 }

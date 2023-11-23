@@ -45,3 +45,7 @@ interface ICategoryRef {
   input: HTMLInputElement | null
   category: ICategory | null
 }
+
+type ILog = {
+  [key: number]: string // key is a timestamp in milliseconds
+}

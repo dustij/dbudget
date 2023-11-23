@@ -10,7 +10,7 @@ const Footer: FC<FooterProps> = () => {
     console.log("Footer clicked!")
   }
   return (
-    <footer className="h-6 bg-yellow-500">
+    <footer className="h-6 border-b border-l border-r bg-white">
       <StatusBar onClick={handleClick} />
     </footer>
   )
