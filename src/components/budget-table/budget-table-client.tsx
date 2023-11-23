@@ -129,12 +129,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       const { success, id } = await actions.insertCategory({
         userId,
         name: newCategoryName,
-        parent: e.target.dataset.parent as CategoryParent,
+        parent: category.parent,
       })
 
       if (success && id) {
         setCategoryData((prev) => {
-          return prev!.map((c) => {
+          if (!prev) return null
+          return prev.map((c) => {
             if (c.id === category.id) {
               return { ...c, id, name: newCategoryName }
             } else {
@@ -154,6 +155,81 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     }
   }
 
+  const handleAmountFocusOut = async (
+    e: React.FocusEvent<HTMLInputElement>,
+  ) => {
+    console.log("HANDLE AMOUNT FOCUS OUT @", new Date().toLocaleTimeString())
+    const input = e.target
+    const row = parseInt(input.dataset.row!)
+    const col = parseInt(input.dataset.col!)
+    const category = refsMatrix.current!.get(row)!.get(col)!
+      .category! as IExtendedCategory // will always exist, assigned to map in render
+    const newAmount = parseInt((parseFloat(input.value) * 100).toFixed(0)) // convert dollars to cents
+    const oldAmount = yearData?.amounts
+      .find((amount) => amount.categories.find((c) => c.id === category.id))
+      ?.categories.find((c) => c.id === category.id)?.monthlyAmounts[col - 1]
+      ?.amount
+
+    // If the amount is empty or 0, delete the amount
+    if (newAmount === 0) {
+      return
+    }
+
+    // If the amount is unchanged, do nothing
+    if (newAmount === oldAmount) {
+      return
+    }
+
+    // If the amount id is empty, insert a new amount
+    try {
+      const { success, id } = await actions.insertAmount({
+        userId,
+        amount: newAmount,
+        year,
+        month: col,
+        categoryId: category.id,
+      })
+
+      console.log("SUCCESS:", success)
+      if (success && id) {
+        setYearData((prev) => {
+          if (!prev) return null
+          e.target.id = id // Set input id to the id of the amount
+          const updatedAmounts = prev.amounts.map((amount) =>
+            amount.parent === category.parent
+              ? {
+                  ...amount,
+                  categories: amount.categories.map((c) =>
+                    c.id === category.id
+                      ? {
+                          ...c,
+                          monthlyAmounts: [
+                            ...c.monthlyAmounts,
+                            {
+                              id,
+                              amount: newAmount,
+                            },
+                          ],
+                        }
+                      : c,
+                  ),
+                }
+              : amount,
+          )
+          return {
+            ...prev,
+            amounts: updatedAmounts,
+          }
+        })
+      } else {
+        throw new Error("Failed to insert amount")
+      }
+    } catch (err) {
+      console.error(err)
+      alert("Failed to insert amount (replace with toast)")
+    }
+  }
+
   const getMap = () => {
     if (!refsMatrix.current) {
       refsMatrix.current = new Map<number, Map<number, ICategoryRef>>()
@@ -166,6 +242,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     row: number,
     col: number,
   ) => {
+    // TODO: ignore shift + enter on mobile
     if (e.shiftKey && e.key === "Enter") {
       /**
        * If shift + enter, move focus upwards
@@ -280,6 +357,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     <>
       {console.log("RENDER @", new Date().toLocaleTimeString())}
       {console.log(`\tcategoryData:`, categoryData)}
+      {console.log(`\trefsMatrix:`, refsMatrix.current)}
+      {console.log(`\tyearData:`, yearData)}
 
       <div
         className={
@@ -374,7 +453,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   id={category.id}
                                   key={category.id}
                                   myValue={category.name}
-                                  data-parent={category.parent}
                                   data-row={row}
                                   data-col={0}
                                   ref={(input) => {
@@ -408,10 +486,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                     type="number"
                                     step={"0.01"}
                                     myValue={0}
-                                    data-parent={category.parent}
-                                    data-category-id={category.id}
-                                    data-category-name={category.name}
-                                    data-month={col + 1}
+                                    data-row={row}
+                                    data-col={col + 1}
                                     ref={(input) => {
                                       if (input) {
                                         const map = getMap()
@@ -428,7 +504,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                       handleKeyDown(e, row, col + 1)
                                     }
                                     onFocus={(e) => e.target.select()}
-                                    // onFocusOut={(e) => handleFocusOut(e)}
+                                    onFocusOut={(e) => handleAmountFocusOut(e)}
                                   />
                                 </td>
                               ))}
@@ -450,7 +526,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   id={category.id}
                                   key={category.id}
                                   myValue={category.name}
-                                  data-parent={category.parent}
+                                  data-row={row}
+                                  data-col={0}
                                   ref={(input) => {
                                     if (input) {
                                       const map = getMap()
@@ -486,10 +563,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                     type="number"
                                     step={"0.01"}
                                     myValue={amount.amount / 100} // convert cents to dollars
-                                    data-parent={category.parent}
-                                    data-category-id={category.id}
-                                    data-category-name={category.name}
-                                    data-month={col + 1}
+                                    data-row={row}
+                                    data-col={col + 1}
                                     ref={(input) => {
                                       if (input) {
                                         const map = getMap()
@@ -506,7 +581,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                       handleKeyDown(e, row, col + 1)
                                     }
                                     onFocus={(e) => e.target.select()}
-                                    // onFocusOut={(e) => handleFocusOut(e)}
+                                    onFocusOut={(e) => handleAmountFocusOut(e)}
                                   />
                                 </td>
                               ))}
