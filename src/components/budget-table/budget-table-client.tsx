@@ -10,6 +10,7 @@ import { useLogContext } from "~/context/log-context"
 import { performRevalidation } from "~/lib/actions"
 
 // Schedule revalidation every * minutes
+// TODO: is a revalidation interval necessary?
 const minutes = 60
 const revalidationInterval = setInterval(
   performRevalidation,
