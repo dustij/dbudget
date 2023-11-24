@@ -152,7 +152,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
         if (success && id) {
           addLog(
-            `[${new Date().toLocaleTimeString()}] Inserted category ${newCategoryName}`,
+            `[${new Date().toLocaleTimeString()}] Inserted category "${newCategoryName}"`,
           )
           setCategoryData((prev) => {
             if (!prev) return null
@@ -173,7 +173,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       } catch (err) {
         console.error(err)
         addLog(
-          `[${new Date().toLocaleTimeString()}] Error: Failed to insert category ${newCategoryName}`,
+          `[${new Date().toLocaleTimeString()}] Error: Failed to insert category "${newCategoryName}"`,
         )
       }
     }
@@ -219,10 +219,11 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
         if (success && id) {
           addLog(
-            `[${new Date().toLocaleTimeString()}] Inserted amount ${formatCurrency(
+            `[${new Date().toLocaleTimeString()}] Set the amount to ${formatCurrency(
               newAmount / 100,
-              false,
-            )} for category "${category.name} for month ${col}"`,
+            )} in ${new Date(2023, col - 1, 1).toLocaleString("default", {
+              month: "short",
+            })} for the "${category.name}" category`,
           )
           setYearData((prev) => {
             if (!prev) return null
@@ -259,10 +260,11 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       } catch (err) {
         console.error(err)
         addLog(
-          `[${new Date().toLocaleTimeString()}] Error: Failed to insert amount ${formatCurrency(
+          `[${new Date().toLocaleTimeString()}] Error: Failed to set the amount to ${formatCurrency(
             newAmount / 100,
-            false,
-          )} for category "${category.name} for month ${col}"`,
+          )} in ${new Date(2023, col - 1, 1).toLocaleString("default", {
+            month: "short",
+          })} for the "${category.name}" category`,
         )
       }
     }
