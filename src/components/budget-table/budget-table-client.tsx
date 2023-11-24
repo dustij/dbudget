@@ -1,11 +1,12 @@
 "use client"
 
 import React, { type FC, useState, useEffect, useRef } from "react"
-import { cn, toTitleCase } from "~/lib/utils"
+import { cn, formatCurrency, toTitleCase } from "~/lib/utils"
 import YearPicker from "../year-picker"
 import { IoAddCircleOutline } from "react-icons/io5"
 import { CATEGORY_PARENTS } from "~/lib/constants"
 import { MyInput } from "../my-input"
+import { useLogContext } from "~/context/log-context"
 
 interface BudgetTableClientProps {
   userId: string
@@ -49,7 +50,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   budget,
   actions,
 }) => {
-  // TODO: should I optimistically update the UI? https://react.dev/reference/react/useOptimistic#noun-labs-1201738-(2)
   const [year, setYear] = useState<number>(2023)
   const [yearData, setYearData] = useState<IYearData | null>(
     budget.yearData.find((data) => data.year === year) || null,
@@ -58,6 +58,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     budget.categories || null,
   )
   const refsMatrix = useRef<Map<number, Map<number, ICategoryRef>> | null>(null)
+  const { addLog } = useLogContext()
 
   let totalRowIndex = 0 // track row index across different parents
 
@@ -68,11 +69,10 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         const lastRow = refsMatrix.current.size - 1
         refsMatrix.current.delete(lastRow)
       }
-
-      const emptyCategory = categoryData?.find((c) => c.name === "")
-      if (emptyCategory) {
-        const row = categoryData.indexOf(emptyCategory)
-        refsMatrix.current?.get(row)?.get(0)?.input?.focus()
+      // focus on input without id
+      const inputWithoutId = findCategoryInputWithoutId()
+      if (inputWithoutId) {
+        inputWithoutId.focus()
       }
     }
 
@@ -80,12 +80,30 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     console.log(`\trefsMatrix:`, refsMatrix.current)
   }, [categoryData])
 
+  const findCategoryInputWithoutId = () => {
+    if (refsMatrix.current) {
+      for (const [, columnsMap] of refsMatrix.current.entries()) {
+        for (const [col, { input }] of columnsMap.entries()) {
+          if (col === 0 && input && !input.id) {
+            // You found a category input without an id
+            return input
+          }
+        }
+      }
+    }
+    // No input without an id found
+    return null
+  }
+
   const hanldeYearChange = (year: number) => {
     setYear(year)
   }
 
   const handleAddRow = (categoryParent: CategoryParent) => {
     console.log("HANDLE ADD ROW @", new Date().toLocaleTimeString())
+    const inputWithoutId = findCategoryInputWithoutId()
+    console.log(`\tinputWithoutId:`, inputWithoutId)
+    if (findCategoryInputWithoutId()) return // prevents duplicating row when input value is not empty for new category name and add row is clicked
     setCategoryData((prev) => {
       const newCategory = {
         userId,
@@ -133,6 +151,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         })
 
         if (success && id) {
+          addLog(
+            `[${new Date().toLocaleTimeString()}] Inserted category "${newCategoryName}"`,
+          )
           setCategoryData((prev) => {
             if (!prev) return null
             return prev.map((c) => {
@@ -151,7 +172,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         }
       } catch (err) {
         console.error(err)
-        alert("Failed to insert category (replace with toast)")
+        addLog(
+          `[${new Date().toLocaleTimeString()}] Error: Failed to insert category "${newCategoryName}"`,
+        )
       }
     }
   }
@@ -171,6 +194,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       ?.categories.find((c) => c.id === category.id)?.monthlyAmounts[col - 1]
       ?.amount
 
+    console.log(newAmount, oldAmount)
+
     // If the amount is empty or 0, delete the amount
     if (newAmount === 0) {
       return
@@ -181,8 +206,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       return
     }
 
-    // If the amount id is empty, insert a new amount
-    if (input.id === "") {
+    // If the amount has no id, insert a new amount
+    if (!input.id) {
       try {
         const { success, id } = await actions.insertAmount({
           userId,
@@ -193,6 +218,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         })
 
         if (success && id) {
+          addLog(
+            `[${new Date().toLocaleTimeString()}] Set the amount to ${formatCurrency(
+              newAmount / 100,
+            )} in ${new Date(2023, col - 1, 1).toLocaleString("default", {
+              month: "short",
+            })} for the "${category.name}" category`,
+          )
           setYearData((prev) => {
             if (!prev) return null
             e.target.id = id // Set input id to the id of the amount
@@ -227,7 +259,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         }
       } catch (err) {
         console.error(err)
-        alert("Failed to insert amount (replace with toast)")
+        addLog(
+          `[${new Date().toLocaleTimeString()}] Error: Failed to set the amount to ${formatCurrency(
+            newAmount / 100,
+          )} in ${new Date(2023, col - 1, 1).toLocaleString("default", {
+            month: "short",
+          })} for the "${category.name}" category`,
+        )
       }
     }
   }
@@ -483,7 +521,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   )}
                                 >
                                   <MyInput
-                                    id={`new-amount-${row}-${col}`}
                                     key={`new-amount-${row}-${col}`}
                                     type="number"
                                     step={"0.01"}

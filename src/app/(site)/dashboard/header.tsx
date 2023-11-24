@@ -7,7 +7,14 @@ import { useSelectedLayoutSegments } from "next/navigation"
 import { useState, type FC } from "react"
 import { cn } from "~/lib/utils"
 import { RxHamburgerMenu } from "react-icons/rx"
-import { AiOutlineClose } from "react-icons/ai" // import the AiOutlineClose icon from react-icons/ai
+import { AiOutlineClose } from "react-icons/ai"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog"
 
 interface HeaderProps {
   user: SessionUser
@@ -18,6 +25,10 @@ const Header: FC<HeaderProps> = ({ user, className }) => {
   const [showUserDialog, setShowUserDialog] = useState(false)
   const [showSidebar, setShowSidebar] = useState(false)
   const segement = useSelectedLayoutSegments()
+
+  const handleCloseUserDialog = () => {
+    setShowUserDialog(false)
+  }
 
   return (
     <>
@@ -229,36 +240,32 @@ const Header: FC<HeaderProps> = ({ user, className }) => {
         </div>
       </header>
       {showUserDialog && (
-        <>
-          <div
-            onClick={() => setShowUserDialog(false)}
-            className="fixed inset-0 z-40 bg-zinc-900/60 backdrop-blur-sm mobile:bg-zinc-900/10 mobile:backdrop-blur-none"
-          />
-          <div
-            onClick={() => setShowUserDialog(false)}
-            className="fixed inset-0 z-50 flex flex-col items-center justify-center"
-          >
-            <div
-              aria-label="User Dialog"
-              onClick={(e) => e.stopPropagation()}
-              className="z-50 rounded-lg border bg-white shadow-md mobile:fixed mobile:right-0 mobile:top-0 mobile:mr-4 mobile:mt-14"
-            >
-              <div className="flex flex-col justify-between space-y-2 py-2">
-                <div className="flex flex-col px-6">
-                  <h1 className="text-lg font-semibold">{user.name}</h1>
-                  <div className="font-light text-zinc-400">{user.email}</div>
-                </div>
-                <div
-                  onClick={() => signOut()}
-                  className="flex items-center border-t px-6 py-2 text-zinc-600 hover:cursor-pointer hover:bg-zinc-50 hover:text-zinc-950"
-                >
-                  <p>Sign Out</p>
-                </div>
+        <Dialog open={showUserDialog} onOpenChange={handleCloseUserDialog}>
+          <DialogTrigger asChild>
+            <div style={{ cursor: "pointer" }}>
+              {/* Content inside the trigger */}
+              Click here to view user details
+            </div>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>User Details</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col justify-between space-y-2 py-2">
+              <div className="flex flex-col px-6">
+                <h1 className="text-lg font-semibold">{user.name}</h1>
+                <div className="font-light text-zinc-400">{user.email}</div>
+              </div>
+              <div
+                onClick={() => signOut()}
+                className="flex items-center border-t px-6 py-2 text-zinc-600 hover:cursor-pointer hover:text-zinc-950"
+              >
+                <p>Sign Out</p>
               </div>
             </div>
-          </div>
-        </>
-      )}
+          </DialogContent>
+        </Dialog>
+      )}{" "}
     </>
   )
 }
