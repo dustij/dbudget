@@ -136,11 +136,19 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     id: string | null
   }> => {
     "use server"
+    console.log("Inserting budget category...")
+
     const data = CreateCategory.parse({ userId, name, parent }) as {
       userId: string
       name: string
       parent: CategoryParent
     }
+
+    // mock delayed response, to test for bugs with optimistic updates
+    const delay = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms))
+    await delay(3000)
+    console.log("Done mocking delay ...")
 
     try {
       await db.insert(categories).values(data)
@@ -178,6 +186,13 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
   ): Promise<{ success: boolean }> => {
     "use server"
     console.log("Deleting budget category...")
+
+    // mock delayed response, to test for bugs with optimistic updates
+    const delay = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms))
+    await delay(3000)
+    console.log("Done mocking delay ...")
+
     try {
       await db.delete(categories).where(eq(categories.id, categoryId))
       try {

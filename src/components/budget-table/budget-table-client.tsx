@@ -7,7 +7,18 @@ import { IoAddCircleOutline } from "react-icons/io5"
 import { CATEGORY_PARENTS } from "~/lib/constants"
 import { MyInput } from "../my-input"
 import { useLogContext } from "~/context/log-context"
-import { performRevalidation } from "~/lib/actions"
+
+//  FIXME: Forseeable issues:
+/*
+  - When adding a new category, if the response delay is longer than it takes for the user to enter amounts,
+  the amounts will be added without a category id associated with them, then when the category id is returned,
+  the row will be 0 amounts, and the database will have stale amounts with no category id associated with them.
+
+  - When deleting a category, if the response delay is longer than it takes for the user to enter amounts,
+  the amounts will be added without a category id associated with them, then when the category is deleted,
+  the database will have stale amounts with a category id associated with them, but no category in the categories 
+  table with that id.
+*/
 
 interface BudgetTableClientProps {
   userId: string
