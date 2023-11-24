@@ -9,14 +9,6 @@ import { MyInput } from "../my-input"
 import { useLogContext } from "~/context/log-context"
 import { performRevalidation } from "~/lib/actions"
 
-// Schedule revalidation every * minutes
-// TODO: is a revalidation interval necessary?
-const minutes = 60
-const revalidationInterval = setInterval(
-  performRevalidation,
-  minutes * 60 * 1000,
-)
-
 interface BudgetTableClientProps {
   userId: string
   budget: IBudget
@@ -74,11 +66,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   let totalRowIndex = 0 // track row index across different parents
 
   useEffect(() => {
-    // Cleanup function will be called when the component is unmounted
-    return cleanup
-  }, [])
-
-  useEffect(() => {
     console.log("USE EFFECT [categoryData] @", new Date().toLocaleTimeString())
     if (refsMatrix.current && categoryData) {
       if (refsMatrix.current.size > categoryData.length) {
@@ -96,11 +83,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     console.log(`\tcategoryData:`, categoryData)
     console.log(`\trefsMatrix:`, refsMatrix.current)
   }, [categoryData])
-
-  const cleanup = () => {
-    console.log("CLEANUP @", new Date().toLocaleTimeString())
-    clearInterval(revalidationInterval)
-  }
 
   const findCategoryInputWithoutId = () => {
     if (refsMatrix.current) {
