@@ -131,40 +131,20 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     const newCategoryName = input.value.trim()
     const oldCategoryName = category.name
 
-    // If the category name is empty, delete the category
-    if (newCategoryName === "") {
-      console.log("DELETE CATEGORY")
-      // Update the state to revert the input value
-      try {
-        // const { success } = await actions.deleteCategory(category.id)
-        const success = false
-        if (success) {
-          addLog(
-            `[${new Date().toLocaleTimeString()}] Deleted category "${oldCategoryName}"`,
-          )
-          setCategoryData((prev) => {
-            return prev!.filter((c) => c.id !== category.id)
-          })
-        } else {
-          throw new Error("Failed to delete category")
-        }
-      } catch (err) {
-        console.error(err)
-        setValue?.(oldCategoryName)
-        addLog(
-          `[${new Date().toLocaleTimeString()}] Error: Failed to delete category "${oldCategoryName}"`,
-        )
+    console.log("category.id:", category.id)
+
+    if (newCategoryName === oldCategoryName) {
+      if (newCategoryName === "") {
+        setCategoryData((prev) => {
+          return prev!.filter((c) => c.id !== category.id)
+        })
       }
       return
     }
 
-    // If the category name is unchanged, do nothing
-    if (newCategoryName === oldCategoryName) {
-      return
-    }
-
-    // If the category id is empty, insert a new category
     if (category.id === "") {
+      console.log("INSERT CATEGORY")
+
       try {
         const { success, id } = await actions.insertCategory({
           userId,
@@ -198,6 +178,32 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           `[${new Date().toLocaleTimeString()}] Error: Failed to insert category "${newCategoryName}"`,
         )
       }
+      return
+    }
+
+    if (newCategoryName === "") {
+      console.log("DELETE CATEGORY")
+      try {
+        // const { success } = await actions.deleteCategory(category.id)
+        const success = false
+        if (success) {
+          addLog(
+            `[${new Date().toLocaleTimeString()}] Deleted category "${oldCategoryName}"`,
+          )
+          setCategoryData((prev) => {
+            return prev!.filter((c) => c.id !== category.id)
+          })
+        } else {
+          throw new Error("Failed to delete category")
+        }
+      } catch (err) {
+        console.error(err)
+        setValue?.(oldCategoryName)
+        addLog(
+          `[${new Date().toLocaleTimeString()}] Error: Failed to delete category "${oldCategoryName}"`,
+        )
+      }
+      return
     }
   }
 
@@ -531,8 +537,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   }}
                                   onKeyDown={(e) => handleKeyDown(e, row, 0)}
                                   onFocus={(e) => e.target.select()}
-                                  onFocusOut={({ e }) =>
-                                    handleCategoryFocusOut(e)
+                                  onFocusOut={({ e, setValue }) =>
+                                    handleCategoryFocusOut(e, setValue)
                                   }
                                 />
                               </td>
