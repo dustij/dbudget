@@ -117,6 +117,12 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     return { success: false }
   }
 
+  const deleteAmount = async (): Promise<{ success: boolean }> => {
+    "use server"
+    console.log("Deleting budget amount...")
+    return { success: false }
+  }
+
   const insertCategory = async ({
     userId,
     name,
@@ -167,6 +173,28 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     return { success: false }
   }
 
+  const deleteCategory = async (
+    categoryId: string,
+  ): Promise<{ success: boolean }> => {
+    "use server"
+    console.log("Deleting budget category...")
+    try {
+      await db.delete(categories).where(eq(categories.id, categoryId))
+      try {
+        await db.delete(amounts).where(eq(amounts.categoryId, categoryId))
+        return { success: true }
+      } catch (error) {
+        console.error(
+          `Error deleting amounts for category (${categoryId}): ${error}`,
+        )
+        return { success: false }
+      }
+    } catch (error) {
+      console.error(`Error deleting category (${categoryId}): ${error}`)
+      return { success: false }
+    }
+  }
+
   return (
     <BudgetTableClient
       userId={userId}
@@ -174,8 +202,10 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
       actions={{
         insertAmount: insertAmount,
         updateAmount: updateAmount,
+        deleteAmount: deleteAmount,
         insertCategory: insertCategory,
         updateCategory: updateCategory,
+        deleteCategory: deleteCategory,
       }}
     />
   )

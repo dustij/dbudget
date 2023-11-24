@@ -29,6 +29,7 @@ interface BudgetTableClientProps {
       id: string | null
     }>
     updateAmount: () => Promise<{ success: boolean }>
+    deleteAmount: () => Promise<{ success: boolean }>
     insertCategory: ({
       userId,
       name,
@@ -42,6 +43,7 @@ interface BudgetTableClientProps {
       id: string | null
     }>
     updateCategory: () => Promise<{ success: boolean }>
+    deleteCategory: (categoryId: string) => Promise<{ success: boolean }>
   }
 }
 
@@ -69,6 +71,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         const lastRow = refsMatrix.current.size - 1
         refsMatrix.current.delete(lastRow)
       }
+
       // focus on input without id
       const inputWithoutId = findCategoryInputWithoutId()
       if (inputWithoutId) {
@@ -118,6 +121,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
   const handleCategoryFocusOut = async (
     e: React.FocusEvent<HTMLInputElement>,
+    setValue?: React.Dispatch<React.SetStateAction<string | number>>,
   ) => {
     console.log("HANDLE CATEGORY FOCUS OUT @", new Date().toLocaleTimeString())
     const input = e.target
@@ -130,9 +134,27 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     // If the category name is empty, delete the category
     if (newCategoryName === "") {
       console.log("DELETE CATEGORY")
-      setCategoryData((prev) => {
-        return prev!.filter((c) => c.id !== category.id)
-      })
+      // Update the state to revert the input value
+      try {
+        // const { success } = await actions.deleteCategory(category.id)
+        const success = false
+        if (success) {
+          addLog(
+            `[${new Date().toLocaleTimeString()}] Deleted category "${oldCategoryName}"`,
+          )
+          setCategoryData((prev) => {
+            return prev!.filter((c) => c.id !== category.id)
+          })
+        } else {
+          throw new Error("Failed to delete category")
+        }
+      } catch (err) {
+        console.error(err)
+        setValue?.(oldCategoryName)
+        addLog(
+          `[${new Date().toLocaleTimeString()}] Error: Failed to delete category "${oldCategoryName}"`,
+        )
+      }
       return
     }
 
@@ -509,7 +531,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   }}
                                   onKeyDown={(e) => handleKeyDown(e, row, 0)}
                                   onFocus={(e) => e.target.select()}
-                                  onBlur={(e) => handleCategoryFocusOut(e)}
+                                  onFocusOut={({ e }) =>
+                                    handleCategoryFocusOut(e)
+                                  }
                                 />
                               </td>
                               {Array.from({ length: 12 }).map((_, col) => (
@@ -543,7 +567,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                       handleKeyDown(e, row, col + 1)
                                     }
                                     onFocus={(e) => e.target.select()}
-                                    onFocusOut={(e) => handleAmountFocusOut(e)}
+                                    onFocusOut={({ e }) =>
+                                      handleAmountFocusOut(e)
+                                    }
                                   />
                                 </td>
                               ))}
@@ -581,7 +607,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   }}
                                   onKeyDown={(e) => handleKeyDown(e, row, 0)}
                                   onFocus={(e) => e.target.select()}
-                                  onBlur={(e) => handleCategoryFocusOut(e)}
+                                  onFocusOut={({ e, setValue }) =>
+                                    handleCategoryFocusOut(e, setValue)
+                                  }
                                 />
                               </td>
                               {monthlyAmounts!.map((amount, col) => (
@@ -594,7 +622,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                 >
                                   <MyInput
                                     id={amount.id ?? ""}
-                                    key={`${amount.id}`}
+                                    key={amount.id}
                                     type="number"
                                     step={"0.01"}
                                     myValue={amount.amount / 100} // convert cents to dollars
@@ -616,7 +644,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                       handleKeyDown(e, row, col + 1)
                                     }
                                     onFocus={(e) => e.target.select()}
-                                    onFocusOut={(e) => handleAmountFocusOut(e)}
+                                    onFocusOut={({ e }) =>
+                                      handleAmountFocusOut(e)
+                                    }
                                   />
                                 </td>
                               ))}
