@@ -203,7 +203,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
             `[${new Date().toLocaleTimeString()}] Success: Inserted category "${newCategoryName}"`,
           )
           setCategoryData((prev) => {
-            if (!prev) return null
+            if (!prev) return []
             return prev.map((c) => {
               if (c.id === category.id) {
                 return { ...c, id, name: newCategoryName }
@@ -328,7 +328,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
             }" category`,
           )
           setYearData((prev) => {
-            if (!prev) return null
+            if (!prev) return { year, amounts: [] }
             const updatedAmounts = prev.amounts.map((amount) =>
               amount.parent === category.parent
                 ? {
@@ -337,8 +337,10 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                       c.id === category.id
                         ? {
                             ...c,
-                            monthlyAmounts: c.monthlyAmounts.filter(
-                              (amount) => amount.id !== input.id,
+                            monthlyAmounts: c.monthlyAmounts.map((amount, i) =>
+                              i === col - 1
+                                ? { ...amount, id: "", amount: 0 }
+                                : amount,
                             ),
                           }
                         : c,
