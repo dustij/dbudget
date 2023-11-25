@@ -85,10 +85,10 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     })
 
     // mock delayed response, to test for bugs with optimistic updates
-    const delay = (ms: number) =>
-      new Promise((resolve) => setTimeout(resolve, ms))
-    await delay(5000)
-    console.log("Done mocking delay ...")
+    // const delay = (ms: number) =>
+    //   new Promise((resolve) => setTimeout(resolve, ms))
+    // await delay(5000)
+    // console.log("Done mocking delay ...")
 
     try {
       await db.insert(amounts).values(data)
@@ -130,10 +130,10 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     console.log("Deleting budget amount...")
 
     // mock delayed response, to test for bugs with optimistic updates
-    const delay = (ms: number) =>
-      new Promise((resolve) => setTimeout(resolve, ms))
-    await delay(5000)
-    console.log("Done mocking delay ...")
+    // const delay = (ms: number) =>
+    //   new Promise((resolve) => setTimeout(resolve, ms))
+    // await delay(5000)
+    // console.log("Done mocking delay ...")
 
     try {
       await db.delete(amounts).where(eq(amounts.id, amountId))
@@ -166,10 +166,10 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     }
 
     // mock delayed response, to test for bugs with optimistic updates
-    const delay = (ms: number) =>
-      new Promise((resolve) => setTimeout(resolve, ms))
-    await delay(5000)
-    console.log("Done mocking delay ...")
+    // const delay = (ms: number) =>
+    //   new Promise((resolve) => setTimeout(resolve, ms))
+    // await delay(5000)
+    // console.log("Done mocking delay ...")
 
     try {
       await db.insert(categories).values(data)
@@ -209,10 +209,10 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     console.log("Deleting budget category...")
 
     // mock delayed response, to test for bugs with optimistic updates
-    const delay = (ms: number) =>
-      new Promise((resolve) => setTimeout(resolve, ms))
-    await delay(5000)
-    console.log("Done mocking delay ...")
+    // const delay = (ms: number) =>
+    //   new Promise((resolve) => setTimeout(resolve, ms))
+    // await delay(5000)
+    // console.log("Done mocking delay ...")
 
     try {
       await db.delete(categories).where(eq(categories.id, categoryId))
