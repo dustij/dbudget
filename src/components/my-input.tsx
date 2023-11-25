@@ -30,7 +30,8 @@ const MyInput = React.forwardRef<HTMLInputElement, InputProps>(
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onBlur={(e) => {
-          type === "number" && setValue(formatCurrency(value, false))
+          type === "number" &&
+            setValue(formatCurrency(value === "" ? 0 : value, false))
           onFocusOut?.({
             e: e,
             setValue: setValue,

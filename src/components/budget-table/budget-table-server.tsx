@@ -84,6 +84,12 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
       month,
     })
 
+    // mock delayed response, to test for bugs with optimistic updates
+    const delay = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms))
+    await delay(5000)
+    console.log("Done mocking delay ...")
+
     try {
       await db.insert(amounts).values(data)
       try {
@@ -117,10 +123,25 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     return { success: false }
   }
 
-  const deleteAmount = async (): Promise<{ success: boolean }> => {
+  const deleteAmount = async (
+    amountId: string,
+  ): Promise<{ success: boolean }> => {
     "use server"
     console.log("Deleting budget amount...")
-    return { success: false }
+
+    // mock delayed response, to test for bugs with optimistic updates
+    const delay = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms))
+    await delay(5000)
+    console.log("Done mocking delay ...")
+
+    try {
+      await db.delete(amounts).where(eq(amounts.id, amountId))
+      return { success: true }
+    } catch (error) {
+      console.error(`Error deleting amount (${amountId}): ${error}`)
+      return { success: false }
+    }
   }
 
   const insertCategory = async ({
@@ -147,7 +168,7 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     // mock delayed response, to test for bugs with optimistic updates
     const delay = (ms: number) =>
       new Promise((resolve) => setTimeout(resolve, ms))
-    await delay(3000)
+    await delay(5000)
     console.log("Done mocking delay ...")
 
     try {
@@ -190,7 +211,7 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     // mock delayed response, to test for bugs with optimistic updates
     const delay = (ms: number) =>
       new Promise((resolve) => setTimeout(resolve, ms))
-    await delay(3000)
+    await delay(5000)
     console.log("Done mocking delay ...")
 
     try {
