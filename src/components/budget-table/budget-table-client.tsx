@@ -7,6 +7,31 @@ import { IoAddCircleOutline } from "react-icons/io5"
 import { CATEGORY_PARENTS } from "~/lib/constants"
 import { MyInput } from "../my-input"
 import { useLogContext } from "~/context/log-context"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog"
+import { set } from "zod"
+
+//  FIXME: Forseeable issues:
+/*
+  - When adding a new category, if the response delay is longer than it takes for the user to enter amounts,
+  the amounts will be added without a category id associated with them, then when the category id is returned,
+  the row will be 0 amounts, and the database will have stale amounts with no category id associated with them.
+
+  - When deleting a category, if the response delay is longer than it takes for the user to enter amounts,
+  the amounts will be added without a category id associated with them, then when the category is deleted,
+  the database will have stale amounts with a category id associated with them, but no category in the categories 
+  table with that id.
+
+  To work around these issues, I added a waiting dialog that shows when the user tries to interact with the table
+  while waiting for a response from the server. This prevents the user from adding new rows or entering amounts while
+  still trying to maintain responsiveness where possible. The waiting dialog is only shown if the user tries to interact
+  with a row that has no category id, or if the user tries to interact with a row while a category is being deleted.
+*/
 
 interface BudgetTableClientProps {
   userId: string
@@ -29,6 +54,7 @@ interface BudgetTableClientProps {
       id: string | null
     }>
     updateAmount: () => Promise<{ success: boolean }>
+    deleteAmount: (amountId: string) => Promise<{ success: boolean }>
     insertCategory: ({
       userId,
       name,
@@ -42,6 +68,7 @@ interface BudgetTableClientProps {
       id: string | null
     }>
     updateCategory: () => Promise<{ success: boolean }>
+    deleteCategory: (categoryId: string) => Promise<{ success: boolean }>
   }
 }
 
@@ -58,6 +85,10 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     budget.categories || null,
   )
   const refsMatrix = useRef<Map<number, Map<number, ICategoryRef>> | null>(null)
+  const [isWaitingForResponse, setIsWaitingForResponse] =
+    useState<boolean>(false)
+  const [showWaitingDialog, setShowWaitingDialog] = useState<boolean>(false)
+  const [isDeletingCategory, setIsDeletingCategory] = useState<boolean>(false)
   const { addLog } = useLogContext()
 
   let totalRowIndex = 0 // track row index across different parents
@@ -69,6 +100,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         const lastRow = refsMatrix.current.size - 1
         refsMatrix.current.delete(lastRow)
       }
+
       // focus on input without id
       const inputWithoutId = findCategoryInputWithoutId()
       if (inputWithoutId) {
@@ -103,7 +135,11 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     console.log("HANDLE ADD ROW @", new Date().toLocaleTimeString())
     const inputWithoutId = findCategoryInputWithoutId()
     console.log(`\tinputWithoutId:`, inputWithoutId)
-    if (findCategoryInputWithoutId()) return // prevents duplicating row when input value is not empty for new category name and add row is clicked
+    if (findCategoryInputWithoutId()) {
+      // prevents duplicating row when input value is not empty for new category name and add row is clicked
+      setShowWaitingDialog(true)
+      return
+    }
     setCategoryData((prev) => {
       const newCategory = {
         userId,
@@ -118,6 +154,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
   const handleCategoryFocusOut = async (
     e: React.FocusEvent<HTMLInputElement>,
+    setValue?: React.Dispatch<React.SetStateAction<string | number>>,
   ) => {
     console.log("HANDLE CATEGORY FOCUS OUT @", new Date().toLocaleTimeString())
     const input = e.target
@@ -127,32 +164,43 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     const newCategoryName = input.value.trim()
     const oldCategoryName = category.name
 
-    // If the category name is empty, delete the category
-    if (newCategoryName === "") {
-      console.log("DELETE CATEGORY")
-      setCategoryData((prev) => {
-        return prev!.filter((c) => c.id !== category.id)
-      })
-      return
-    }
+    console.log("category.id:", category.id)
 
-    // If the category name is unchanged, do nothing
     if (newCategoryName === oldCategoryName) {
+      // when newly added row is blurred without changing the category name, delete the row, no db call
+      if (newCategoryName === "") {
+        setCategoryData((prev) => {
+          return prev!.filter((c) => c.id !== category.id)
+        })
+      }
       return
     }
 
-    // If the category id is empty, insert a new category
+    /**
+     * Insert new category
+     */
     if (category.id === "") {
+      console.log("INSERT CATEGORY")
+      addLog(
+        `[${new Date().toLocaleTimeString()}] Inserting category "${newCategoryName}"...`,
+      )
+
       try {
+        setIsWaitingForResponse(true)
+        // Not showing waiting dailog right away, only show if user trys to interact with this row (see handleKeyDown)
+
         const { success, id } = await actions.insertCategory({
           userId,
           name: newCategoryName,
           parent: category.parent,
         })
 
+        setIsWaitingForResponse(false)
+        setShowWaitingDialog(false)
+
         if (success && id) {
           addLog(
-            `[${new Date().toLocaleTimeString()}] Inserted category "${newCategoryName}"`,
+            `[${new Date().toLocaleTimeString()}] Success: Inserted category "${newCategoryName}"`,
           )
           setCategoryData((prev) => {
             if (!prev) return null
@@ -176,7 +224,54 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           `[${new Date().toLocaleTimeString()}] Error: Failed to insert category "${newCategoryName}"`,
         )
       }
+      return
     }
+
+    /**
+     * Delete existing category
+     */
+    if (newCategoryName === "") {
+      console.log("DELETE CATEGORY")
+
+      addLog(
+        `[${new Date().toLocaleTimeString()}] Deleting category "${oldCategoryName}"...`,
+      )
+
+      try {
+        setIsDeletingCategory(true)
+        setIsWaitingForResponse(true)
+        // Not showing waiting dailog right away, only show if user trys to interact with this row (see handleKeyDown)
+
+        const { success } = await actions.deleteCategory(category.id)
+
+        setIsWaitingForResponse(false)
+        setShowWaitingDialog(false)
+        setIsDeletingCategory(false)
+
+        if (success) {
+          addLog(
+            `[${new Date().toLocaleTimeString()}] Success: Deleted category "${oldCategoryName}"`,
+          )
+          setCategoryData((prev) => {
+            return prev!.filter((c) => c.id !== category.id)
+          })
+        } else {
+          throw new Error("Failed to delete category")
+        }
+      } catch (err) {
+        console.error(err)
+        setValue?.(oldCategoryName)
+        addLog(
+          `[${new Date().toLocaleTimeString()}] Error: Failed to delete category "${oldCategoryName}"`,
+        )
+      }
+      return
+    }
+
+    /**
+     * Update existing category
+     */
+    console.log("UPDATE CATEGORY")
   }
 
   const handleAmountFocusOut = async (
@@ -196,19 +291,99 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
     console.log(newAmount, oldAmount)
 
-    // If the amount is empty or 0, delete the amount
-    if (newAmount === 0) {
-      return
-    }
-
     // If the amount is unchanged, do nothing
     if (newAmount === oldAmount) {
       return
     }
 
-    // If the amount has no id, insert a new amount
-    if (!input.id) {
+    /**
+     * Delete existing amount
+     */
+    if (!newAmount) {
+      console.log("DELETE AMOUNT")
+
+      if (!input.id) return // If no id, do nothing (amount has not been inserted yet)
+
+      addLog(
+        `[${new Date().toLocaleTimeString()}] Deleting the amount in ${new Date(
+          2023,
+          col - 1,
+          1,
+        ).toLocaleString("default", { month: "short" })} for the "${
+          category.name
+        }" category...`,
+      )
+
       try {
+        const { success } = await actions.deleteAmount(input.id)
+
+        if (success) {
+          addLog(
+            `[${new Date().toLocaleTimeString()}] Success: Deleted the amount in ${new Date(
+              2023,
+              col - 1,
+              1,
+            ).toLocaleString("default", { month: "short" })} for the "${
+              category.name
+            }" category`,
+          )
+          setYearData((prev) => {
+            if (!prev) return null
+            const updatedAmounts = prev.amounts.map((amount) =>
+              amount.parent === category.parent
+                ? {
+                    ...amount,
+                    categories: amount.categories.map((c) =>
+                      c.id === category.id
+                        ? {
+                            ...c,
+                            monthlyAmounts: c.monthlyAmounts.filter(
+                              (amount) => amount.id !== input.id,
+                            ),
+                          }
+                        : c,
+                    ),
+                  }
+                : amount,
+            )
+            return {
+              ...prev,
+              amounts: updatedAmounts,
+            }
+          })
+        } else {
+          throw new Error("Failed to delete amount")
+        }
+      } catch (err) {
+        console.error(err)
+        addLog(
+          `[${new Date().toLocaleTimeString()}] Error: Failed to delete the amount in ${new Date(
+            2023,
+            col - 1,
+            1,
+          ).toLocaleString("default", { month: "short" })} for the "${
+            category.name
+          }" category`,
+        )
+      }
+    }
+
+    /**
+     * Insert new amount
+     */
+    if (!input.id) {
+      console.log("INSERT AMOUNT")
+
+      addLog(
+        `[${new Date().toLocaleTimeString()}] Setting the amount to ${formatCurrency(
+          newAmount / 100,
+        )} in ${new Date(2023, col - 1, 1).toLocaleString("default", {
+          month: "short",
+        })} for the "${category.name}" category...`,
+      )
+
+      try {
+        if (isWaitingForResponse) return
         const { success, id } = await actions.insertAmount({
           userId,
           amount: newAmount,
@@ -219,7 +394,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
         if (success && id) {
           addLog(
-            `[${new Date().toLocaleTimeString()}] Set the amount to ${formatCurrency(
+            `[${new Date().toLocaleTimeString()}] Success: Set the amount to ${formatCurrency(
               newAmount / 100,
             )} in ${new Date(2023, col - 1, 1).toLocaleString("default", {
               month: "short",
@@ -236,13 +411,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                       c.id === category.id
                         ? {
                             ...c,
-                            monthlyAmounts: [
-                              ...c.monthlyAmounts,
-                              {
-                                id,
-                                amount: newAmount,
-                              },
-                            ],
+                            // set monthly amount at col - 1 to the new amount
+                            monthlyAmounts: c.monthlyAmounts.map((amount, i) =>
+                              i === col - 1
+                                ? { ...amount, id, amount: newAmount }
+                                : amount,
+                            ),
                           }
                         : c,
                     ),
@@ -268,6 +442,11 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         )
       }
     }
+
+    /**
+     * Update existing amount
+     */
+    console.log("UPDATE AMOUNT")
   }
 
   const getMap = () => {
@@ -282,6 +461,17 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     row: number,
     col: number,
   ) => {
+    console.log("HANDLE KEY DOWN @", new Date().toLocaleTimeString())
+    console.log("\tisWaitingForResponse", isWaitingForResponse)
+    if (isWaitingForResponse) {
+      // User is trying to interact with the table while waiting for a response
+      // If no category id, show waiting dialog
+      const categoryId = refsMatrix.current!.get(row)!.get(col)!.category!.id // will always exist, assigned to map in render
+      if (!categoryId || isDeletingCategory) {
+        setShowWaitingDialog(true)
+        return
+      }
+    }
     // TODO: ignore shift + enter on mobile
     if (e.shiftKey && e.key === "Enter") {
       /**
@@ -509,7 +699,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   }}
                                   onKeyDown={(e) => handleKeyDown(e, row, 0)}
                                   onFocus={(e) => e.target.select()}
-                                  onBlur={(e) => handleCategoryFocusOut(e)}
+                                  onFocusOut={({ e, setValue }) =>
+                                    handleCategoryFocusOut(e, setValue)
+                                  }
                                 />
                               </td>
                               {Array.from({ length: 12 }).map((_, col) => (
@@ -543,7 +735,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                       handleKeyDown(e, row, col + 1)
                                     }
                                     onFocus={(e) => e.target.select()}
-                                    onFocusOut={(e) => handleAmountFocusOut(e)}
+                                    onFocusOut={({ e }) =>
+                                      handleAmountFocusOut(e)
+                                    }
                                   />
                                 </td>
                               ))}
@@ -581,7 +775,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   }}
                                   onKeyDown={(e) => handleKeyDown(e, row, 0)}
                                   onFocus={(e) => e.target.select()}
-                                  onBlur={(e) => handleCategoryFocusOut(e)}
+                                  onFocusOut={({ e, setValue }) =>
+                                    handleCategoryFocusOut(e, setValue)
+                                  }
                                 />
                               </td>
                               {monthlyAmounts!.map((amount, col) => (
@@ -594,7 +790,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                 >
                                   <MyInput
                                     id={amount.id ?? ""}
-                                    key={`${amount.id}`}
+                                    key={amount.id}
                                     type="number"
                                     step={"0.01"}
                                     myValue={amount.amount / 100} // convert cents to dollars
@@ -616,7 +812,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                       handleKeyDown(e, row, col + 1)
                                     }
                                     onFocus={(e) => e.target.select()}
-                                    onFocusOut={(e) => handleAmountFocusOut(e)}
+                                    onFocusOut={({ e }) =>
+                                      handleAmountFocusOut(e)
+                                    }
                                   />
                                 </td>
                               ))}
@@ -647,6 +845,18 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           </tbody>
         </table>
       </div>
+      {showWaitingDialog && (
+        <Dialog open={showWaitingDialog} onOpenChange={setShowWaitingDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Waiting</DialogTitle>
+            </DialogHeader>
+            <div className="h-full overflow-auto p-2">
+              Waiting for a response from the server...
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   )
 }

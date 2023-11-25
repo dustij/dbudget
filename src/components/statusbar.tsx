@@ -6,7 +6,7 @@ import Clock from "./clock/clock"
 import { cn } from "~/lib/utils"
 
 interface StatusBarProps {
-  onClick: () => void
+  onClick?: () => void
 }
 
 const getLastLogMessage = (log: Record<string, string> | null) => {
@@ -50,9 +50,10 @@ const StatusBar: FC<StatusBarProps> = ({ onClick }) => {
     >
       <span
         className={cn(
-          "text-base font-normal transition mobile:text-sm",
+          "text-base font-light transition mobile:text-sm",
           // if last log message begins with "Error", make it red
           getLastLogMessage(log)?.startsWith(" Error") && "text-red-500",
+          getLastLogMessage(log)?.startsWith(" Success") && "text-lime-600",
           fadeOut && "opacity-0",
         )}
       >

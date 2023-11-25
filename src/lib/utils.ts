@@ -9,11 +9,7 @@ export function isClient() {
   return typeof window !== "undefined"
 }
 
-export function formatCurrency(
-  amount: string | number | undefined,
-  dollarSign = true,
-) {
-  if (amount === undefined) return ""
+export function formatCurrency(amount: string | number, dollarSign = true) {
   if (typeof amount === "string") amount = parseFloat(amount)
   const USD = new Intl.NumberFormat("en-US", {
     style: "currency",

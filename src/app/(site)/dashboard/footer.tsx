@@ -32,22 +32,19 @@ const Footer: FC<FooterProps> = () => {
         <StatusBar onClick={handleClick} />
       </footer>
       <Dialog open={showDialog} onOpenChange={handleClose}>
-        <DialogTrigger asChild>
-          <div onClick={handleClick} style={{ cursor: "pointer" }}>
-            {/* Content inside the trigger, like your StatusBar */}
-            Click here to view logs
-          </div>
-        </DialogTrigger>
-        <DialogContent className="h-fit max-h-[512px]">
-          <DialogHeader>
+        <DialogContent className="flex max-h-full flex-col mobile-hz:h-[512px]">
+          <DialogHeader className="">
             <DialogTitle>Logs</DialogTitle>
           </DialogHeader>
-          <div className="h-full overflow-auto border p-2">
+          <div className="flex-grow overflow-auto border p-2">
             {Object.entries(log).map(([timestamp, logItem]) => (
               <p
                 key={timestamp}
                 className={cn(
+                  "font-light",
                   logItem.split("]")[1]?.startsWith(" Error") && "text-red-500",
+                  logItem.split("]")[1]?.startsWith(" Success") &&
+                    "text-lime-600",
                 )}
               >
                 {logItem}
