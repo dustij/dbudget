@@ -16,7 +16,7 @@ interface FooterProps {}
 
 const Footer: FC<FooterProps> = () => {
   const [showDialog, setShowDialog] = useState(false)
-  const { log } = useLogContext()
+  const { log, clearLog } = useLogContext()
 
   const handleClick = () => {
     setShowDialog(true)
@@ -36,9 +36,9 @@ const Footer: FC<FooterProps> = () => {
           <DialogHeader className="">
             <DialogTitle>Logs</DialogTitle>
           </DialogHeader>
-          <div className="flex-grow overflow-auto border p-2">
+          <ul className="flex-grow overflow-auto border p-2">
             {Object.entries(log).map(([timestamp, logItem]) => (
-              <p
+              <li
                 key={timestamp}
                 className={cn(
                   "font-light",
@@ -48,8 +48,17 @@ const Footer: FC<FooterProps> = () => {
                 )}
               >
                 {logItem}
-              </p>
+              </li>
             ))}
+          </ul>
+          <div className="flex justify-end">
+            {/* clear logs button */}
+            <button
+              className="px-4 text-sm font-normal text-zinc-900 transition hover:opacity-70"
+              onClick={clearLog}
+            >
+              Clear
+            </button>
           </div>
         </DialogContent>
       </Dialog>
