@@ -241,12 +241,6 @@ const Header: FC<HeaderProps> = ({ user, className }) => {
       </header>
       {showUserDialog && (
         <Dialog open={showUserDialog} onOpenChange={handleCloseUserDialog}>
-          <DialogTrigger asChild>
-            <div style={{ cursor: "pointer" }}>
-              {/* Content inside the trigger */}
-              Click here to view user details
-            </div>
-          </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>User Details</DialogTitle>
