@@ -45,12 +45,12 @@ const StatusBar: FC<StatusBarProps> = ({ onClick }) => {
 
   return (
     <div
-      className="flex h-full items-center justify-between px-4 py-2 transition hover:cursor-pointer hover:bg-zinc-100 "
+      className="flex h-full items-center justify-between px-4 py-2 transition hover:cursor-pointer hover:bg-zinc-100"
       onClick={onClick}
     >
       <span
         className={cn(
-          "text-base font-light transition mobile:text-sm",
+          "flex-shrink truncate whitespace-nowrap text-base font-light transition mobile:text-sm",
           // if last log message begins with "Error", make it red
           getLastLogMessage(log)?.startsWith(" Error") && "text-red-500",
           getLastLogMessage(log)?.startsWith(" Success") && "text-lime-600",
@@ -59,7 +59,7 @@ const StatusBar: FC<StatusBarProps> = ({ onClick }) => {
       >
         {log && getLastLogMessage(log)}
       </span>
-      <Clock className="text-base font-light mobile:text-sm" />
+      <Clock className="flex-grow whitespace-nowrap text-right text-base font-light mobile:text-sm" />
     </div>
   )
 }

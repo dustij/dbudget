@@ -449,6 +449,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
      * Update existing amount
      */
     console.log("UPDATE AMOUNT")
+    // FIXME: bug when changing amount, fails to update amount in db then delete amount quits working, hoping after i implement udpate amount this bug goes away
   }
 
   const getMap = () => {
