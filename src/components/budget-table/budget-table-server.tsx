@@ -52,6 +52,9 @@ const AmountSchema = z.object({
 const CreateCategory = CategorySchema.omit({ id: true })
 const CreateAmount = AmountSchema.omit({ id: true })
 
+const UpdateCategory = CategorySchema.pick({ id: true, name: true })
+const UpdateAmount = AmountSchema.pick({ id: true, amount: true })
+
 interface BudgetTableServerProps {
   userId: string
 }
@@ -117,10 +120,31 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     }
   }
 
-  const updateAmount = async (): Promise<{ success: boolean }> => {
+  const updateAmount = async (
+    amountId: string,
+    newAmount: number | string,
+  ): Promise<{ success: boolean }> => {
     "use server"
     console.log("Updating budget amount...")
-    return { success: false }
+
+    const data = UpdateAmount.parse({ id: amountId, amount: newAmount })
+
+    // mock delayed response, to test for bugs with optimistic updates
+    // const delay = (ms: number) =>
+    //   new Promise((resolve) => setTimeout(resolve, ms))
+    // await delay(5000)
+    // console.log("Done mocking delay ...")
+
+    try {
+      await db
+        .update(amounts)
+        .set({ amount: data.amount })
+        .where(eq(amounts.id, data.id))
+      return { success: true }
+    } catch (error) {
+      console.error(`Error updating amount (${amountId}): ${error}`)
+      return { success: false }
+    }
   }
 
   const deleteAmount = async (
@@ -196,10 +220,31 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     }
   }
 
-  const updateCategory = async (): Promise<{ success: boolean }> => {
+  const updateCategory = async (
+    categoryId: string,
+    newName: string,
+  ): Promise<{ success: boolean }> => {
     "use server"
     console.log("Updating budget category...")
-    return { success: false }
+
+    const data = UpdateCategory.parse({ id: categoryId, name: newName })
+
+    // mock delayed response, to test for bugs with optimistic updates
+    // const delay = (ms: number) =>
+    //   new Promise((resolve) => setTimeout(resolve, ms))
+    // await delay(5000)
+    // console.log("Done mocking delay ...")
+
+    try {
+      await db
+        .update(categories)
+        .set({ name: data.name })
+        .where(eq(categories.id, data.id))
+      return { success: true }
+    } catch (error) {
+      console.error(`Error updating category (${categoryId}): ${error}`)
+      return { success: false }
+    }
   }
 
   const deleteCategory = async (
