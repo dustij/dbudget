@@ -1,3 +1,5 @@
+"use client"
+
 import type { FC } from "react"
 import { useTime } from "./hook"
 import { cn } from "~/lib/utils"
