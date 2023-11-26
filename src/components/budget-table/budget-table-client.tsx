@@ -429,7 +429,27 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
             })} for the "${category.name}" category`,
           )
           setYearData((prev) => {
-            if (!prev) return null
+            if (!prev)
+              // If no year data, return new year data, to be updated later
+              return {
+                year,
+                amounts: [
+                  {
+                    parent: category.parent,
+                    categories: [
+                      {
+                        ...category,
+                        monthlyAmounts: [
+                          ...Array.from({ length: 12 }).map((_, i) => ({
+                            id: i === col - 1 ? id : "",
+                            amount: i === col - 1 ? newAmount : 0,
+                          })),
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              }
             e.target.id = id // Set input id to the id of the amount
             const updatedAmounts = prev.amounts.map((amount) =>
               amount.parent === category.parent
@@ -472,6 +492,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       return
     }
 
+    //FIXME: The first time a user is using the application this doesn't work, might be related to updating the year data, my guess is that the amount id for the input isnt being set because when updating an amount the log message says setting amount.. and failed to set amount, when it should be updating amount.. and failed to update amount, probably because we set yearly data to null if it doesn't exist at the start
     /**
      * Update existing amount
      */
@@ -499,7 +520,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           }" category to ${formatCurrency(newAmount / 100)}`,
         )
         setYearData((prev) => {
-          if (!prev) return null
+          if (!prev) return { year, amounts: [] }
           const updatedAmounts = prev.amounts.map((amount) =>
             amount.parent === category.parent
               ? {

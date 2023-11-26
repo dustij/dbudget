@@ -65,9 +65,3 @@ const StatusBar: FC<StatusBarProps> = ({ onClick }) => {
 }
 
 export default StatusBar
-
-// FIXME: Error: Text content does not match server-rendered HTML.
-
-// Warning: Text content did not match. Server: "Sun, Nov 26, 2023, 5:07 AM" Client: "Sun, Nov 26, 2023, 5:08 AM"
-
-// See more info here: https://nextjs.org/docs/messages/react-hydration-error

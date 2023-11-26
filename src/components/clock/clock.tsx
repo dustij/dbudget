@@ -1,6 +1,7 @@
 "use client"
 
 import type { FC } from "react"
+import { useEffect } from "react"
 import { useTime } from "./hook"
 import { cn } from "~/lib/utils"
 
@@ -10,6 +11,9 @@ interface ClockProps {
 
 const Clock: FC<ClockProps> = ({ className }) => {
   const time = useTime()
+
+  useEffect(() => {}, [time])
+
   return (
     <span className={cn("text-zinc-500", className)}>
       {time.toLocaleTimeString([], {
