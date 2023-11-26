@@ -12,7 +12,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "~/components/ui/dialog"
 import { set } from "zod"
 
@@ -53,7 +52,10 @@ interface BudgetTableClientProps {
       success: boolean
       id: string | null
     }>
-    updateAmount: () => Promise<{ success: boolean }>
+    updateAmount: (
+      amountId: string,
+      newAmount: number | string,
+    ) => Promise<{ success: boolean }>
     deleteAmount: (amountId: string) => Promise<{ success: boolean }>
     insertCategory: ({
       userId,
@@ -67,7 +69,10 @@ interface BudgetTableClientProps {
       success: boolean
       id: string | null
     }>
-    updateCategory: () => Promise<{ success: boolean }>
+    updateCategory: (
+      categoryId: string,
+      newName: string,
+    ) => Promise<{ success: boolean }>
     deleteCategory: (categoryId: string) => Promise<{ success: boolean }>
   }
 }
@@ -272,10 +277,51 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
      * Update existing category
      */
     console.log("UPDATE CATEGORY")
+    addLog(
+      `[${new Date().toLocaleTimeString()}] Updating category "${oldCategoryName}" to "${newCategoryName}"...`,
+    )
+
+    try {
+      setIsWaitingForResponse(true)
+      // Not showing waiting dailog right away, only show if user trys to interact with this row (see handleKeyDown)
+
+      const { success } = await actions.updateCategory(
+        category.id,
+        newCategoryName,
+      )
+
+      setIsWaitingForResponse(false)
+      setShowWaitingDialog(false)
+
+      if (success) {
+        addLog(
+          `[${new Date().toLocaleTimeString()}] Success: Updated category "${oldCategoryName}" to "${newCategoryName}"`,
+        )
+        setCategoryData((prev) => {
+          if (!prev) return []
+          return prev.map((c) => {
+            if (c.id === category.id) {
+              return { ...c, name: newCategoryName }
+            } else {
+              return c
+            }
+          })
+        })
+      } else {
+        throw new Error("Failed to update category")
+      }
+    } catch (err) {
+      console.error(err)
+      setValue?.(oldCategoryName)
+      addLog(
+        `[${new Date().toLocaleTimeString()}] Error: Failed to update category "${oldCategoryName}" to "${newCategoryName}"`,
+      )
+    }
   }
 
   const handleAmountFocusOut = async (
     e: React.FocusEvent<HTMLInputElement>,
+    setValue?: React.Dispatch<React.SetStateAction<string | number>>,
   ) => {
     console.log("HANDLE AMOUNT FOCUS OUT @", new Date().toLocaleTimeString())
     const input = e.target
@@ -286,8 +332,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     const newAmount = parseInt((parseFloat(input.value) * 100).toFixed(0)) // convert dollars to cents
     const oldAmount = yearData?.amounts
       .find((amount) => amount.categories.find((c) => c.id === category.id))
-      ?.categories.find((c) => c.id === category.id)?.monthlyAmounts[col - 1]
-      ?.amount
+      ?.categories.find((c) => c.id === category.id)
+      ?.monthlyAmounts.find((a) => a.id === input.id)?.amount
 
     console.log(newAmount, oldAmount)
 
@@ -368,6 +414,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           }" category`,
         )
       }
+      return
     }
 
     /**
@@ -443,12 +490,80 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           })} for the "${category.name}" category`,
         )
       }
+      return
     }
 
     /**
      * Update existing amount
      */
     console.log("UPDATE AMOUNT")
+
+    addLog(
+      `[${new Date().toLocaleTimeString()}] Updating the amount in ${new Date(
+        2023,
+        col - 1,
+        1,
+      ).toLocaleString("default", { month: "short" })} for the "${
+        category.name
+      }" category to ${formatCurrency(newAmount / 100)}...`,
+    )
+
+    try {
+      const { success } = await actions.updateAmount(input.id, newAmount)
+
+      if (success) {
+        addLog(
+          `[${new Date().toLocaleTimeString()}] Success: Updated the amount in ${new Date(
+            2023,
+            col - 1,
+            1,
+          ).toLocaleString("default", { month: "short" })} for the "${
+            category.name
+          }" category to ${formatCurrency(newAmount / 100)}`,
+        )
+        setYearData((prev) => {
+          if (!prev) return null
+          const updatedAmounts = prev.amounts.map((amount) =>
+            amount.parent === category.parent
+              ? {
+                  ...amount,
+                  categories: amount.categories.map((c) =>
+                    c.id === category.id
+                      ? {
+                          ...c,
+                          // set monthly amount at col - 1 to the new amount
+                          monthlyAmounts: c.monthlyAmounts.map((amount, i) =>
+                            i === col - 1
+                              ? { ...amount, amount: newAmount }
+                              : amount,
+                          ),
+                        }
+                      : c,
+                  ),
+                }
+              : amount,
+          )
+          return {
+            ...prev,
+            amounts: updatedAmounts,
+          }
+        })
+      } else {
+        throw new Error("Failed to update amount")
+      }
+    } catch (err) {
+      console.error(err)
+      setValue?.(formatCurrency(oldAmount ? oldAmount / 100 : 0, false))
+      addLog(
+        `[${new Date().toLocaleTimeString()}] Error: Failed to update the amount in ${new Date(
+          2023,
+          col - 1,
+          1,
+        ).toLocaleString("default", { month: "short" })} for the "${
+          category.name
+        }" category to ${formatCurrency(newAmount / 100)}`,
+      )
+    }
   }
 
   const getMap = () => {
@@ -737,8 +852,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                       handleKeyDown(e, row, col + 1)
                                     }
                                     onFocus={(e) => e.target.select()}
-                                    onFocusOut={({ e }) =>
-                                      handleAmountFocusOut(e)
+                                    onFocusOut={({ e, setValue }) =>
+                                      handleAmountFocusOut(e, setValue)
                                     }
                                   />
                                 </td>
@@ -814,8 +929,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                       handleKeyDown(e, row, col + 1)
                                     }
                                     onFocus={(e) => e.target.select()}
-                                    onFocusOut={({ e }) =>
-                                      handleAmountFocusOut(e)
+                                    onFocusOut={({ e, setValue }) =>
+                                      handleAmountFocusOut(e, setValue)
                                     }
                                   />
                                 </td>
