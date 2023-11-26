@@ -305,6 +305,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     }
   }
 
+  // TODO: feature: take in math statements that start with =, like "= 1000 / 12" or "= 1000 * 0.12" and save the result
   const handleAmountFocusOut = async (
     e: React.FocusEvent<HTMLInputElement>,
     setValue?: React.Dispatch<React.SetStateAction<string | number>>,
@@ -403,11 +404,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
      */
     if (!input.id) {
       addLog(
-        `[${new Date().toLocaleTimeString()}] Setting the amount to ${formatCurrency(
-          newAmount / 100,
-        )} in ${new Date(2023, col - 1, 1).toLocaleString("default", {
-          month: "short",
-        })} for the "${category.name}" category...`,
+        `[${new Date().toLocaleTimeString()}] Setting the amount in ${new Date(
+          2023,
+          col - 1,
+          1,
+        ).toLocaleString("default", { month: "short" })} for the "${
+          category.name
+        }" category to ${formatCurrency(newAmount / 100)}...`,
       )
 
       try {
@@ -422,11 +425,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
         if (success && id) {
           addLog(
-            `[${new Date().toLocaleTimeString()}] Success: Set the amount to ${formatCurrency(
-              newAmount / 100,
-            )} in ${new Date(2023, col - 1, 1).toLocaleString("default", {
-              month: "short",
-            })} for the "${category.name}" category`,
+            `[${new Date().toLocaleTimeString()}] Success: Set the amount in ${new Date(
+              2023,
+              col - 1,
+              1,
+            ).toLocaleString("default", { month: "short" })} for the "${
+              category.name
+            }" category to ${formatCurrency(newAmount / 100)}`,
           )
           setYearData((prev) => {
             if (!prev)
@@ -482,17 +487,18 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       } catch (err) {
         console.error(err)
         addLog(
-          `[${new Date().toLocaleTimeString()}] Error: Failed to set the amount to ${formatCurrency(
-            newAmount / 100,
-          )} in ${new Date(2023, col - 1, 1).toLocaleString("default", {
-            month: "short",
-          })} for the "${category.name}" category`,
+          `[${new Date().toLocaleTimeString()}] Error: Failed to set the amount in ${new Date(
+            2023,
+            col - 1,
+            1,
+          ).toLocaleString("default", { month: "short" })} for the "${
+            category.name
+          }" category to ${formatCurrency(newAmount / 100)}`,
         )
       }
       return
     }
 
-    //FIXME: The first time a user is using the application this doesn't work, might be related to updating the year data, my guess is that the amount id for the input isnt being set because when updating an amount the log message says setting amount.. and failed to set amount, when it should be updating amount.. and failed to update amount, probably because we set yearly data to null if it doesn't exist at the start
     /**
      * Update existing amount
      */
@@ -520,8 +526,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           }" category to ${formatCurrency(newAmount / 100)}`,
         )
         setYearData((prev) => {
-          if (!prev) return { year, amounts: [] }
-          const updatedAmounts = prev.amounts.map((amount) =>
+          const updatedAmounts = prev!.amounts.map((amount) =>
             amount.parent === category.parent
               ? {
                   ...amount,
@@ -542,7 +547,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
               : amount,
           )
           return {
-            ...prev,
+            ...prev!,
             amounts: updatedAmounts,
           }
         })
