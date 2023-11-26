@@ -54,7 +54,7 @@ const Footer: FC<FooterProps> = () => {
           <div className="flex justify-end">
             {/* clear logs button */}
             <button
-              className="px-4 text-sm font-normal text-zinc-900 transition hover:opacity-70"
+              className="px-4 text-sm font-normal text-zinc-900 transition hover:opacity-70 focus-visible:outline-none focus-visible:ring-0"
               onClick={clearLog}
             >
               Clear
