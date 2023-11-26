@@ -99,7 +99,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   let totalRowIndex = 0 // track row index across different parents
 
   useEffect(() => {
-    console.log("USE EFFECT [categoryData] @", new Date().toLocaleTimeString())
     if (refsMatrix.current && categoryData) {
       if (refsMatrix.current.size > categoryData.length) {
         const lastRow = refsMatrix.current.size - 1
@@ -112,9 +111,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         inputWithoutId.focus()
       }
     }
-
-    console.log(`\tcategoryData:`, categoryData)
-    console.log(`\trefsMatrix:`, refsMatrix.current)
   }, [categoryData])
 
   const findCategoryInputWithoutId = () => {
@@ -137,9 +133,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   }
 
   const handleAddRow = (categoryParent: CategoryParent) => {
-    console.log("HANDLE ADD ROW @", new Date().toLocaleTimeString())
     const inputWithoutId = findCategoryInputWithoutId()
-    console.log(`\tinputWithoutId:`, inputWithoutId)
     if (findCategoryInputWithoutId()) {
       // prevents duplicating row when input value is not empty for new category name and add row is clicked
       setShowWaitingDialog(true)
@@ -154,22 +148,18 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       }
       return prev ? [...prev, newCategory] : [newCategory]
     })
-    console.log(`\tcategoryData:`, categoryData)
   }
 
   const handleCategoryFocusOut = async (
     e: React.FocusEvent<HTMLInputElement>,
     setValue?: React.Dispatch<React.SetStateAction<string | number>>,
   ) => {
-    console.log("HANDLE CATEGORY FOCUS OUT @", new Date().toLocaleTimeString())
     const input = e.target
     const row = parseInt(input.dataset.row!)
     const col = parseInt(input.dataset.col!)
     const category = refsMatrix.current!.get(row)!.get(col)!.category! // will always exist, assigned to map in render
     const newCategoryName = input.value.trim()
     const oldCategoryName = category.name
-
-    console.log("category.id:", category.id)
 
     if (newCategoryName === oldCategoryName) {
       // when newly added row is blurred without changing the category name, delete the row, no db call
@@ -185,9 +175,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
      * Insert new category
      */
     if (category.id === "") {
-      console.log("INSERT CATEGORY")
       addLog(
-        `[${new Date().toLocaleTimeString()}] Inserting category "${newCategoryName}"...`,
+        `[${new Date().toLocaleTimeString()}] Creating category "${newCategoryName}"...`,
       )
 
       try {
@@ -205,7 +194,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
         if (success && id) {
           addLog(
-            `[${new Date().toLocaleTimeString()}] Success: Inserted category "${newCategoryName}"`,
+            `[${new Date().toLocaleTimeString()}] Success: Created category "${newCategoryName}"`,
           )
           setCategoryData((prev) => {
             if (!prev) return []
@@ -221,12 +210,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           setCategoryData((prev) => {
             return prev!.filter((c) => c.id !== category.id)
           })
-          throw new Error("Failed to insert category")
+          throw new Error("Failed to create category")
         }
       } catch (err) {
         console.error(err)
         addLog(
-          `[${new Date().toLocaleTimeString()}] Error: Failed to insert category "${newCategoryName}"`,
+          `[${new Date().toLocaleTimeString()}] Error: Failed to create category "${newCategoryName}"`,
         )
       }
       return
@@ -236,8 +225,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
      * Delete existing category
      */
     if (newCategoryName === "") {
-      console.log("DELETE CATEGORY")
-
       addLog(
         `[${new Date().toLocaleTimeString()}] Deleting category "${oldCategoryName}"...`,
       )
@@ -276,7 +263,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     /**
      * Update existing category
      */
-    console.log("UPDATE CATEGORY")
     addLog(
       `[${new Date().toLocaleTimeString()}] Updating category "${oldCategoryName}" to "${newCategoryName}"...`,
     )
@@ -323,7 +309,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     e: React.FocusEvent<HTMLInputElement>,
     setValue?: React.Dispatch<React.SetStateAction<string | number>>,
   ) => {
-    console.log("HANDLE AMOUNT FOCUS OUT @", new Date().toLocaleTimeString())
     const input = e.target
     const row = parseInt(input.dataset.row!)
     const col = parseInt(input.dataset.col!)
@@ -335,8 +320,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       ?.categories.find((c) => c.id === category.id)
       ?.monthlyAmounts.find((a) => a.id === input.id)?.amount
 
-    console.log(newAmount, oldAmount)
-
     // If the amount is unchanged, do nothing
     if (newAmount === oldAmount) {
       return
@@ -346,8 +329,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
      * Delete existing amount
      */
     if (!newAmount) {
-      console.log("DELETE AMOUNT")
-
       if (!input.id) return // If no id, do nothing (amount has not been inserted yet)
 
       addLog(
@@ -421,8 +402,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
      * Insert new amount
      */
     if (!input.id) {
-      console.log("INSERT AMOUNT")
-
       addLog(
         `[${new Date().toLocaleTimeString()}] Setting the amount to ${formatCurrency(
           newAmount / 100,
@@ -496,8 +475,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     /**
      * Update existing amount
      */
-    console.log("UPDATE AMOUNT")
-
     addLog(
       `[${new Date().toLocaleTimeString()}] Updating the amount in ${new Date(
         2023,
@@ -578,8 +555,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     row: number,
     col: number,
   ) => {
-    console.log("HANDLE KEY DOWN @", new Date().toLocaleTimeString())
-    console.log("\tisWaitingForResponse", isWaitingForResponse)
     if (isWaitingForResponse) {
       // User is trying to interact with the table while waiting for a response
       // If no category id, show waiting dialog
@@ -702,11 +677,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
   return (
     <>
-      {console.log("RENDER @", new Date().toLocaleTimeString())}
-      {console.log(`\tcategoryData:`, categoryData)}
-      {console.log(`\trefsMatrix:`, refsMatrix.current)}
-      {console.log(`\tyearData:`, yearData)}
-
       <div
         className={
           "sticky left-0 top-0 z-30 flex h-[33px] items-center justify-center border-b bg-white"

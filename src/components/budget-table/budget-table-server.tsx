@@ -79,6 +79,7 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     id: string | null
   }> => {
     "use server"
+
     const data = CreateAmount.parse({
       userId,
       categoryId,
@@ -125,7 +126,6 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     newAmount: number | string,
   ): Promise<{ success: boolean }> => {
     "use server"
-    console.log("Updating budget amount...")
 
     const data = UpdateAmount.parse({ id: amountId, amount: newAmount })
 
@@ -151,7 +151,6 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     amountId: string,
   ): Promise<{ success: boolean }> => {
     "use server"
-    console.log("Deleting budget amount...")
 
     // mock delayed response, to test for bugs with optimistic updates
     // const delay = (ms: number) =>
@@ -181,7 +180,6 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     id: string | null
   }> => {
     "use server"
-    console.log("Inserting budget category...")
 
     const data = CreateCategory.parse({ userId, name, parent }) as {
       userId: string
@@ -225,7 +223,6 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     newName: string,
   ): Promise<{ success: boolean }> => {
     "use server"
-    console.log("Updating budget category...")
 
     const data = UpdateCategory.parse({ id: categoryId, name: newName })
 
@@ -251,7 +248,6 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     categoryId: string,
   ): Promise<{ success: boolean }> => {
     "use server"
-    console.log("Deleting budget category...")
 
     // mock delayed response, to test for bugs with optimistic updates
     // const delay = (ms: number) =>
