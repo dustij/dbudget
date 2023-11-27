@@ -1,5 +1,6 @@
 import "./globals.css"
 
+import { Analytics } from "@vercel/analytics/react"
 import type { Metadata } from "next"
 import { GeistSans } from "geist/font"
 import { LogProvider } from "~/context/log-context"
@@ -18,6 +19,7 @@ export default function RootLayout({
     <html lang="en">
       <LogProvider>
         <body className={GeistSans.className}>{children}</body>
+        <Analytics />
       </LogProvider>
     </html>
   )
