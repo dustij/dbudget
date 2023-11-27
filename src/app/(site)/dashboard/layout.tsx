@@ -20,7 +20,7 @@ const DashboardLayout: React.FC<DashboardProps> = async ({ children }) => {
       <div className="my-content border-b border-l border-r bg-zinc-50">
         {children}
       </div>
-      <Footer />
+      <Footer initialTime={new Date()} />
     </>
   )
 }

@@ -7,14 +7,15 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "~/components/ui/dialog"
 import { useLogContext } from "~/context/log-context"
 import { cn } from "~/lib/utils"
 
-interface FooterProps {}
+interface FooterProps {
+  initialTime: Date
+}
 
-const Footer: FC<FooterProps> = () => {
+const Footer: FC<FooterProps> = ({ initialTime }) => {
   const [showDialog, setShowDialog] = useState(false)
   const { log, clearLog } = useLogContext()
 
@@ -29,7 +30,7 @@ const Footer: FC<FooterProps> = () => {
   return (
     <>
       <footer className="h-6 border-b border-l border-r bg-white">
-        <StatusBar onClick={handleClick} />
+        <StatusBar initialTime={initialTime} onClick={handleClick} />
       </footer>
       <Dialog open={showDialog} onOpenChange={handleClose}>
         <DialogContent className="flex max-h-full flex-col mobile-hz:h-[512px]">

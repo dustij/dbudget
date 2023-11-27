@@ -6,6 +6,7 @@ import Clock from "./clock/clock"
 import { cn } from "~/lib/utils"
 
 interface StatusBarProps {
+  initialTime: Date
   onClick?: () => void
 }
 
@@ -14,7 +15,7 @@ const getLastLogMessage = (log: Record<string, string> | null) => {
   return lastLog ? lastLog.split("]")[1] : null
 }
 
-const StatusBar: FC<StatusBarProps> = ({ onClick }) => {
+const StatusBar: FC<StatusBarProps> = ({ onClick, initialTime }) => {
   const { log } = useLogContext()
   const [fadeOut, setFadeOut] = useState(false)
   const currentLogRef = useRef<string | null>(null)
@@ -59,7 +60,10 @@ const StatusBar: FC<StatusBarProps> = ({ onClick }) => {
       >
         {log && getLastLogMessage(log)}
       </span>
-      <Clock className="flex-grow whitespace-nowrap text-right text-base font-light mobile:text-sm" />
+      <Clock
+        initialTime={initialTime}
+        className="flex-grow whitespace-nowrap text-right text-base font-light mobile:text-sm"
+      />
     </div>
   )
 }
