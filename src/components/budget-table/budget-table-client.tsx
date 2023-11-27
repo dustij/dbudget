@@ -10,10 +10,12 @@ import { useLogContext } from "~/context/log-context"
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog"
 import { set } from "zod"
+import { Button } from "../ui/button"
 
 //  FIXME: Forseeable issues:
 /*
@@ -74,6 +76,7 @@ interface BudgetTableClientProps {
       newName: string,
     ) => Promise<{ success: boolean }>
     deleteCategory: (categoryId: string) => Promise<{ success: boolean }>
+    revalidateBudget: (userId: string) => Promise<IBudget>
   }
 }
 
@@ -82,7 +85,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   budget,
   actions,
 }) => {
-  const [year, setYear] = useState<number>(2023)
+  const [year, setYear] = useState<number>(new Date().getFullYear())
   const [yearData, setYearData] = useState<IYearData | null>(
     budget.yearData.find((data) => data.year === year) || null,
   )
@@ -93,10 +96,22 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const [isWaitingForResponse, setIsWaitingForResponse] =
     useState<boolean>(false)
   const [showWaitingDialog, setShowWaitingDialog] = useState<boolean>(false)
+  const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] =
+    useState<boolean>(false)
+  const [categoryToDelete, setCategoryToDelete] = useState<ICategory | null>(
+    null,
+  )
   const [isDeletingCategory, setIsDeletingCategory] = useState<boolean>(false)
   const { addLog } = useLogContext()
 
   let totalRowIndex = 0 // track row index across different parents
+
+  useEffect(() => {
+    actions.revalidateBudget(userId).then((budget) => {
+      setYearData(budget.yearData.find((data) => data.year === year) || null)
+      setCategoryData(budget.categories || null)
+    })
+  }, [year, budget.yearData, budget.categories, actions, userId])
 
   useEffect(() => {
     if (refsMatrix.current && categoryData) {
@@ -148,6 +163,51 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       }
       return prev ? [...prev, newCategory] : [newCategory]
     })
+  }
+
+  const handleDeleteCategory = async () => {
+    if (!categoryToDelete) return
+
+    addLog(
+      `[${new Date().toLocaleTimeString()}] Deleting category "${
+        categoryToDelete.name
+      }"...`,
+    )
+
+    try {
+      setIsDeletingCategory(true)
+      setIsWaitingForResponse(true)
+      // Not showing waiting dailog right away, only show if user trys to interact with this row (see handleKeyDown)
+
+      const { success } = await actions.deleteCategory(categoryToDelete.id)
+
+      setIsWaitingForResponse(false)
+      setShowWaitingDialog(false)
+      setIsDeletingCategory(false)
+
+      if (success) {
+        addLog(
+          `[${new Date().toLocaleTimeString()}] Success: Deleted category "${
+            categoryToDelete.name
+          }"`,
+        )
+        setCategoryData((prev) => {
+          return prev!.filter((c) => c.id !== categoryToDelete.id)
+        })
+      } else {
+        throw new Error("Failed to delete category")
+      }
+    } catch (err) {
+      console.error(err)
+      addLog(
+        `[${new Date().toLocaleTimeString()}] Error: Failed to delete category "${
+          categoryToDelete.name
+        }"`,
+      )
+    } finally {
+      setShowDeleteCategoryDialog(false)
+      setCategoryToDelete(null)
+    }
   }
 
   const handleCategoryFocusOut = async (
@@ -225,38 +285,45 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
      * Delete existing category
      */
     if (newCategoryName === "") {
-      addLog(
-        `[${new Date().toLocaleTimeString()}] Deleting category "${oldCategoryName}"...`,
-      )
-
-      try {
-        setIsDeletingCategory(true)
-        setIsWaitingForResponse(true)
-        // Not showing waiting dailog right away, only show if user trys to interact with this row (see handleKeyDown)
-
-        const { success } = await actions.deleteCategory(category.id)
-
-        setIsWaitingForResponse(false)
-        setShowWaitingDialog(false)
-        setIsDeletingCategory(false)
-
-        if (success) {
-          addLog(
-            `[${new Date().toLocaleTimeString()}] Success: Deleted category "${oldCategoryName}"`,
-          )
-          setCategoryData((prev) => {
-            return prev!.filter((c) => c.id !== category.id)
-          })
-        } else {
-          throw new Error("Failed to delete category")
-        }
-      } catch (err) {
-        console.error(err)
-        setValue?.(oldCategoryName)
-        addLog(
-          `[${new Date().toLocaleTimeString()}] Error: Failed to delete category "${oldCategoryName}"`,
-        )
+      if (!showDeleteCategoryDialog) {
+        setShowDeleteCategoryDialog(true)
+        setCategoryToDelete(category)
       }
+      // If delete was cancelled, revert to old category name
+      setValue?.(oldCategoryName)
+
+      // addLog(
+      //   `[${new Date().toLocaleTimeString()}] Deleting category "${oldCategoryName}"...`,
+      // )
+
+      // try {
+      //   setIsDeletingCategory(true)
+      //   setIsWaitingForResponse(true)
+      //   // Not showing waiting dailog right away, only show if user trys to interact with this row (see handleKeyDown)
+
+      //   const { success } = await actions.deleteCategory(category.id)
+
+      //   setIsWaitingForResponse(false)
+      //   setShowWaitingDialog(false)
+      //   setIsDeletingCategory(false)
+
+      //   if (success) {
+      //     addLog(
+      //       `[${new Date().toLocaleTimeString()}] Success: Deleted category "${oldCategoryName}"`,
+      //     )
+      //     setCategoryData((prev) => {
+      //       return prev!.filter((c) => c.id !== category.id)
+      //     })
+      //   } else {
+      //     throw new Error("Failed to delete category")
+      //   }
+      // } catch (err) {
+      //   console.error(err)
+      //   setValue?.(oldCategoryName)
+      //   addLog(
+      //     `[${new Date().toLocaleTimeString()}] Error: Failed to delete category "${oldCategoryName}"`,
+      //   )
+      // }
       return
     }
 
@@ -323,6 +390,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
     // If the amount is unchanged, do nothing
     if (newAmount === oldAmount) {
+      // TODO: doesn't seem to be working, it still updates amounts when they are unchanged
       return
     }
 
@@ -334,12 +402,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
       addLog(
         `[${new Date().toLocaleTimeString()}] Deleting the amount in ${new Date(
-          2023,
+          year,
           col - 1,
           1,
-        ).toLocaleString("default", { month: "short" })} for the "${
-          category.name
-        }" category...`,
+        ).toLocaleString("default", {
+          month: "short",
+          year: "2-digit",
+        })} for the "${category.name}" category...`,
       )
 
       try {
@@ -348,12 +417,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         if (success) {
           addLog(
             `[${new Date().toLocaleTimeString()}] Success: Deleted the amount in ${new Date(
-              2023,
+              year,
               col - 1,
               1,
-            ).toLocaleString("default", { month: "short" })} for the "${
-              category.name
-            }" category`,
+            ).toLocaleString("default", {
+              month: "short",
+              year: "2-digit",
+            })} for the "${category.name}" category`,
           )
           setYearData((prev) => {
             if (!prev) return { year, amounts: [] }
@@ -388,12 +458,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         console.error(err)
         addLog(
           `[${new Date().toLocaleTimeString()}] Error: Failed to delete the amount in ${new Date(
-            2023,
+            year,
             col - 1,
             1,
-          ).toLocaleString("default", { month: "short" })} for the "${
-            category.name
-          }" category`,
+          ).toLocaleString("default", {
+            month: "short",
+            year: "2-digit",
+          })} for the "${category.name}" category`,
         )
       }
       return
@@ -405,12 +476,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     if (!input.id) {
       addLog(
         `[${new Date().toLocaleTimeString()}] Setting the amount in ${new Date(
-          2023,
+          year,
           col - 1,
           1,
-        ).toLocaleString("default", { month: "short" })} for the "${
-          category.name
-        }" category to ${formatCurrency(newAmount / 100)}...`,
+        ).toLocaleString("default", {
+          month: "short",
+          year: "2-digit",
+        })} for the "${category.name}" category to ${formatCurrency(
+          newAmount / 100,
+        )}...`,
       )
 
       try {
@@ -426,12 +500,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         if (success && id) {
           addLog(
             `[${new Date().toLocaleTimeString()}] Success: Set the amount in ${new Date(
-              2023,
+              year,
               col - 1,
               1,
-            ).toLocaleString("default", { month: "short" })} for the "${
-              category.name
-            }" category to ${formatCurrency(newAmount / 100)}`,
+            ).toLocaleString("default", {
+              month: "short",
+              year: "2-digit",
+            })} for the "${category.name}" category to ${formatCurrency(
+              newAmount / 100,
+            )}`,
           )
           setYearData((prev) => {
             if (!prev)
@@ -488,12 +565,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         console.error(err)
         addLog(
           `[${new Date().toLocaleTimeString()}] Error: Failed to set the amount in ${new Date(
-            2023,
+            year,
             col - 1,
             1,
-          ).toLocaleString("default", { month: "short" })} for the "${
-            category.name
-          }" category to ${formatCurrency(newAmount / 100)}`,
+          ).toLocaleString("default", {
+            month: "short",
+            year: "2-digit",
+          })} for the "${category.name}" category to ${formatCurrency(
+            newAmount / 100,
+          )}`,
         )
       }
       return
@@ -504,12 +584,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
      */
     addLog(
       `[${new Date().toLocaleTimeString()}] Updating the amount in ${new Date(
-        2023,
+        year,
         col - 1,
         1,
-      ).toLocaleString("default", { month: "short" })} for the "${
-        category.name
-      }" category to ${formatCurrency(newAmount / 100)}...`,
+      ).toLocaleString("default", {
+        month: "short",
+        year: "2-digit",
+      })} for the "${category.name}" category to ${formatCurrency(
+        newAmount / 100,
+      )}...`,
     )
 
     try {
@@ -518,12 +601,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       if (success) {
         addLog(
           `[${new Date().toLocaleTimeString()}] Success: Updated the amount in ${new Date(
-            2023,
+            year,
             col - 1,
             1,
-          ).toLocaleString("default", { month: "short" })} for the "${
-            category.name
-          }" category to ${formatCurrency(newAmount / 100)}`,
+          ).toLocaleString("default", {
+            month: "short",
+            year: "2-digit",
+          })} for the "${category.name}" category to ${formatCurrency(
+            newAmount / 100,
+          )}`,
         )
         setYearData((prev) => {
           const updatedAmounts = prev!.amounts.map((amount) =>
@@ -559,12 +645,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       setValue?.(formatCurrency(oldAmount ? oldAmount / 100 : 0, false))
       addLog(
         `[${new Date().toLocaleTimeString()}] Error: Failed to update the amount in ${new Date(
-          2023,
+          year,
           col - 1,
           1,
-        ).toLocaleString("default", { month: "short" })} for the "${
-          category.name
-        }" category to ${formatCurrency(newAmount / 100)}`,
+        ).toLocaleString("default", {
+          month: "short",
+          year: "2-digit",
+        })} for the "${category.name}" category to ${formatCurrency(
+          newAmount / 100,
+        )}`,
       )
     }
   }
@@ -958,6 +1047,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           </tbody>
         </table>
       </div>
+
       {showWaitingDialog && (
         <Dialog open={showWaitingDialog} onOpenChange={setShowWaitingDialog}>
           <DialogContent>
@@ -967,6 +1057,37 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
             <div className="h-full overflow-auto p-2">
               Waiting for a response from the server...
             </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {showDeleteCategoryDialog && (
+        <Dialog
+          open={showDeleteCategoryDialog}
+          onOpenChange={setShowDeleteCategoryDialog}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Category</DialogTitle>
+            </DialogHeader>
+            <div className="h-full overflow-auto p-2">
+              Deleting this category will also delete all amounts associated
+              with it. Are you sure you want to delete the category{" "}
+              {categoryToDelete?.name}? This action cannot be undone.
+            </div>
+            <DialogFooter>
+              <div className="flex items-center justify-end space-x-2">
+                <Button variant="destructive" onClick={handleDeleteCategory}>
+                  Delete
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowDeleteCategoryDialog(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       )}

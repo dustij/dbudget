@@ -12,21 +12,30 @@ const YearPicker: FC<YearPickerProps> = ({ children, onYearChange }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [isMouseDown, setIsMouseDown] = useState(false)
   const [value, setValue] = useState(children)
+  const [isFirstFocus, setIsFirstFocus] = useState(true)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (inputRef.current) {
       if (isEditing) {
         inputRef.current.focus()
-        inputRef.current.select()
+        if (isFirstFocus) {
+          inputRef.current.select()
+          setIsFirstFocus(false)
+        }
       } else {
         inputRef.current.blur()
+        setIsFirstFocus(true)
         onYearChange(value)
       }
     }
-  }, [isEditing, onYearChange, value])
+  }, [isEditing, isFirstFocus, onYearChange, value])
 
   const submitEditing = () => {
+    if (value.toString().length !== 4) {
+      inputRef.current?.select()
+      return
+    }
     setIsEditing(false)
   }
 
@@ -73,7 +82,9 @@ const YearPicker: FC<YearPickerProps> = ({ children, onYearChange }) => {
           className="h-8 w-16 rounded bg-white text-center text-base font-medium text-zinc-900 selection:bg-lime-200 hover:cursor-default focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-lime-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           type="number"
           value={value}
-          onChange={(e) => setValue(parseInt(e.target.value))}
+          onChange={(e) => {
+            setValue(parseInt(e.target.value))
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter") submitEditing()
             if (e.key === "Escape") submitEditing()

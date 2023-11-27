@@ -10,6 +10,7 @@ const Budget: FC<BudgetProps> = async () => {
   if (!session) {
     return null
   }
+
   return <BudgetTableServer userId={session.user.id} />
 }
 
