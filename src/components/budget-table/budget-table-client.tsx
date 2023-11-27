@@ -10,10 +10,12 @@ import { useLogContext } from "~/context/log-context"
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog"
 import { set } from "zod"
+import { Button } from "../ui/button"
 
 //  FIXME: Forseeable issues:
 /*
@@ -94,6 +96,11 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const [isWaitingForResponse, setIsWaitingForResponse] =
     useState<boolean>(false)
   const [showWaitingDialog, setShowWaitingDialog] = useState<boolean>(false)
+  const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] =
+    useState<boolean>(false)
+  const [categoryToDelete, setCategoryToDelete] = useState<ICategory | null>(
+    null,
+  )
   const [isDeletingCategory, setIsDeletingCategory] = useState<boolean>(false)
   const { addLog } = useLogContext()
 
@@ -156,6 +163,51 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       }
       return prev ? [...prev, newCategory] : [newCategory]
     })
+  }
+
+  const handleDeleteCategory = async () => {
+    if (!categoryToDelete) return
+
+    addLog(
+      `[${new Date().toLocaleTimeString()}] Deleting category "${
+        categoryToDelete.name
+      }"...`,
+    )
+
+    try {
+      setIsDeletingCategory(true)
+      setIsWaitingForResponse(true)
+      // Not showing waiting dailog right away, only show if user trys to interact with this row (see handleKeyDown)
+
+      const { success } = await actions.deleteCategory(categoryToDelete.id)
+
+      setIsWaitingForResponse(false)
+      setShowWaitingDialog(false)
+      setIsDeletingCategory(false)
+
+      if (success) {
+        addLog(
+          `[${new Date().toLocaleTimeString()}] Success: Deleted category "${
+            categoryToDelete.name
+          }"`,
+        )
+        setCategoryData((prev) => {
+          return prev!.filter((c) => c.id !== categoryToDelete.id)
+        })
+      } else {
+        throw new Error("Failed to delete category")
+      }
+    } catch (err) {
+      console.error(err)
+      addLog(
+        `[${new Date().toLocaleTimeString()}] Error: Failed to delete category "${
+          categoryToDelete.name
+        }"`,
+      )
+    } finally {
+      setShowDeleteCategoryDialog(false)
+      setCategoryToDelete(null)
+    }
   }
 
   const handleCategoryFocusOut = async (
@@ -233,38 +285,45 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
      * Delete existing category
      */
     if (newCategoryName === "") {
-      addLog(
-        `[${new Date().toLocaleTimeString()}] Deleting category "${oldCategoryName}"...`,
-      )
-
-      try {
-        setIsDeletingCategory(true)
-        setIsWaitingForResponse(true)
-        // Not showing waiting dailog right away, only show if user trys to interact with this row (see handleKeyDown)
-
-        const { success } = await actions.deleteCategory(category.id)
-
-        setIsWaitingForResponse(false)
-        setShowWaitingDialog(false)
-        setIsDeletingCategory(false)
-
-        if (success) {
-          addLog(
-            `[${new Date().toLocaleTimeString()}] Success: Deleted category "${oldCategoryName}"`,
-          )
-          setCategoryData((prev) => {
-            return prev!.filter((c) => c.id !== category.id)
-          })
-        } else {
-          throw new Error("Failed to delete category")
-        }
-      } catch (err) {
-        console.error(err)
-        setValue?.(oldCategoryName)
-        addLog(
-          `[${new Date().toLocaleTimeString()}] Error: Failed to delete category "${oldCategoryName}"`,
-        )
+      if (!showDeleteCategoryDialog) {
+        setShowDeleteCategoryDialog(true)
+        setCategoryToDelete(category)
       }
+      // If delete was cancelled, revert to old category name
+      setValue?.(oldCategoryName)
+
+      // addLog(
+      //   `[${new Date().toLocaleTimeString()}] Deleting category "${oldCategoryName}"...`,
+      // )
+
+      // try {
+      //   setIsDeletingCategory(true)
+      //   setIsWaitingForResponse(true)
+      //   // Not showing waiting dailog right away, only show if user trys to interact with this row (see handleKeyDown)
+
+      //   const { success } = await actions.deleteCategory(category.id)
+
+      //   setIsWaitingForResponse(false)
+      //   setShowWaitingDialog(false)
+      //   setIsDeletingCategory(false)
+
+      //   if (success) {
+      //     addLog(
+      //       `[${new Date().toLocaleTimeString()}] Success: Deleted category "${oldCategoryName}"`,
+      //     )
+      //     setCategoryData((prev) => {
+      //       return prev!.filter((c) => c.id !== category.id)
+      //     })
+      //   } else {
+      //     throw new Error("Failed to delete category")
+      //   }
+      // } catch (err) {
+      //   console.error(err)
+      //   setValue?.(oldCategoryName)
+      //   addLog(
+      //     `[${new Date().toLocaleTimeString()}] Error: Failed to delete category "${oldCategoryName}"`,
+      //   )
+      // }
       return
     }
 
@@ -988,6 +1047,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           </tbody>
         </table>
       </div>
+
       {showWaitingDialog && (
         <Dialog open={showWaitingDialog} onOpenChange={setShowWaitingDialog}>
           <DialogContent>
@@ -997,6 +1057,37 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
             <div className="h-full overflow-auto p-2">
               Waiting for a response from the server...
             </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {showDeleteCategoryDialog && (
+        <Dialog
+          open={showDeleteCategoryDialog}
+          onOpenChange={setShowDeleteCategoryDialog}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Category</DialogTitle>
+            </DialogHeader>
+            <div className="h-full overflow-auto p-2">
+              Deleting this category will also delete all amounts associated
+              with it. Are you sure you want to delete the category{" "}
+              {categoryToDelete?.name}? This action cannot be undone.
+            </div>
+            <DialogFooter>
+              <div className="flex items-center justify-end space-x-2">
+                <Button variant="destructive" onClick={handleDeleteCategory}>
+                  Delete
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowDeleteCategoryDialog(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
