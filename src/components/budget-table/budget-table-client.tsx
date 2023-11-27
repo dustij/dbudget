@@ -74,6 +74,7 @@ interface BudgetTableClientProps {
       newName: string,
     ) => Promise<{ success: boolean }>
     deleteCategory: (categoryId: string) => Promise<{ success: boolean }>
+    revalidateBudget: (userId: string) => Promise<IBudget>
   }
 }
 
@@ -82,7 +83,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   budget,
   actions,
 }) => {
-  const [year, setYear] = useState<number>(2023)
+  const [year, setYear] = useState<number>(new Date().getFullYear())
   const [yearData, setYearData] = useState<IYearData | null>(
     budget.yearData.find((data) => data.year === year) || null,
   )
@@ -97,6 +98,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const { addLog } = useLogContext()
 
   let totalRowIndex = 0 // track row index across different parents
+
+  useEffect(() => {
+    actions.revalidateBudget(userId).then((budget) => {
+      setYearData(budget.yearData.find((data) => data.year === year) || null)
+      setCategoryData(budget.categories || null)
+    })
+  }, [year, budget.yearData, budget.categories, actions, userId])
 
   useEffect(() => {
     if (refsMatrix.current && categoryData) {
@@ -323,6 +331,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
     // If the amount is unchanged, do nothing
     if (newAmount === oldAmount) {
+      // TODO: doesn't seem to be working, it still updates amounts when they are unchanged
       return
     }
 
@@ -334,12 +343,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
       addLog(
         `[${new Date().toLocaleTimeString()}] Deleting the amount in ${new Date(
-          2023,
+          year,
           col - 1,
           1,
-        ).toLocaleString("default", { month: "short" })} for the "${
-          category.name
-        }" category...`,
+        ).toLocaleString("default", {
+          month: "short",
+          year: "2-digit",
+        })} for the "${category.name}" category...`,
       )
 
       try {
@@ -348,12 +358,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         if (success) {
           addLog(
             `[${new Date().toLocaleTimeString()}] Success: Deleted the amount in ${new Date(
-              2023,
+              year,
               col - 1,
               1,
-            ).toLocaleString("default", { month: "short" })} for the "${
-              category.name
-            }" category`,
+            ).toLocaleString("default", {
+              month: "short",
+              year: "2-digit",
+            })} for the "${category.name}" category`,
           )
           setYearData((prev) => {
             if (!prev) return { year, amounts: [] }
@@ -388,12 +399,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         console.error(err)
         addLog(
           `[${new Date().toLocaleTimeString()}] Error: Failed to delete the amount in ${new Date(
-            2023,
+            year,
             col - 1,
             1,
-          ).toLocaleString("default", { month: "short" })} for the "${
-            category.name
-          }" category`,
+          ).toLocaleString("default", {
+            month: "short",
+            year: "2-digit",
+          })} for the "${category.name}" category`,
         )
       }
       return
@@ -405,12 +417,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     if (!input.id) {
       addLog(
         `[${new Date().toLocaleTimeString()}] Setting the amount in ${new Date(
-          2023,
+          year,
           col - 1,
           1,
-        ).toLocaleString("default", { month: "short" })} for the "${
-          category.name
-        }" category to ${formatCurrency(newAmount / 100)}...`,
+        ).toLocaleString("default", {
+          month: "short",
+          year: "2-digit",
+        })} for the "${category.name}" category to ${formatCurrency(
+          newAmount / 100,
+        )}...`,
       )
 
       try {
@@ -426,12 +441,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         if (success && id) {
           addLog(
             `[${new Date().toLocaleTimeString()}] Success: Set the amount in ${new Date(
-              2023,
+              year,
               col - 1,
               1,
-            ).toLocaleString("default", { month: "short" })} for the "${
-              category.name
-            }" category to ${formatCurrency(newAmount / 100)}`,
+            ).toLocaleString("default", {
+              month: "short",
+              year: "2-digit",
+            })} for the "${category.name}" category to ${formatCurrency(
+              newAmount / 100,
+            )}`,
           )
           setYearData((prev) => {
             if (!prev)
@@ -488,12 +506,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         console.error(err)
         addLog(
           `[${new Date().toLocaleTimeString()}] Error: Failed to set the amount in ${new Date(
-            2023,
+            year,
             col - 1,
             1,
-          ).toLocaleString("default", { month: "short" })} for the "${
-            category.name
-          }" category to ${formatCurrency(newAmount / 100)}`,
+          ).toLocaleString("default", {
+            month: "short",
+            year: "2-digit",
+          })} for the "${category.name}" category to ${formatCurrency(
+            newAmount / 100,
+          )}`,
         )
       }
       return
@@ -504,12 +525,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
      */
     addLog(
       `[${new Date().toLocaleTimeString()}] Updating the amount in ${new Date(
-        2023,
+        year,
         col - 1,
         1,
-      ).toLocaleString("default", { month: "short" })} for the "${
-        category.name
-      }" category to ${formatCurrency(newAmount / 100)}...`,
+      ).toLocaleString("default", {
+        month: "short",
+        year: "2-digit",
+      })} for the "${category.name}" category to ${formatCurrency(
+        newAmount / 100,
+      )}...`,
     )
 
     try {
@@ -518,12 +542,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       if (success) {
         addLog(
           `[${new Date().toLocaleTimeString()}] Success: Updated the amount in ${new Date(
-            2023,
+            year,
             col - 1,
             1,
-          ).toLocaleString("default", { month: "short" })} for the "${
-            category.name
-          }" category to ${formatCurrency(newAmount / 100)}`,
+          ).toLocaleString("default", {
+            month: "short",
+            year: "2-digit",
+          })} for the "${category.name}" category to ${formatCurrency(
+            newAmount / 100,
+          )}`,
         )
         setYearData((prev) => {
           const updatedAmounts = prev!.amounts.map((amount) =>
@@ -559,12 +586,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       setValue?.(formatCurrency(oldAmount ? oldAmount / 100 : 0, false))
       addLog(
         `[${new Date().toLocaleTimeString()}] Error: Failed to update the amount in ${new Date(
-          2023,
+          year,
           col - 1,
           1,
-        ).toLocaleString("default", { month: "short" })} for the "${
-          category.name
-        }" category to ${formatCurrency(newAmount / 100)}`,
+        ).toLocaleString("default", {
+          month: "short",
+          year: "2-digit",
+        })} for the "${category.name}" category to ${formatCurrency(
+          newAmount / 100,
+        )}`,
       )
     }
   }

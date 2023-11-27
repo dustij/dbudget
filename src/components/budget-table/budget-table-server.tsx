@@ -62,6 +62,12 @@ interface BudgetTableServerProps {
 const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
   const budget = await getBudgetData(userId)
 
+  const revalidateBudget = async () => {
+    "use server"
+    const newBudget = await getBudgetData(userId)
+    return newBudget
+  }
+
   const insertAmount = async ({
     userId,
     categoryId,
@@ -283,6 +289,7 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
         insertCategory: insertCategory,
         updateCategory: updateCategory,
         deleteCategory: deleteCategory,
+        revalidateBudget: revalidateBudget,
       }}
     />
   )
