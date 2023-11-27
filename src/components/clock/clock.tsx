@@ -1,18 +1,23 @@
 "use client"
 
 import type { FC } from "react"
-import { useEffect } from "react"
-import { useTime } from "./hook"
+import { useEffect, useState } from "react"
 import { cn } from "~/lib/utils"
 
 interface ClockProps {
+  initialTime: Date
   className?: string
 }
 
-const Clock: FC<ClockProps> = ({ className }) => {
-  const time = useTime()
+const Clock: FC<ClockProps> = ({ className, initialTime }) => {
+  const [time, setTime] = useState(() => new Date(initialTime))
 
-  useEffect(() => {}, [time])
+  useEffect(() => {
+    const id = setInterval(() => {
+      setTime(new Date())
+    }, 1000)
+    return () => clearInterval(id)
+  }, [])
 
   return (
     <span className={cn("text-zinc-500", className)}>
@@ -23,6 +28,7 @@ const Clock: FC<ClockProps> = ({ className }) => {
         day: "numeric",
         hour: "numeric",
         minute: "2-digit",
+        second: "2-digit",
         hour12: true,
       })}
     </span>
