@@ -93,6 +93,6 @@ export async function getBudgetData(userId: string): Promise<IBudget> {
     return formattedData
   } catch (error) {
     console.error(error)
-    throw new Error("Error getting budget data")
+    return { categories: [], yearData: [] }
   }
 }

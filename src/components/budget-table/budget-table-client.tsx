@@ -24,7 +24,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data }) => {
     <>
       <div
         className={
-          "sticky left-0 top-0 z-30 flex h-[33px] items-center justify-center border-b bg-white"
+          "sticky left-0 top-0 z-30 flex h-[48px] items-center justify-between gap-2 border-b bg-white px-4"
         }
       >
         <YearPicker onYearChange={hanldeYearChange}>{year}</YearPicker>
@@ -35,7 +35,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ data }) => {
             "w-full min-w-[1070px] table-fixed border-separate border-spacing-0 bg-white text-[14px]"
           }
         >
-          <thead className="sticky top-[33px] z-30 h-[33px] bg-white">
+          <thead className="sticky top-[48px] z-30 h-[33px] bg-white">
             <tr>
               <th className="sticky left-0 cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-left text-base font-normal text-zinc-400">
                 Category
