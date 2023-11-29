@@ -98,6 +98,42 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     setIsDirty(true)
   }
 
+  const handleAmountOut = (
+    e: React.FocusEvent<HTMLInputElement>,
+    setValue: React.Dispatch<React.SetStateAction<string | number>>,
+  ) => {
+    const previousValue = e.target.dataset.previousValue?.trim()
+    const currentValue = e.target.value.trim()
+
+    // If the values are equal then do nothing, because no change was made
+    if (currentValue === previousValue) return
+    // If previous value is 0 and current value is empty string, do nothing
+    if (previousValue === "0.00" && currentValue === "") return
+
+    setIsDirty(true)
+  }
+
+  const getMonthAmount = (category: ICategory, month: number): number => {
+    // Is there a data for this year?
+    const yearData = budget.allYearsData.find((d) => d.year === year)
+    if (!yearData) return 0
+    // Is there a budget for this parent?
+    const parentBudget = yearData.budgets.find(
+      (b) => b.parent === category.parent,
+    )
+    if (!parentBudget) return 0
+    // Is this category in the budget?
+    const categoryBudget = parentBudget.categoriesData.find(
+      (c) => c.id === category.id,
+    )
+    if (!categoryBudget) return 0
+    // Get the amount for this month
+    const amountData = categoryBudget.monthlyAmounts[month]
+    if (!amountData) return 0
+    // convert from cents to dollars
+    return amountData.amount / 100
+  }
+
   return (
     <>
       <div
@@ -225,18 +261,19 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
                         {Array.from({ length: 12 }).map((_, col) => (
                           <td
-                            key={`${category.name}-${col}-${lastSave}`}
+                            key={col}
                             className={cn(
                               "relative h-6 border-b border-r p-0 group-hover:bg-accent",
                               col === 11 && "border-r-0",
                             )}
                           >
                             <MyInput
-                              key={`${category.name}-${col}`}
+                              key={`${category.name}-${col}-${lastSave.current}`}
                               name={`${category.name}-${col}`}
                               className="w-full text-zinc-500"
                               type="number"
-                              value={0.0}
+                              value={getMonthAmount(category, col)}
+                              data-previous-value=""
                               ref={(input) => {
                                 if (input) {
                                   const currentRow =
@@ -245,7 +282,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   refsMatrix.current[row] = currentRow
                                 }
                               }}
-                              onFocusOut={() => setIsDirty(true)}
+                              onFocus={(e) => {
+                                e.target.dataset.previousValue = e.target.value
+                              }}
+                              onFocusOut={({ e, setValue }) =>
+                                handleAmountOut(e, setValue)
+                              }
                             />
                           </td>
                         ))}
