@@ -10,7 +10,7 @@ interface StatusBarProps {
   onClick?: () => void
 }
 
-const getLastLogMessage = (log: Record<string, string> | null) => {
+const getLastLogMessage = (log: Record<number, string> | null) => {
   const lastLog = Object.values(log || {}).slice(-1)[0] || null
   return lastLog ? lastLog.split("]")[1] : null
 }

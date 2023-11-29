@@ -1,6 +1,6 @@
-interface IBudget {
+interface IBudgetData {
   categories: ICategory[] | []
-  yearData: IYearData[] | []
+  allYearsData: IYearData[] | []
 }
 
 interface ICategory {
@@ -15,12 +15,12 @@ interface ICategory {
 
 interface IYearData {
   year: number
-  amounts: IAmount[]
+  budgets: IBudget[]
 }
 
-interface IAmount {
+interface IBudget {
   parent: CategoryParent
-  categories: IExtendedCategory[]
+  categoriesData: IExtendedCategory[]
 }
 
 interface IExtendedCategory extends ICategory {
@@ -41,11 +41,6 @@ type CategoryParent =
   | "leakage"
   | "savings"
 
-interface ICategoryRef {
-  input: HTMLInputElement | null
-  category: ICategory | null
-}
-
-type ILog = {
+interface ILog {
   [key: number]: string // key is a timestamp in milliseconds
 }

@@ -15,12 +15,12 @@ interface RefItem {
 
 interface BudgetTableClientProps {
   userId: string
-  data: IBudget
+  data: IBudgetData
 }
 
 const BudgetTableClient: FC<BudgetTableClientProps> = ({ userId, data }) => {
   const [year, setYear] = useState<number>(new Date().getFullYear())
-  const [budget, setBudget] = useState<IBudget>(data)
+  const [budget, setBudget] = useState<IBudgetData>(data)
   const refsMatrix = useRef<RefItem[][]>([])
 
   let totalRowIndex = 0 // track row index across different parents

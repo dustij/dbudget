@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm"
 import { db } from "~/db"
 import { amounts, categories } from "~/db/schema"
 
-export async function getBudgetData(userId: string): Promise<IBudget> {
+export async function getBudgetData(userId: string): Promise<IBudgetData> {
   try {
     const rawData = await db
       .select()
@@ -20,19 +20,19 @@ export async function getBudgetData(userId: string): Promise<IBudget> {
           acc.categories.push(category)
         }
 
-        // If no amount then there is no data to add to the yearData object
+        // If no amount then there is no data to add to the allYearsData object
         if (!amount) {
           return acc
         }
 
         // If year doesn't exist, create it
-        if (!acc.yearData[amount.year]) {
-          acc.yearData[amount.year] = {}
+        if (!acc.allYearsData[amount.year]) {
+          acc.allYearsData[amount.year] = {}
         }
 
         // If category doesn't exist, create it
-        if (!acc.yearData[amount.year]![category.id]) {
-          acc.yearData[amount.year]![category.id] = {
+        if (!acc.allYearsData[amount.year]![category.id]) {
+          acc.allYearsData[amount.year]![category.id] = {
             ...category,
             monthlyAmounts: Array.from({ length: 12 }).fill({
               id: null,
@@ -42,15 +42,15 @@ export async function getBudgetData(userId: string): Promise<IBudget> {
         }
 
         // Add amount to monthlyAmounts
-        acc.yearData[amount.year]![category.id]!.monthlyAmounts[
+        acc.allYearsData[amount.year]![category.id]!.monthlyAmounts[
           amount.month - 1
         ] = { id: amount.id, amount: Number(amount.amount) }
 
         return acc
       },
-      { categories: [], yearData: {} } as {
+      { categories: [], allYearsData: {} } as {
         categories: ICategory[]
-        yearData: {
+        allYearsData: {
           [year: string]: {
             [categoryId: string]: IExtendedCategory
           }
@@ -59,33 +59,32 @@ export async function getBudgetData(userId: string): Promise<IBudget> {
     )
 
     const formattedData = (() => {
-      const yearData = Object.keys(reducedData.yearData).map((year) => {
-        const amounts = Object.values(reducedData.yearData[year] ?? {}).reduce(
-          (acc: any, category: any) => {
-            const existingParent = acc.find(
-              (item: any) => item.parent === category.parent,
-            )
-            if (existingParent) {
-              existingParent.categories.push(category)
-            } else {
-              acc.push({
-                parent: category.parent,
-                categories: [category],
-              })
-            }
-            return acc
-          },
-          [],
-        )
+      const allYearsData = Object.keys(reducedData.allYearsData).map((year) => {
+        const budgets = Object.values(
+          reducedData.allYearsData[year] ?? {},
+        ).reduce((acc: any, category: any) => {
+          const existingParent = acc.find(
+            (item: any) => item.parent === category.parent,
+          )
+          if (existingParent) {
+            existingParent.categoriesData.push(category)
+          } else {
+            acc.push({
+              parent: category.parent,
+              categoriesData: [category],
+            })
+          }
+          return acc
+        }, [])
         return {
           year: parseInt(year),
-          amounts,
+          budgets,
         }
       })
       return {
         categories: reducedData.categories,
-        yearData,
-      } as IBudget
+        allYearsData,
+      }
     })()
 
     // console.log("formattedData >", JSON.stringify(formattedData, null, 2))
@@ -93,6 +92,6 @@ export async function getBudgetData(userId: string): Promise<IBudget> {
     return formattedData
   } catch (error) {
     console.error(error)
-    return { categories: [], yearData: [] }
+    return { categories: [], allYearsData: [] }
   }
 }
