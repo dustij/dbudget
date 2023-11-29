@@ -46,7 +46,7 @@ const StatusBar: FC<StatusBarProps> = ({ onClick, initialTime }) => {
 
   return (
     <div
-      className="flex h-full items-center justify-between px-4 py-2 transition hover:cursor-pointer hover:bg-zinc-100"
+      className="flex h-full items-center justify-between px-4 py-2 transition hover:cursor-pointer hover:bg-accent"
       onClick={onClick}
     >
       <span

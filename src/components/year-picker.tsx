@@ -11,7 +11,6 @@ interface YearPickerProps {
 
 const YearPicker: FC<YearPickerProps> = ({ children, onYearChange }) => {
   const [isEditing, setIsEditing] = useState(false)
-  const [isMouseDown, setIsMouseDown] = useState(false)
   const [value, setValue] = useState(children)
   const [isFirstFocus, setIsFirstFocus] = useState(true)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -54,14 +53,9 @@ const YearPicker: FC<YearPickerProps> = ({ children, onYearChange }) => {
     <div className="flex items-center justify-center gap-2">
       <Button
         variant="ghost"
-        className={cn(
-          "h-8 p-1 text-zinc-500 hover:text-zinc-900 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-lime-500",
-          isMouseDown && "hover:opacity-70",
-        )}
+        className="h-8 p-1 text-zinc-500 hover:text-zinc-900 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-lime-500"
         type="button"
         onClick={() => decrement()}
-        onMouseDown={() => setIsMouseDown(true)}
-        onMouseUp={() => setIsMouseDown(false)}
       >
         <svg
           className="h-4 w-6"
@@ -80,7 +74,7 @@ const YearPicker: FC<YearPickerProps> = ({ children, onYearChange }) => {
       <input
         id="year-picker"
         ref={inputRef}
-        className="h-8 w-20 rounded border border-input bg-white text-center text-base text-zinc-900 selection:bg-lime-200 hover:cursor-default focus-visible:border-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-lime-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        className="h-8 w-20 cursor-default rounded border border-input bg-white text-center text-base text-zinc-900 selection:bg-lime-200 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-lime-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         type="number"
         value={value}
         onChange={(e) => {
@@ -95,13 +89,8 @@ const YearPicker: FC<YearPickerProps> = ({ children, onYearChange }) => {
       />
       <Button
         variant="ghost"
-        className={cn(
-          "h-8 p-1 text-zinc-500 hover:text-zinc-900 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-lime-500",
-          isMouseDown && "hover:opacity-70",
-        )}
+        className="h-8 p-1 text-zinc-500 hover:text-zinc-900 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-lime-500"
         onClick={() => increment()}
-        onMouseDown={() => setIsMouseDown(true)}
-        onMouseUp={() => setIsMouseDown(false)}
       >
         <svg
           className="h-4 w-6"

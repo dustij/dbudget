@@ -5,7 +5,7 @@ import { cn, formatCurrency } from "~/lib/utils"
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
-  myValue: string | number
+  value: string | number
   dollarSign?: boolean | undefined
   onFocusOut?: ({}: {
     e: React.FocusEvent<HTMLInputElement>
@@ -15,11 +15,11 @@ export interface InputProps
 
 const MyInput = React.forwardRef<HTMLInputElement, InputProps>(
   (
-    { className, type, myValue, dollarSign = false, onFocusOut, ...props },
+    { className, type, value, dollarSign = false, onFocusOut, ...props },
     ref,
   ) => {
-    const [value, setValue] = useState(
-      type === "number" ? formatCurrency(myValue, false) : myValue,
+    const [_value, setValue] = useState(
+      type === "number" ? formatCurrency(value, false) : value,
     )
 
     return (
@@ -31,11 +31,11 @@ const MyInput = React.forwardRef<HTMLInputElement, InputProps>(
           className,
         )}
         ref={ref}
-        value={value}
+        value={_value}
         onChange={(e) => setValue(e.target.value)}
         onBlur={(e) => {
           type === "number" &&
-            setValue(formatCurrency(value === "" ? 0 : value, dollarSign))
+            setValue(formatCurrency(_value === "" ? 0 : _value, dollarSign))
           onFocusOut?.({
             e: e,
             setValue: setValue,
