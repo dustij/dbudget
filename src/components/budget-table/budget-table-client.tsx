@@ -148,8 +148,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ userId, data }) => {
                   .map((category) => {
                     const row = totalRowIndex++
                     return (
-                      <tr key={row}>
-                        <td className="sticky left-0 cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-2 text-left text-base font-normal text-zinc-500 mobile:text-sm">
+                      <tr key={row} className="group">
+                        <td className="sticky left-0 z-10 cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-2 text-left text-base font-normal text-zinc-500 group-hover:bg-accent mobile:text-sm">
                           <MyInput
                             key={category.name}
                             name={category.name}
@@ -170,7 +170,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ userId, data }) => {
                             key={`${category.name}-${col}`}
                             // className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-500 mobile:text-sm"
                             className={cn(
-                              "relative h-6 border-b border-r p-0",
+                              "relative h-6 border-b border-r p-0 group-hover:bg-accent",
                               col === 11 && "border-r-0",
                             )}
                           >
