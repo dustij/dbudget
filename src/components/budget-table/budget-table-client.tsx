@@ -16,12 +16,21 @@ interface RefItem {
 interface BudgetTableClientProps {
   userId: string
   data: IBudgetData
+  action: {
+    getBudget: () => Promise<IBudgetData>
+  }
 }
 
-const BudgetTableClient: FC<BudgetTableClientProps> = ({ userId, data }) => {
+const BudgetTableClient: FC<BudgetTableClientProps> = ({
+  userId,
+  data,
+  action,
+}) => {
   const [year, setYear] = useState<number>(new Date().getFullYear())
   const [budget, setBudget] = useState<IBudgetData>(data)
+  const [isDirty, setIsDirty] = useState<boolean>(false)
   const refsMatrix = useRef<RefItem[][]>([])
+  const lastSave = useRef<number>(new Date().getTime())
 
   let totalRowIndex = 0 // track row index across different parents
 
@@ -50,6 +59,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ userId, data }) => {
     }))
   }
 
+  const handleCancel = async () => {
+    const data = await action.getBudget()
+    setBudget(data)
+    setIsDirty(false)
+    lastSave.current = new Date().getTime()
+  }
+
   return (
     <>
       <div
@@ -62,14 +78,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ userId, data }) => {
           <Button
             variant="default"
             className="h-8 font-normal focus-visible:border-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-lime-500"
-            disabled
+            disabled={!isDirty}
           >
             Save
           </Button>
           <Button
             variant="outline"
             className="h-8 font-normal text-zinc-600 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-lime-500"
-            disabled
+            disabled={!isDirty}
+            onClick={handleCancel}
           >
             Cancel
           </Button>
@@ -151,7 +168,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ userId, data }) => {
                       <tr key={row} className="group">
                         <td className="sticky left-0 z-10 cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-2 text-left text-base font-normal text-zinc-500 group-hover:bg-accent mobile:text-sm">
                           <MyInput
-                            key={category.name}
+                            key={`${category.name}-${lastSave.current}`}
                             name={category.name}
                             autoComplete="off"
                             className="w-full text-zinc-500"
@@ -163,11 +180,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ userId, data }) => {
                                 refsMatrix.current[row] = currentRow
                               }
                             }}
+                            onFocusOut={() => setIsDirty(true)}
                           />
                         </td>
                         {Array.from({ length: 12 }).map((_, col) => (
                           <td
-                            key={`${category.name}-${col}`}
+                            key={`${category.name}-${col}-${lastSave}`}
                             // className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-500 mobile:text-sm"
                             className={cn(
                               "relative h-6 border-b border-r p-0 group-hover:bg-accent",
@@ -188,6 +206,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({ userId, data }) => {
                                   refsMatrix.current[row] = currentRow
                                 }
                               }}
+                              onFocusOut={() => setIsDirty(true)}
                             />
                           </td>
                         ))}

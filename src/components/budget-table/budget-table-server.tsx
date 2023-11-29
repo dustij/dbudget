@@ -9,7 +9,14 @@ interface BudgetTableServerProps {
 const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
   const data = await getBudgetData(userId)
 
-  return <BudgetTableClient data={data} userId={userId} />
+  const getBudget = async () => {
+    "use server"
+    return getBudgetData(userId)
+  }
+
+  return (
+    <BudgetTableClient data={data} userId={userId} action={{ getBudget }} />
+  )
 }
 
 export default BudgetTableServer
