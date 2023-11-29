@@ -151,7 +151,7 @@ export const rules = mysqlTable(
 export const categories = mysqlTable(
   "category",
   {
-    id: char("id", { length: NANO_ID_LENGTH }) // TODO: make this derived from user id, name, parent so it can be managed offline
+    id: char("id", { length: NANO_ID_LENGTH })
       .$defaultFn(generateNanoId)
       .primaryKey(),
     name: varchar("name", { length: 255 }).notNull(),
@@ -180,7 +180,7 @@ export const categories = mysqlTable(
 export const amounts = mysqlTable(
   "amount",
   {
-    id: char("id", { length: NANO_ID_LENGTH }) // TODO: make this derived from user id, year, month, category id so it can be managed offline
+    id: char("id", { length: NANO_ID_LENGTH })
       .$defaultFn(generateNanoId)
       .primaryKey(),
     userId: varchar("userId", { length: 255 }).notNull(),
