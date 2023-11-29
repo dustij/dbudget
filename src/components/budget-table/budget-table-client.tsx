@@ -7,6 +7,7 @@ import { CATEGORY_PARENTS } from "~/lib/constants"
 import { cn, toTitleCase } from "~/lib/utils"
 import { MyInput } from "../my-input"
 import { Button } from "../ui/button"
+import { categories } from "~/db/schema"
 
 interface RefItem {
   input: HTMLInputElement
@@ -40,6 +41,14 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
   useEffect(() => {
     console.debug(budget)
+
+    const emptyInput = refsMatrix.current.find((row) =>
+      row.find((col) => col.category.id === "~!"),
+    )?.[0]?.input
+
+    if (emptyInput) {
+      emptyInput.focus()
+    }
   }, [budget])
 
   const hanldeYearChange = (year: number) => {
@@ -48,7 +57,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
   const handleAddRow = (parent: CategoryParent) => {
     const newCategory: ICategory = {
-      id: "",
+      id: "~!",
       name: "",
       userId: userId,
       parent: parent,
@@ -64,6 +73,29 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     setBudget(data)
     setIsDirty(false)
     lastSave.current = new Date().getTime()
+  }
+
+  const handleCategoryOut = (
+    e: React.FocusEvent<HTMLInputElement>,
+    setValue: React.Dispatch<React.SetStateAction<string | number>>,
+  ) => {
+    const previousValue = e.target.dataset.previousValue?.trim()
+    const currentValue = e.target.value.trim()
+
+    // If the values are equal, check if they are empty strings
+    if (currentValue === previousValue) {
+      // If not then do nothing, because no change was made
+      if (currentValue !== "") return
+      // If both are empty strings, remove the row from the budget because there is nothing to save
+      const filteredCategories = budget.categories.filter((c) => c.name !== "")
+      setBudget((prev) => ({
+        ...prev,
+        categories: filteredCategories,
+      }))
+      return
+    }
+
+    setIsDirty(true)
   }
 
   return (
@@ -169,7 +201,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                         <td className="sticky left-0 z-10 cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-2 text-left text-base font-normal text-zinc-500 group-hover:bg-accent mobile:text-sm">
                           <MyInput
                             key={`${category.name}-${lastSave.current}`}
+                            id={category.id}
                             name={category.name}
+                            data-previous-value=""
                             autoComplete="off"
                             className="w-full text-zinc-500"
                             value={category.name}
@@ -180,13 +214,18 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                 refsMatrix.current[row] = currentRow
                               }
                             }}
-                            onFocusOut={() => setIsDirty(true)}
+                            onFocus={(e) => {
+                              e.target.dataset.previousValue = e.target.value
+                            }}
+                            onFocusOut={({ e, setValue }) =>
+                              handleCategoryOut(e, setValue)
+                            }
                           />
                         </td>
+
                         {Array.from({ length: 12 }).map((_, col) => (
                           <td
                             key={`${category.name}-${col}-${lastSave}`}
-                            // className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-500 mobile:text-sm"
                             className={cn(
                               "relative h-6 border-b border-r p-0 group-hover:bg-accent",
                               col === 11 && "border-r-0",
