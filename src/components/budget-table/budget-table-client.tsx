@@ -6,7 +6,16 @@ import { IoAddCircleOutline } from "react-icons/io5"
 import { cn, formatCurrency, toTitleCase } from "~/lib/utils"
 import { MyInput } from "../my-input"
 import { Button } from "../ui/button"
-import { get } from "http"
+
+const parentNames: CategoryParent[] = [
+  "income",
+  "fixed",
+  "variable",
+  "discretionary",
+  "obligation",
+  "leakage",
+  "savings",
+]
 
 interface RefItem {
   input: HTMLInputElement
@@ -31,66 +40,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const [isDirty, setIsDirty] = useState<boolean>(false)
   const refsMatrix = useRef<RefItem[][]>([])
   const lastSave = useRef<number>(new Date().getTime())
-
-  const getParentTotal = (parent: CategoryParent, month: number): number => {
-    const yearBudget = budgets.budgetsByYear.find((d) => d.year === year)
-    if (!yearBudget) return 0
-    const parentBudget = yearBudget.budgetsByParent.find(
-      (b) => b.parent === parent,
-    )
-    if (!parentBudget) return 0
-    const budgetsByCategory = parentBudget.budgetsByCategory
-    if (!budgetsByCategory) return 0
-
-    const total = budgetsByCategory.reduce((acc, curr) => {
-      const amountData = curr.monthlyAmounts[month]
-      if (!amountData) return acc
-      return acc + amountData.amount / 100
-    }, 0)
-
-    return total
-  }
-
-  const parentsRef = useRef<{ name: CategoryParent; totals: number[] }[]>([
-    {
-      name: "income",
-      totals: Array.from({ length: 12 }, (_, i) => getParentTotal("income", i)),
-    },
-    {
-      name: "fixed",
-      totals: Array.from({ length: 12 }, (_, i) => getParentTotal("fixed", i)),
-    },
-    {
-      name: "variable",
-      totals: Array.from({ length: 12 }, (_, i) =>
-        getParentTotal("variable", i),
-      ),
-    },
-    {
-      name: "discretionary",
-      totals: Array.from({ length: 12 }, (_, i) =>
-        getParentTotal("discretionary", i),
-      ),
-    },
-    {
-      name: "obligation",
-      totals: Array.from({ length: 12 }, (_, i) =>
-        getParentTotal("obligation", i),
-      ),
-    },
-    {
-      name: "leakage",
-      totals: Array.from({ length: 12 }, (_, i) =>
-        getParentTotal("leakage", i),
-      ),
-    },
-    {
-      name: "savings",
-      totals: Array.from({ length: 12 }, (_, i) =>
-        getParentTotal("savings", i),
-      ),
-    },
-  ])
 
   let totalRowIndex = 0 // track row index across different parents
 
@@ -159,9 +108,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     const categoryExists = budgets.categories.find(
       (c) => c.name === currentValue,
     )
-
-    // Update th budget
-    setIsDirty(true)
 
     /* 
       ========== ADDING NEW CATEGORY ==========
@@ -265,6 +211,53 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                 }
               }),
       }))
+
+      setIsDirty(true)
+    }
+
+    /* 
+      ========== CHANGING CATEGORY NAME ==========
+    */
+
+    if (previousValue && previousValue !== "" && currentValue !== "") {
+      // If category with this name already exists, set the input value to the previous value
+      if (categoryExists) {
+        setValue(previousValue)
+        return
+      }
+
+      setBudgets((prev) => ({
+        ...prev,
+        categories: prev.categories.map((c) => {
+          if (c.name !== previousValue) return c
+          return {
+            ...c,
+            name: currentValue,
+          }
+        }),
+        budgetsByYear: prev.budgetsByYear.map((yearBudget) => {
+          if (yearBudget.year !== year) return yearBudget
+
+          return {
+            ...yearBudget,
+            budgetsByParent: yearBudget.budgetsByParent.map((b) => {
+              if (b.parent !== parent) return b
+
+              return {
+                ...b,
+                budgetsByCategory: b.budgetsByCategory.map((c) => {
+                  if (c.name !== previousValue) return c
+
+                  return {
+                    ...c,
+                    name: currentValue,
+                  }
+                }),
+              }
+            }),
+          }
+        }),
+      }))
     }
   }
 
@@ -281,9 +274,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     if (currentValue === previousValue) return
     // If previous value is 0 and current value is empty string, do nothing
     if (previousValue === "0.00" && currentValue === "") return
-
-    // Update the budget
-    setIsDirty(true)
 
     /*
     ========= ADDING NEW AMOUNT =========
@@ -322,6 +312,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           }
         }),
       }))
+
+      setIsDirty(true)
     }
   }
 
@@ -336,7 +328,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     if (!parentBudget) return 0
     // Is this category in the budget?
     const categoryBudget = parentBudget.budgetsByCategory.find(
-      (c) => c.id === category.id,
+      (c) => c.name === category.name,
     )
     if (!categoryBudget) return 0
     // Get the amount for this month
@@ -344,6 +336,27 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     if (!amountData) return 0
     // convert from cents to dollars
     return amountData.amount / 100
+  }
+
+  const getParentTotal = (parent: CategoryParent, month: number): number => {
+    const yearBudget = budgets.budgetsByYear.find((d) => d.year === year)
+    if (!yearBudget) return 0
+
+    const parentBudget = yearBudget.budgetsByParent.find(
+      (b) => b.parent === parent,
+    )
+    if (!parentBudget) return 0
+
+    const budgetsByCategory = parentBudget.budgetsByCategory
+    if (!budgetsByCategory) return 0
+
+    const total = budgetsByCategory.reduce((acc, curr) => {
+      const amountData = curr.monthlyAmounts[month]
+      if (!amountData) return acc
+      return acc + amountData.amount
+    }, 0)
+
+    return total / 100
   }
 
   return (
@@ -422,26 +435,26 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
             </tr>
           </thead>
           <tbody>
-            {parentsRef.current.map((parent) => (
-              <React.Fragment key={parent.name}>
+            {parentNames.map((parentName) => (
+              <React.Fragment key={parentName}>
                 {/* Parent Totals Row */}
-                <tr key={parent.name}>
+                <tr key={parentName}>
                   <td className="sticky left-0 cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-left text-base font-normal text-zinc-900 mobile:text-sm">
-                    {toTitleCase(parent.name)}
+                    {toTitleCase(parentName)}
                   </td>
                   {Array.from({ length: 12 }).map((_, col) => (
                     <td
                       key={`${parent}-${col}-${lastSave.current}`}
                       className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-900 mobile:text-sm"
                     >
-                      {formatCurrency(parent.totals[col] ?? 0)}
+                      {formatCurrency(getParentTotal(parentName, col))}
                     </td>
                   ))}
                 </tr>
 
                 {/* Child Rows */}
                 {budgets.categories
-                  .filter((c) => c.parent === parent.name)
+                  .filter((c) => c.parent === parentName)
                   .map((category) => {
                     const row = totalRowIndex++
                     return (
@@ -465,7 +478,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                               e.target.dataset.previousValue = e.target.value
                             }}
                             onFocusOut={({ e, setValue }) =>
-                              handleCategoryOut(e, setValue, parent.name)
+                              handleCategoryOut(e, setValue, parentName)
                             }
                           />
                         </td>
@@ -515,7 +528,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                 <tr key={`${parent}-add`}>
                   <td
                     className="sticky left-0 z-10 h-6 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm"
-                    onClick={() => handleAddRow(parent.name)}
+                    onClick={() => handleAddRow(parentName)}
                   >
                     <IoAddCircleOutline className="mr-1 inline-block h-full pb-[2px]" />
                     Add
