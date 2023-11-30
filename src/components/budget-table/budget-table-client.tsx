@@ -142,8 +142,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     const previousValue = e.target.dataset.previousValue?.trim()
     const currentValue = e.target.value.trim()
 
-    console.log("previousValue", previousValue, "currentValue", currentValue)
-
     // If the values are equal, check if they are empty strings
     if (currentValue === previousValue) {
       // If not then do nothing, because no change was made
@@ -165,11 +163,10 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     // Update th budget
     setIsDirty(true)
 
-    /* If previous value is empty string and current value is not empty string, this is a new category.
-      Add the new category to the categories array in the budget and create a new IExtendedCategory item and add it to the
-      budgetsByCategory array for the selected year, with the 0 amount in monthlyAmounts for all months, remember the id is "@just-added!"
-      so replace that empty category with a new one
+    /* 
+      ========== ADDING NEW CATEGORY ==========
     */
+
     if (previousValue === "" && currentValue !== "") {
       // If the category already exists, remove the row, cannot add new category with same name
       if (categoryExists) {
@@ -190,45 +187,83 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         parent: parent,
       }
 
-      // Initialize the year data if it doesn't exist
-      const yearBudget = budgets.budgetsByYear.find((d) => d.year === year) ?? {
-        year: year,
-        budgetsByParent: [],
-      }
-
-      // Initialize the budgetsByCategory if it doesn't exist
-      const budgetsByCategory =
-        yearBudget.budgetsByParent.find((b) => b.parent === parent)
-          ?.budgetsByCategory ?? []
-
       setBudgets((prev) => ({
         categories: prev.categories.map((c) => {
           if (c.id !== "@just-added!") return c
           return newCategory
         }),
-        budgetsByYear: prev.budgetsByYear.map((_yearBudget) => {
-          console.log("_yearBudget", _yearBudget)
-          if (_yearBudget && _yearBudget.year !== year) return _yearBudget
-          return {
-            year: year,
-            budgetsByParent: [
-              ...yearBudget.budgetsByParent,
-              {
-                parent: parent,
-                budgetsByCategory: [
-                  ...budgetsByCategory,
-                  {
-                    ...newCategory,
-                    monthlyAmounts: Array.from({ length: 12 }, () => ({
-                      id: null,
-                      amount: 0,
-                    })),
-                  },
-                ],
-              },
-            ],
-          }
-        }),
+        budgetsByYear:
+          // If budgets for this year don't exist, create them
+          !prev.budgetsByYear.find((d) => d.year === year)
+            ? [
+                {
+                  year: year,
+                  budgetsByParent: [
+                    {
+                      parent: parent,
+                      budgetsByCategory: [
+                        {
+                          ...newCategory,
+                          monthlyAmounts: Array.from({ length: 12 }, () => ({
+                            id: null,
+                            amount: 0,
+                          })),
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ]
+            : // Otherwise, update the budgets for this year
+              prev.budgetsByYear.map((yearBudget) => {
+                if (yearBudget.year !== year) return yearBudget
+                return {
+                  year: year,
+                  // If budgets for this parent don't exist, create them
+                  budgetsByParent: !yearBudget.budgetsByParent.find(
+                    (b) => b.parent === parent,
+                  )
+                    ? [
+                        ...yearBudget.budgetsByParent,
+                        {
+                          parent: parent,
+                          budgetsByCategory: [
+                            {
+                              ...newCategory,
+                              monthlyAmounts: Array.from(
+                                { length: 12 },
+                                () => ({
+                                  id: null,
+                                  amount: 0,
+                                }),
+                              ),
+                            },
+                          ],
+                        },
+                      ]
+                    : // Otherwise, update the budgets for this parent
+                      yearBudget.budgetsByParent.map((parentBudget) => {
+                        if (parentBudget.parent !== parent) return parentBudget
+                        return {
+                          parent: parent,
+                          // We've determined above that this is a new category, so add it to the budgetsByCategory array
+                          budgetsByCategory: [
+                            ...parentBudget.budgetsByCategory,
+                            {
+                              ...newCategory,
+                              monthlyAmounts: Array.from(
+                                { length: 12 },
+                                () => ({
+                                  id: null,
+                                  amount: 0,
+                                }),
+                              ),
+                            },
+                          ],
+                        }
+                      }),
+                }
+              }),
       }))
     }
   }
@@ -250,7 +285,10 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     // Update the budget
     setIsDirty(true)
 
-    // If the previous value was 0 and the current value is not empty
+    /*
+    ========= ADDING NEW AMOUNT =========
+    */
+
     if (previousValue === "0.00" && currentValue !== "") {
       setBudgets((prev) => ({
         ...prev,
