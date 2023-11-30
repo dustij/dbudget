@@ -216,7 +216,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     }
 
     /* 
-      ========== CHANGING CATEGORY NAME ==========
+      ========== UPDATING CATEGORY NAME ==========
     */
 
     if (previousValue && previousValue !== "" && currentValue !== "") {
@@ -258,6 +258,38 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           }
         }),
       }))
+
+      setIsDirty(true)
+    }
+
+    /* 
+      ========== REMOVING CATEGORY ==========
+    */
+
+    if (previousValue && previousValue !== "" && currentValue === "") {
+      setBudgets((prev) => ({
+        ...prev,
+        categories: prev.categories.filter((c) => c.name !== previousValue),
+        budgetsByYear: prev.budgetsByYear.map((yearBudget) => {
+          if (yearBudget.year !== year) return yearBudget
+
+          return {
+            ...yearBudget,
+            budgetsByParent: yearBudget.budgetsByParent.map((b) => {
+              if (b.parent !== parent) return b
+
+              return {
+                ...b,
+                budgetsByCategory: b.budgetsByCategory.filter(
+                  (c) => c.name !== previousValue,
+                ),
+              }
+            }),
+          }
+        }),
+      }))
+
+      setIsDirty(true)
     }
   }
 
@@ -302,6 +334,88 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                       {
                         id: null,
                         amount: parseInt(currentValue) * 100,
+                      },
+                      ...c.monthlyAmounts.slice(col + 1),
+                    ],
+                  }
+                }),
+              }
+            }),
+          }
+        }),
+      }))
+
+      setIsDirty(true)
+    }
+
+    /*
+    ========= UPDATING AMOUNT =========
+    */
+
+    if (previousValue && previousValue !== "" && currentValue !== "") {
+      setBudgets((prev) => ({
+        ...prev,
+        budgetsByYear: prev.budgetsByYear.map((yearBudget) => {
+          if (yearBudget.year !== year) return yearBudget
+
+          return {
+            ...yearBudget,
+            budgetsByParent: yearBudget.budgetsByParent.map((b) => {
+              if (b.parent !== category.parent) return b
+
+              return {
+                parent: b.parent,
+                budgetsByCategory: b.budgetsByCategory.map((c) => {
+                  if (c.name !== category.name) return c
+
+                  return {
+                    ...c,
+                    monthlyAmounts: [
+                      ...c.monthlyAmounts.slice(0, col),
+                      {
+                        id: null,
+                        amount: parseInt(currentValue) * 100,
+                      },
+                      ...c.monthlyAmounts.slice(col + 1),
+                    ],
+                  }
+                }),
+              }
+            }),
+          }
+        }),
+      }))
+
+      setIsDirty(true)
+    }
+
+    /*
+    ========= REMOVING AMOUNT =========
+    */
+
+    if (previousValue && previousValue !== "" && currentValue === "") {
+      setBudgets((prev) => ({
+        ...prev,
+        budgetsByYear: prev.budgetsByYear.map((yearBudget) => {
+          if (yearBudget.year !== year) return yearBudget
+
+          return {
+            ...yearBudget,
+            budgetsByParent: yearBudget.budgetsByParent.map((b) => {
+              if (b.parent !== category.parent) return b
+
+              return {
+                parent: b.parent,
+                budgetsByCategory: b.budgetsByCategory.map((c) => {
+                  if (c.name !== category.name) return c
+
+                  return {
+                    ...c,
+                    monthlyAmounts: [
+                      ...c.monthlyAmounts.slice(0, col),
+                      {
+                        id: null,
+                        amount: 0,
                       },
                       ...c.monthlyAmounts.slice(col + 1),
                     ],
