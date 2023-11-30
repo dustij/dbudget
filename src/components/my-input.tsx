@@ -26,6 +26,7 @@ const MyInput = React.forwardRef<HTMLInputElement, InputProps>(
       if (["Enter", "Escape"].includes(e.key)) {
         e.currentTarget.blur()
       }
+      props.onKeyDown?.(e)
     }
 
     return (
