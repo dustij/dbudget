@@ -22,6 +22,12 @@ const MyInput = React.forwardRef<HTMLInputElement, InputProps>(
       type === "number" ? formatCurrency(value, false) : value,
     )
 
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (["Enter", "Escape"].includes(e.key)) {
+        e.currentTarget.blur()
+      }
+    }
+
     return (
       <input
         type={type}
@@ -41,6 +47,7 @@ const MyInput = React.forwardRef<HTMLInputElement, InputProps>(
             setValue: setValue,
           })
         }}
+        onKeyDown={handleKeyDown}
         {...props}
       />
     )
