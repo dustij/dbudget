@@ -83,6 +83,57 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     lastSave.current = new Date().getTime()
   }
 
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    { row, col }: { row: number; col: number },
+  ) => {
+    // If the user presses the enter key, move to the next or previous input
+    if (e.key === "Enter") {
+      const isFirstRow = row === 0
+      const isFirstCol = col === 0
+      const isLastRow = row === refsMatrix.current.length - 1
+      const isLastCol = col === 12
+
+      // If shift key is pressed, move to previous input
+      if (e.shiftKey) {
+        // If is first row and is first column, we are at the top left corner of the table, so do nothing
+        if (isFirstRow && isFirstCol) {
+          e.currentTarget.blur()
+          return
+        }
+
+        // If not first row, move to previous row in same column
+        if (!isFirstRow) {
+          const previousRow = refsMatrix.current[row - 1]!
+          previousRow[col]!.input.focus()
+          return
+        }
+
+        // If is first row, move to last row in previous column
+        const lastRow = refsMatrix.current[refsMatrix.current.length - 1]!
+        lastRow[col - 1]!.input.focus()
+        return
+      }
+
+      // If is last row and is last column, we are at the bottom right corner of the table, so do nothing
+      if (isLastRow && isLastCol) {
+        e.currentTarget.blur()
+        return
+      }
+
+      // If not last row, move to next row in same column
+      if (!isLastRow) {
+        const nextRow = refsMatrix.current[row + 1]!
+        nextRow[col]!.input.focus()
+        return
+      }
+
+      // If is last row, move to first row in next column
+      const firstRow = refsMatrix.current[0]!
+      firstRow[col + 1]!.input.focus()
+    }
+  }
+
   const handleCategoryOut = (
     e: React.FocusEvent<HTMLInputElement>,
     setValue: React.Dispatch<React.SetStateAction<string | number>>,
@@ -696,10 +747,14 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                               }
                             }}
                             onFocus={(e) => {
+                              e.currentTarget.select()
                               e.target.dataset.previousValue = e.target.value
                             }}
                             onFocusOut={({ e, setValue }) =>
                               handleCategoryOut(e, setValue, parentName)
+                            }
+                            onKeyDown={(e) =>
+                              handleKeyDown(e, { row: row, col: 0 })
                             }
                           />
                         </td>
@@ -728,6 +783,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                 }
                               }}
                               onFocus={(e) => {
+                                e.currentTarget.select()
                                 e.target.dataset.previousValue = e.target.value
                               }}
                               onFocusOut={({ e, setValue }) =>
@@ -737,6 +793,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                   { row, col },
                                   category,
                                 )
+                              }
+                              onKeyDown={(e) =>
+                                handleKeyDown(e, { row: row, col: col + 1 })
                               }
                             />
                           </td>

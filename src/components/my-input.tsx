@@ -48,8 +48,8 @@ const MyInput = React.forwardRef<HTMLInputElement, InputProps>(
             setValue: setValue,
           })
         }}
-        onKeyDown={handleKeyDown}
         {...props}
+        onKeyDown={handleKeyDown}
       />
     )
   },
