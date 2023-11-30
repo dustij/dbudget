@@ -27,20 +27,22 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   action,
 }) => {
   const [year, setYear] = useState<number>(new Date().getFullYear())
-  const [budget, setBudget] = useState<IBudgetData>(data)
+  const [budgets, setBudgets] = useState<IBudgetData>(data)
   const [isDirty, setIsDirty] = useState<boolean>(false)
   const refsMatrix = useRef<RefItem[][]>([])
   const lastSave = useRef<number>(new Date().getTime())
 
   const getParentTotal = (parent: CategoryParent, month: number): number => {
-    const yearData = budget.allYearsData.find((d) => d.year === year)
-    if (!yearData) return 0
-    const parentBudget = yearData.budgets.find((b) => b.parent === parent)
+    const yearBudget = budgets.budgetsByYear.find((d) => d.year === year)
+    if (!yearBudget) return 0
+    const parentBudget = yearBudget.budgetsByParent.find(
+      (b) => b.parent === parent,
+    )
     if (!parentBudget) return 0
-    const categoriesData = parentBudget.categoriesData
-    if (!categoriesData) return 0
+    const budgetsByCategory = parentBudget.budgetsByCategory
+    if (!budgetsByCategory) return 0
 
-    const total = categoriesData.reduce((acc, curr) => {
+    const total = budgetsByCategory.reduce((acc, curr) => {
       const amountData = curr.monthlyAmounts[month]
       if (!amountData) return acc
       return acc + amountData.amount / 100
@@ -97,7 +99,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   }, [refsMatrix])
 
   useEffect(() => {
-    console.debug(budget)
+    console.debug(budgets)
 
     const emptyInput = refsMatrix.current.find((row) =>
       row.find((col) => col.category.id === "@just-added!"),
@@ -106,7 +108,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     if (emptyInput) {
       emptyInput.focus()
     }
-  }, [budget])
+  }, [budgets])
 
   const hanldeYearChange = (year: number) => {
     setYear(year)
@@ -119,7 +121,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       userId: userId,
       parent: parent,
     }
-    setBudget((prev) => ({
+    setBudgets((prev) => ({
       ...prev,
       categories: [...prev.categories, newCategory],
     }))
@@ -127,7 +129,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
   const handleCancel = async () => {
     const data = await action.getBudget()
-    setBudget(data)
+    setBudgets(data)
     setIsDirty(false)
     lastSave.current = new Date().getTime()
   }
@@ -147,8 +149,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       // If not then do nothing, because no change was made
       if (currentValue !== "") return
       // If both are empty strings, remove the row from the budget because there is nothing to save
-      const filteredCategories = budget.categories.filter((c) => c.name !== "")
-      setBudget((prev) => ({
+      const filteredCategories = budgets.categories.filter((c) => c.name !== "")
+      setBudgets((prev) => ({
         ...prev,
         categories: filteredCategories,
       }))
@@ -156,7 +158,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     }
 
     // Category names should be unique
-    const categoryExists = budget.categories.find(
+    const categoryExists = budgets.categories.find(
       (c) => c.name === currentValue,
     )
 
@@ -165,16 +167,16 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
     /* If previous value is empty string and current value is not empty string, this is a new category.
       Add the new category to the categories array in the budget and create a new IExtendedCategory item and add it to the
-      categoriesData array for the selected year, with the 0 amount in monthlyAmounts for all months, remember the id is "@just-added!"
+      budgetsByCategory array for the selected year, with the 0 amount in monthlyAmounts for all months, remember the id is "@just-added!"
       so replace that empty category with a new one
     */
     if (previousValue === "" && currentValue !== "") {
       // If the category already exists, remove the row, cannot add new category with same name
       if (categoryExists) {
-        const filteredCategories = budget.categories.filter(
+        const filteredCategories = budgets.categories.filter(
           (c) => c.id !== "@just-added!",
         )
-        setBudget((prev) => ({
+        setBudgets((prev) => ({
           ...prev,
           categories: filteredCategories,
         }))
@@ -188,29 +190,33 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         parent: parent,
       }
 
-      const yearData = budget.allYearsData.find((d) => d.year === year) ?? {
+      // Initialize the year data if it doesn't exist
+      const yearBudget = budgets.budgetsByYear.find((d) => d.year === year) ?? {
         year: year,
-        budgets: [],
+        budgetsByParent: [],
       }
 
-      const categoriesData =
-        yearData.budgets.find((b) => b.parent === parent)?.categoriesData ?? []
+      // Initialize the budgetsByCategory if it doesn't exist
+      const budgetsByCategory =
+        yearBudget.budgetsByParent.find((b) => b.parent === parent)
+          ?.budgetsByCategory ?? []
 
-      setBudget((prev) => ({
+      setBudgets((prev) => ({
         categories: prev.categories.map((c) => {
           if (c.id !== "@just-added!") return c
           return newCategory
         }),
-        allYearsData: [
-          ...prev.allYearsData,
-          {
+        budgetsByYear: prev.budgetsByYear.map((_yearBudget) => {
+          console.log("_yearBudget", _yearBudget)
+          if (_yearBudget && _yearBudget.year !== year) return _yearBudget
+          return {
             year: year,
-            budgets: [
-              ...yearData.budgets,
+            budgetsByParent: [
+              ...yearBudget.budgetsByParent,
               {
                 parent: parent,
-                categoriesData: [
-                  ...categoriesData,
+                budgetsByCategory: [
+                  ...budgetsByCategory,
                   {
                     ...newCategory,
                     monthlyAmounts: Array.from({ length: 12 }, () => ({
@@ -221,8 +227,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                 ],
               },
             ],
-          },
-        ],
+          }
+        }),
       }))
     }
   }
@@ -246,19 +252,19 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
     // If the previous value was 0 and the current value is not empty
     if (previousValue === "0.00" && currentValue !== "") {
-      setBudget((prev) => ({
+      setBudgets((prev) => ({
         ...prev,
-        allYearsData: prev.allYearsData.map((yearData) => {
-          if (yearData.year !== year) return yearData
+        budgetsByYear: prev.budgetsByYear.map((yearBudget) => {
+          if (yearBudget.year !== year) return yearBudget
 
           return {
-            ...yearData,
-            budgets: yearData.budgets.map((b) => {
+            ...yearBudget,
+            budgetsByParent: yearBudget.budgetsByParent.map((b) => {
               if (b.parent !== category.parent) return b
 
               return {
                 parent: b.parent,
-                categoriesData: b.categoriesData.map((c) => {
+                budgetsByCategory: b.budgetsByCategory.map((c) => {
                   if (c.name !== category.name) return c
 
                   return {
@@ -283,15 +289,15 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
   const getMonthAmount = (category: ICategory, month: number): number => {
     // Is there a data for this year?
-    const yearData = budget.allYearsData.find((d) => d.year === year)
-    if (!yearData) return 0
+    const yearBudget = budgets.budgetsByYear.find((d) => d.year === year)
+    if (!yearBudget) return 0
     // Is there a budget for this parent?
-    const parentBudget = yearData.budgets.find(
+    const parentBudget = yearBudget.budgetsByParent.find(
       (b) => b.parent === category.parent,
     )
     if (!parentBudget) return 0
     // Is this category in the budget?
-    const categoryBudget = parentBudget.categoriesData.find(
+    const categoryBudget = parentBudget.budgetsByCategory.find(
       (c) => c.id === category.id,
     )
     if (!categoryBudget) return 0
@@ -396,7 +402,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                 </tr>
 
                 {/* Child Rows */}
-                {budget.categories
+                {budgets.categories
                   .filter((c) => c.parent === parent.name)
                   .map((category) => {
                     const row = totalRowIndex++

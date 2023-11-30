@@ -1,6 +1,6 @@
 interface IBudgetData {
   categories: ICategory[] | []
-  allYearsData: IYearData[] | []
+  budgetsByYear: IYearBudget[] | []
 }
 
 interface ICategory {
@@ -13,17 +13,17 @@ interface ICategory {
   updatedAt?: Date | string
 }
 
-interface IYearData {
+interface IYearBudget {
   year: number
-  budgets: IBudget[]
+  budgetsByParent: IParentBudget[]
 }
 
-interface IBudget {
+interface IParentBudget {
   parent: CategoryParent
-  categoriesData: IExtendedCategory[]
+  budgetsByCategory: ICategoryBudget[]
 }
 
-interface IExtendedCategory extends ICategory {
+interface ICategoryBudget extends ICategory {
   monthlyAmounts: IMonthlyAmount[]
 }
 

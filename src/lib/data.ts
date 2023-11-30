@@ -20,19 +20,19 @@ export async function getBudgetData(userId: string): Promise<IBudgetData> {
           acc.categories.push(category)
         }
 
-        // If no amount then there is no data to add to the allYearsData object
+        // If no amount then there is no data to add to the budgetsByYear object
         if (!amount) {
           return acc
         }
 
         // If year doesn't exist, create it
-        if (!acc.allYearsData[amount.year]) {
-          acc.allYearsData[amount.year] = {}
+        if (!acc.budgetsByYear[amount.year]) {
+          acc.budgetsByYear[amount.year] = {}
         }
 
         // If category doesn't exist, create it
-        if (!acc.allYearsData[amount.year]![category.id]) {
-          acc.allYearsData[amount.year]![category.id] = {
+        if (!acc.budgetsByYear[amount.year]![category.id]) {
+          acc.budgetsByYear[amount.year]![category.id] = {
             ...category,
             monthlyAmounts: Array.from({ length: 12 }).fill({
               id: null,
@@ -42,48 +42,50 @@ export async function getBudgetData(userId: string): Promise<IBudgetData> {
         }
 
         // Add amount to monthlyAmounts
-        acc.allYearsData[amount.year]![category.id]!.monthlyAmounts[
+        acc.budgetsByYear[amount.year]![category.id]!.monthlyAmounts[
           amount.month - 1
         ] = { id: amount.id, amount: Number(amount.amount) }
 
         return acc
       },
-      { categories: [], allYearsData: {} } as {
+      { categories: [], budgetsByYear: {} } as {
         categories: ICategory[]
-        allYearsData: {
+        budgetsByYear: {
           [year: string]: {
-            [categoryId: string]: IExtendedCategory
+            [categoryId: string]: ICategoryBudget
           }
         }
       },
     )
 
     const formattedData = (() => {
-      const allYearsData = Object.keys(reducedData.allYearsData).map((year) => {
-        const budgets = Object.values(
-          reducedData.allYearsData[year] ?? {},
-        ).reduce((acc: any, category: any) => {
-          const existingParent = acc.find(
-            (item: any) => item.parent === category.parent,
-          )
-          if (existingParent) {
-            existingParent.categoriesData.push(category)
-          } else {
-            acc.push({
-              parent: category.parent,
-              categoriesData: [category],
-            })
+      const budgetsByYear = Object.keys(reducedData.budgetsByYear).map(
+        (year) => {
+          const budgetsByParent = Object.values(
+            reducedData.budgetsByYear[year] ?? {},
+          ).reduce((acc: any, category: any) => {
+            const existingParent = acc.find(
+              (item: any) => item.parent === category.parent,
+            )
+            if (existingParent) {
+              existingParent.budgetsByCategory.push(category)
+            } else {
+              acc.push({
+                parent: category.parent,
+                budgetsByCategory: [category],
+              })
+            }
+            return acc
+          }, [])
+          return {
+            year: parseInt(year),
+            budgetsByParent,
           }
-          return acc
-        }, [])
-        return {
-          year: parseInt(year),
-          budgets,
-        }
-      })
+        },
+      )
       return {
         categories: reducedData.categories,
-        allYearsData,
+        budgetsByYear,
       }
     })()
 
@@ -92,6 +94,6 @@ export async function getBudgetData(userId: string): Promise<IBudgetData> {
     return formattedData
   } catch (error) {
     console.error(error)
-    return { categories: [], allYearsData: [] }
+    return { categories: [], budgetsByYear: [] }
   }
 }
