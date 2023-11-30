@@ -3,11 +3,10 @@
 import React, { type FC, useState, useEffect, useRef } from "react"
 import YearPicker from "../year-picker"
 import { IoAddCircleOutline } from "react-icons/io5"
-import { CATEGORY_PARENTS } from "~/lib/constants"
-import { cn, toTitleCase } from "~/lib/utils"
+import { cn, formatCurrency, toTitleCase } from "~/lib/utils"
 import { MyInput } from "../my-input"
 import { Button } from "../ui/button"
-import { categories } from "~/db/schema"
+import { get } from "http"
 
 interface RefItem {
   input: HTMLInputElement
@@ -33,6 +32,64 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const refsMatrix = useRef<RefItem[][]>([])
   const lastSave = useRef<number>(new Date().getTime())
 
+  const getParentTotal = (parent: CategoryParent, month: number): number => {
+    const yearData = budget.allYearsData.find((d) => d.year === year)
+    if (!yearData) return 0
+    const parentBudget = yearData.budgets.find((b) => b.parent === parent)
+    if (!parentBudget) return 0
+    const categoriesData = parentBudget.categoriesData
+    if (!categoriesData) return 0
+
+    const total = categoriesData.reduce((acc, curr) => {
+      const amountData = curr.monthlyAmounts[month]
+      if (!amountData) return acc
+      return acc + amountData.amount / 100
+    }, 0)
+
+    return total
+  }
+
+  const parentsRef = useRef<{ name: CategoryParent; totals: number[] }[]>([
+    {
+      name: "income",
+      totals: Array.from({ length: 12 }, (_, i) => getParentTotal("income", i)),
+    },
+    {
+      name: "fixed",
+      totals: Array.from({ length: 12 }, (_, i) => getParentTotal("fixed", i)),
+    },
+    {
+      name: "variable",
+      totals: Array.from({ length: 12 }, (_, i) =>
+        getParentTotal("variable", i),
+      ),
+    },
+    {
+      name: "discretionary",
+      totals: Array.from({ length: 12 }, (_, i) =>
+        getParentTotal("discretionary", i),
+      ),
+    },
+    {
+      name: "obligation",
+      totals: Array.from({ length: 12 }, (_, i) =>
+        getParentTotal("obligation", i),
+      ),
+    },
+    {
+      name: "leakage",
+      totals: Array.from({ length: 12 }, (_, i) =>
+        getParentTotal("leakage", i),
+      ),
+    },
+    {
+      name: "savings",
+      totals: Array.from({ length: 12 }, (_, i) =>
+        getParentTotal("savings", i),
+      ),
+    },
+  ])
+
   let totalRowIndex = 0 // track row index across different parents
 
   useEffect(() => {
@@ -43,7 +100,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     console.debug(budget)
 
     const emptyInput = refsMatrix.current.find((row) =>
-      row.find((col) => col.category.id === "~!"),
+      row.find((col) => col.category.id === "@just-added!"),
     )?.[0]?.input
 
     if (emptyInput) {
@@ -57,7 +114,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
   const handleAddRow = (parent: CategoryParent) => {
     const newCategory: ICategory = {
-      id: "~!",
+      id: "@just-added!",
       name: "",
       userId: userId,
       parent: parent,
@@ -78,9 +135,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const handleCategoryOut = (
     e: React.FocusEvent<HTMLInputElement>,
     setValue: React.Dispatch<React.SetStateAction<string | number>>,
+    parent: CategoryParent,
   ) => {
     const previousValue = e.target.dataset.previousValue?.trim()
     const currentValue = e.target.value.trim()
+
+    console.log("previousValue", previousValue, "currentValue", currentValue)
 
     // If the values are equal, check if they are empty strings
     if (currentValue === previousValue) {
@@ -95,12 +155,83 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       return
     }
 
+    // Category names should be unique
+    const categoryExists = budget.categories.find(
+      (c) => c.name === currentValue,
+    )
+
+    // Update th budget
     setIsDirty(true)
+
+    /* If previous value is empty string and current value is not empty string, this is a new category.
+      Add the new category to the categories array in the budget and create a new IExtendedCategory item and add it to the
+      categoriesData array for the selected year, with the 0 amount in monthlyAmounts for all months, remember the id is "@just-added!"
+      so replace that empty category with a new one
+    */
+    if (previousValue === "" && currentValue !== "") {
+      // If the category already exists, remove the row, cannot add new category with same name
+      if (categoryExists) {
+        const filteredCategories = budget.categories.filter(
+          (c) => c.id !== "@just-added!",
+        )
+        setBudget((prev) => ({
+          ...prev,
+          categories: filteredCategories,
+        }))
+        return
+      }
+
+      const newCategory: ICategory = {
+        id: "",
+        name: currentValue,
+        userId: userId,
+        parent: parent,
+      }
+
+      const yearData = budget.allYearsData.find((d) => d.year === year) ?? {
+        year: year,
+        budgets: [],
+      }
+
+      const categoriesData =
+        yearData.budgets.find((b) => b.parent === parent)?.categoriesData ?? []
+
+      setBudget((prev) => ({
+        categories: prev.categories.map((c) => {
+          if (c.id !== "@just-added!") return c
+          return newCategory
+        }),
+        allYearsData: [
+          ...prev.allYearsData,
+          {
+            year: year,
+            budgets: [
+              ...yearData.budgets,
+              {
+                parent: parent,
+                categoriesData: [
+                  ...categoriesData,
+                  {
+                    ...newCategory,
+                    monthlyAmounts: Array.from({ length: 12 }, () => ({
+                      id: null,
+                      amount: 0,
+                    })),
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }))
+    }
   }
 
   const handleAmountOut = (
     e: React.FocusEvent<HTMLInputElement>,
     setValue: React.Dispatch<React.SetStateAction<string | number>>,
+    { row, col }: { row: number; col: number },
+    category: ICategory,
   ) => {
     const previousValue = e.target.dataset.previousValue?.trim()
     const currentValue = e.target.value.trim()
@@ -110,7 +241,44 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     // If previous value is 0 and current value is empty string, do nothing
     if (previousValue === "0.00" && currentValue === "") return
 
+    // Update the budget
     setIsDirty(true)
+
+    // If the previous value was 0 and the current value is not empty
+    if (previousValue === "0.00" && currentValue !== "") {
+      setBudget((prev) => ({
+        ...prev,
+        allYearsData: prev.allYearsData.map((yearData) => {
+          if (yearData.year !== year) return yearData
+
+          return {
+            ...yearData,
+            budgets: yearData.budgets.map((b) => {
+              if (b.parent !== category.parent) return b
+
+              return {
+                parent: b.parent,
+                categoriesData: b.categoriesData.map((c) => {
+                  if (c.name !== category.name) return c
+
+                  return {
+                    ...c,
+                    monthlyAmounts: [
+                      ...c.monthlyAmounts.slice(0, col),
+                      {
+                        id: null,
+                        amount: parseInt(currentValue) * 100,
+                      },
+                      ...c.monthlyAmounts.slice(col + 1),
+                    ],
+                  }
+                }),
+              }
+            }),
+          }
+        }),
+      }))
+    }
   }
 
   const getMonthAmount = (category: ICategory, month: number): number => {
@@ -210,26 +378,26 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
             </tr>
           </thead>
           <tbody>
-            {CATEGORY_PARENTS.map((parent) => (
-              <React.Fragment key={parent}>
+            {parentsRef.current.map((parent) => (
+              <React.Fragment key={parent.name}>
                 {/* Parent Totals Row */}
-                <tr key={parent}>
+                <tr key={parent.name}>
                   <td className="sticky left-0 cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-left text-base font-normal text-zinc-900 mobile:text-sm">
-                    {toTitleCase(parent)}
+                    {toTitleCase(parent.name)}
                   </td>
-                  {Array.from({ length: 12 }).map((_, i) => (
+                  {Array.from({ length: 12 }).map((_, col) => (
                     <td
-                      key={i}
+                      key={`${parent}-${col}-${lastSave.current}`}
                       className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-900 mobile:text-sm"
                     >
-                      0.00
+                      {formatCurrency(parent.totals[col] ?? 0)}
                     </td>
                   ))}
                 </tr>
 
                 {/* Child Rows */}
                 {budget.categories
-                  .filter((c) => c.parent === parent)
+                  .filter((c) => c.parent === parent.name)
                   .map((category) => {
                     const row = totalRowIndex++
                     return (
@@ -237,7 +405,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                         <td className="sticky left-0 z-10 cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-2 text-left text-base font-normal text-zinc-500 group-hover:bg-accent mobile:text-sm">
                           <MyInput
                             key={`${category.name}-${lastSave.current}`}
-                            id={category.id}
                             name={category.name}
                             data-previous-value=""
                             autoComplete="off"
@@ -254,7 +421,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                               e.target.dataset.previousValue = e.target.value
                             }}
                             onFocusOut={({ e, setValue }) =>
-                              handleCategoryOut(e, setValue)
+                              handleCategoryOut(e, setValue, parent.name)
                             }
                           />
                         </td>
@@ -286,7 +453,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                 e.target.dataset.previousValue = e.target.value
                               }}
                               onFocusOut={({ e, setValue }) =>
-                                handleAmountOut(e, setValue)
+                                handleAmountOut(
+                                  e,
+                                  setValue,
+                                  { row, col },
+                                  category,
+                                )
                               }
                             />
                           </td>
@@ -299,7 +471,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                 <tr key={`${parent}-add`}>
                   <td
                     className="sticky left-0 z-10 h-6 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm"
-                    onClick={() => handleAddRow(parent)}
+                    onClick={() => handleAddRow(parent.name)}
                   >
                     <IoAddCircleOutline className="mr-1 inline-block h-full pb-[2px]" />
                     Add
