@@ -4,7 +4,6 @@ import { getBudgetData } from "~/lib/data"
 import BudgetTableClient from "./budget-table-client"
 import { db } from "~/db"
 import { categories, amounts } from "~/db/schema"
-import { saveJSONfile } from "~/lib/actions"
 import { eq } from "drizzle-orm"
 
 const CategorySchema = z.object({
@@ -60,12 +59,9 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
   }
 
   const updateServerBudgets = async (data: IBudgetData) => {
-    "use server"
+    ;("use server")
 
-    /*
-    ========== NEW CATEGORIES ==========
-    */
-
+    // Seperate new categories, updated categories, and categories to delete
     const newCategories = data.categories
       .filter((category) => category.id === null)
       .map((category) => {
@@ -73,7 +69,42 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
         return CreateCategory.parse(category)
       })
 
-    // drizzle insert new categories to get ids
+    const updatedCategories = data.categories
+      .filter((category) => category.id !== null)
+      .map((category) => {
+        return UpdateCategory.parse(category)
+      })
+
+    // TODO: const deletedCategories = data.categories.filter(
+
+    // seperate new amounts, updated amounts, and amounts to delete
+    const yearBudgetsWithNewAmounts = data.budgetsByYear.filter((yearBudget) =>
+      yearBudget.budgetsByParent.some((parentBudget) =>
+        parentBudget.budgetsByCategory.some((category) =>
+          category.monthlyAmounts.some(
+            (amount) => amount.amount > 0 && amount.id === null,
+          ),
+        ),
+      ),
+    )
+
+    const yearBudgetsWithExistingAmounts = data.budgetsByYear.filter(
+      (yearBudget) =>
+        yearBudget.budgetsByParent.some((parentBudget) =>
+          parentBudget.budgetsByCategory.some((category) =>
+            category.monthlyAmounts.some(
+              (amount) => amount.amount > 0 && amount.id !== null,
+            ),
+          ),
+        ),
+    )
+
+    // TODO: const yearBudgetsWithDeletedAmounts = data.budgetsByYear.filter(
+
+    /*
+    ========== INSERT CATEGORIES ==========
+    */
+
     try {
       await db.insert(categories).values(newCategories)
       try {
@@ -92,8 +123,28 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
       console.error(e)
     }
 
-    // update new category ids in amounts
+    /*
+    ========== UPDATE CATEGORIES ==========
+    */
+
     try {
+      for (const category of updatedCategories) {
+        await db
+          .update(categories)
+          .set({ name: category.name })
+          .where(eq(categories.id, category.id))
+      }
+    } catch (e) {
+      console.error("Something went wrong while updating categories:")
+      console.error(e)
+    }
+
+    /*
+    ========== INSERT AMOUNTS ==========
+    */
+
+    try {
+      // prep new amounts by updating category ids
       data.budgetsByYear.forEach((yearBudget) => {
         yearBudget.budgetsByParent.forEach((parentBudget) => {
           const nullCategories = parentBudget.budgetsByCategory.filter(
@@ -122,20 +173,6 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
       console.error("Something went wrong while updating new category ids:")
       console.error(e)
     }
-
-    /*
-    ========== NEW AMOUNTS ==========
-    */
-
-    const yearBudgetsWithNewAmounts = data.budgetsByYear.filter((yearBudget) =>
-      yearBudget.budgetsByParent.some((parentBudget) =>
-        parentBudget.budgetsByCategory.some((category) =>
-          category.monthlyAmounts.some(
-            (amount) => amount.amount > 0 && amount.id === null,
-          ),
-        ),
-      ),
-    )
 
     const newAmounts = yearBudgetsWithNewAmounts.map((yearBudget) =>
       yearBudget.budgetsByParent.map((parentBudget) =>
@@ -175,7 +212,9 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
       console.error(e)
     }
 
-    saveJSONfile("temp/.debug.data.json", data)
+    /*
+    ========== UPDATE AMOUNTS ==========
+    */
 
     return getBudgetData(userId)
   }

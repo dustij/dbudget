@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm"
 import { db } from "~/db"
 import { amounts, categories } from "~/db/schema"
+import { saveJSONfile } from "./actions"
 
 export async function getBudgetData(userId: string): Promise<IBudgetData> {
   try {
@@ -90,6 +91,7 @@ export async function getBudgetData(userId: string): Promise<IBudgetData> {
     })()
 
     // console.log("formattedData >", JSON.stringify(formattedData, null, 2))
+    saveJSONfile("temp/.debug.data.json", formattedData)
 
     return formattedData
   } catch (error) {
