@@ -805,9 +805,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                   })}
 
                 {/* Add Button Row */}
-                <tr key={`${parent}-add`}>
+                <tr key={`${parentName}-add`}>
                   <td
-                    className="sticky left-0 z-10 h-6 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm"
+                    className={cn(
+                      "sticky left-0 z-10 h-6 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm",
+                      parentName === "savings" && "border-b-0",
+                    )}
                     onClick={() => handleAddRow(parentName)}
                   >
                     <IoAddCircleOutline className="mr-1 inline-block h-full pb-[2px]" />
@@ -816,13 +819,39 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                   {Array.from({ length: 12 }).map((_, index) => (
                     <td
                       key={index}
-                      className="border-b bg-white hover:cursor-default"
+                      className={cn(
+                        "border-b bg-white hover:cursor-default",
+                        parentName === "savings" && "border-b-0",
+                      )}
                     ></td>
                   ))}
                 </tr>
               </React.Fragment>
             ))}
           </tbody>
+          <tfoot className="sticky bottom-0 z-30 bg-white">
+            <tr>
+              <td className="sticky left-0 cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-t bg-white px-1.5 text-left text-base font-normal text-zinc-900 mobile:text-sm">
+                Total
+              </td>
+              {Array.from({ length: 12 }).map((_, col) => (
+                <td
+                  key={col}
+                  className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-t bg-white px-1.5 text-right text-base font-normal text-zinc-900 mobile:text-sm"
+                >
+                  {formatCurrency(
+                    budgets.categories.reduce((acc, curr) => {
+                      if (curr.parent === "income") {
+                        return acc + getMonthAmount(curr, col)
+                      } else {
+                        return acc - getMonthAmount(curr, col)
+                      }
+                    }, 0),
+                  )}
+                </td>
+              ))}
+            </tr>
+          </tfoot>
         </table>
       </div>
     </>
