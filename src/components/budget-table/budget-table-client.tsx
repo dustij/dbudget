@@ -6,6 +6,7 @@ import { IoAddCircleOutline } from "react-icons/io5"
 import { cn, formatCurrency, toTitleCase } from "~/lib/utils"
 import { MyInput } from "../my-input"
 import { Button } from "../ui/button"
+import { saveJSONfile } from "~/lib/actions"
 
 const parentNames: CategoryParent[] = [
   "income",
@@ -44,11 +45,11 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   let totalRowIndex = 0 // track row index across different parents
 
   useEffect(() => {
-    console.debug(refsMatrix.current)
+    console.debug({ refsMatrix: refsMatrix.current })
   }, [refsMatrix])
 
   useEffect(() => {
-    console.debug(budgets)
+    console.debug({ budgets })
 
     const emptyInput = refsMatrix.current.find((row) =>
       row.find((col) => col.category.id === "@just-added!"),
@@ -74,6 +75,10 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       ...prev,
       categories: [...prev.categories, newCategory],
     }))
+  }
+
+  const handleSave = async () => {
+    saveJSONfile("temp/.debug.budgets.json", budgets)
   }
 
   const handleCancel = async () => {
@@ -248,7 +253,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                         }
                         return {
                           ...parentBudget,
-                          // We've determined above that this is a new category, so add it to the budgetsByCategory array
+                          // We've determined above that this is a new category, so just add it to the budgetsByCategory array
                           budgetsByCategory: [
                             ...parentBudget.budgetsByCategory,
                             {
@@ -364,8 +369,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   ) => {
     const previousValue = e.target.dataset.previousValue?.trim()
     const currentValue = e.target.value.trim()
-
-    console.log({ previousValue, currentValue })
 
     // If the values are equal then do nothing, because no change was made
     if (currentValue === previousValue) {
@@ -644,6 +647,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
             variant="default"
             className="h-8 font-normal focus-visible:border-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-lime-500"
             disabled={!isDirty}
+            onClick={handleSave}
           >
             Save
           </Button>
