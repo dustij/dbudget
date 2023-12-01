@@ -4,7 +4,7 @@ interface IBudgetData {
 }
 
 interface ICategory {
-  id: string
+  id?: string | null
   name: string
   userId: string
   parent: CategoryParent
@@ -28,7 +28,7 @@ interface ICategoryBudget extends ICategory {
 }
 
 interface IMonthlyAmount {
-  id: string | null
+  id?: string | null
   amount: number
 }
 

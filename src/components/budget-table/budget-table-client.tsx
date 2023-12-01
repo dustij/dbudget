@@ -27,7 +27,8 @@ interface BudgetTableClientProps {
   userId: string
   data: IBudgetData
   action: {
-    getBudget: () => Promise<IBudgetData>
+    getServerBudgets: () => Promise<IBudgetData>
+    updateServerBudgets: (data: IBudgetData) => Promise<IBudgetData>
   }
 }
 
@@ -40,15 +41,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const [budgets, setBudgets] = useState<IBudgetData>(data)
   const [isDirty, setIsDirty] = useState<boolean>(false)
   const refsMatrix = useRef<RefItem[][]>([])
-  const lastSave = useRef<number>(new Date().getTime())
+  const keyTimeRef = useRef<number>(new Date().getTime())
 
-  let totalRowIndex = 0 // track row index across different parents
+  // track row index across different parents
+  let totalRowIndex = 0
 
   useEffect(() => {
     console.debug({ refsMatrix: refsMatrix.current })
-  }, [refsMatrix])
-
-  useEffect(() => {
     console.debug({ budgets })
 
     const emptyInput = refsMatrix.current.find((row) =>
@@ -79,13 +78,17 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
   const handleSave = async () => {
     saveJSONfile("temp/.debug.budgets.json", budgets)
+    const data = await action.updateServerBudgets(budgets)
+    setBudgets(data)
+    setIsDirty(false)
+    keyTimeRef.current = new Date().getTime()
   }
 
   const handleCancel = async () => {
-    const data = await action.getBudget()
+    const data = await action.getServerBudgets()
     setBudgets(data)
     setIsDirty(false)
-    lastSave.current = new Date().getTime()
+    keyTimeRef.current = new Date().getTime()
   }
 
   const handleKeyDown = (
@@ -185,7 +188,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
       }
 
       const newCategory: ICategory = {
-        id: "",
+        id: null,
         name: currentValue,
         userId: userId,
         parent: parent,
@@ -720,7 +723,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                   </td>
                   {Array.from({ length: 12 }).map((_, col) => (
                     <td
-                      key={`${parent}-${col}-${lastSave.current}`}
+                      key={`${parentName}-${col}-${keyTimeRef.current}`}
                       className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-900 mobile:text-sm"
                     >
                       {formatCurrency(getParentTotal(parentName, col))}
@@ -737,7 +740,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                       <tr key={row} className="group">
                         <td className="sticky left-0 z-10 cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-2 text-left text-base font-normal text-zinc-500 group-hover:bg-accent mobile:text-sm">
                           <MyInput
-                            key={`${category.name}-${lastSave.current}`}
+                            key={`${category.name}-${keyTimeRef.current}`}
                             name={category.name}
                             data-previous-value=""
                             autoComplete="off"
@@ -772,7 +775,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                             )}
                           >
                             <MyInput
-                              key={`${year}-${category.name}-${col}-${lastSave.current}`}
+                              key={`${year}-${category.name}-${col}-${keyTimeRef.current}`}
                               name={`${category.name}-${col}`}
                               className="w-full text-zinc-500"
                               type="number"
