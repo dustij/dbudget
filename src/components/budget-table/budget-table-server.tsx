@@ -70,14 +70,14 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     */
 
     const newCategories = data.categories
-      .filter((category) => category.id === null)
+      .filter((category) => !category.id)
       .map((category) => {
         delete category.id
         return CreateCategory.parse(category)
       })
 
     const updatedCategories = data.categories
-      .filter((category) => category.id !== null)
+      .filter((category) => category.id)
       .map((category) => {
         return UpdateCategory.parse(category)
       })
