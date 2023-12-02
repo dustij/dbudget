@@ -81,7 +81,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     const data = await action.updateServerBudgets(budgets)
     setBudgets(data)
     setIsDirty(false)
-    keyTimeRef.current = new Date().getTime()
+    // keyTimeRef.current = new Date().getTime()
   }
 
   const handleCancel = async () => {
@@ -396,22 +396,60 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                 ...prev.budgetsByYear,
                 {
                   year: year,
-                  budgetsByParent: prev.categories.map((c) => ({
-                    parent: c.parent,
-                    budgetsByCategory: [
-                      {
-                        ...c,
-                        monthlyAmounts: Array.from({ length: 12 }, (_, i) => {
-                          return i === col
-                            ? {
-                                id: null,
-                                amount: parseFloat(currentValue) * 100,
-                              }
-                            : { id: null, amount: 0 }
-                        }),
-                      },
-                    ],
-                  })),
+                  budgetsByParent: prev.categories.reduce(
+                    // Reducing to avoid duplicate parents, if budget for parent exists, add category budget to it, otherwise create it
+                    (acc, curr) => {
+                      const existingParent = acc.find(
+                        (b) => b.parent === curr.parent,
+                      )
+
+                      if (existingParent) {
+                        existingParent.budgetsByCategory.push({
+                          ...curr,
+                          monthlyAmounts: Array.from({ length: 12 }, (_, i) => {
+                            // When creating the budget for the first time, we need to check if the category name matches the current inputs category name
+                            return i === col && category.name === curr.name
+                              ? {
+                                  id: null,
+                                  amount: Math.round(
+                                    parseFloat(currentValue) * 100,
+                                  ),
+                                }
+                              : { id: null, amount: 0 }
+                          }),
+                        })
+
+                        return acc
+                      } else {
+                        return [
+                          ...acc,
+                          {
+                            parent: curr.parent,
+                            budgetsByCategory: [
+                              {
+                                ...curr,
+                                monthlyAmounts: Array.from(
+                                  { length: 12 },
+                                  (_, i) => {
+                                    return i === col &&
+                                      category.name === curr.name
+                                      ? {
+                                          id: null,
+                                          amount: Math.round(
+                                            parseFloat(currentValue) * 100,
+                                          ),
+                                        }
+                                      : { id: null, amount: 0 }
+                                  },
+                                ),
+                              },
+                            ],
+                          },
+                        ]
+                      }
+                    },
+                    [] as IParentBudget[],
+                  ),
                 },
               ]
             : // Otherwise, add the new amount to the budgets for this year
@@ -445,8 +483,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                       return i === col
                                         ? {
                                             id: null,
-                                            amount:
+                                            amount: Math.round(
                                               parseFloat(currentValue) * 100,
+                                            ),
                                           }
                                         : { id: null, amount: 0 }
                                     },
@@ -465,7 +504,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                     ...c.monthlyAmounts.slice(0, col),
                                     {
                                       id: null,
-                                      amount: parseFloat(currentValue) * 100,
+                                      amount: Math.round(
+                                        parseFloat(currentValue) * 100,
+                                      ),
                                     },
                                     ...c.monthlyAmounts.slice(col + 1),
                                   ],
@@ -513,8 +554,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                     monthlyAmounts: [
                       ...c.monthlyAmounts.slice(0, col),
                       {
-                        id: null,
-                        amount: parseFloat(currentValue) * 100,
+                        ...c.monthlyAmounts[col],
+                        amount: Math.round(parseFloat(currentValue) * 100),
                       },
                       ...c.monthlyAmounts.slice(col + 1),
                     ],
@@ -735,6 +776,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                 {budgets.categories
                   .filter((c) => c.parent === parentName)
                   .map((category) => {
+                    keyTimeRef.current = new Date().getTime()
                     const row = totalRowIndex++
                     return (
                       <tr key={row} className="group">
@@ -776,7 +818,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                           >
                             <MyInput
                               key={`${year}-${category.name}-${col}-${keyTimeRef.current}`}
-                              name={`${category.name}-${col}`}
+                              name={`${year}-${category.name}-${col}`}
                               className="w-full text-zinc-500"
                               type="number"
                               value={getMonthAmount(category, col)}

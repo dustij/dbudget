@@ -5,6 +5,7 @@ import BudgetTableClient from "./budget-table-client"
 import { db } from "~/db"
 import { categories, amounts } from "~/db/schema"
 import { eq } from "drizzle-orm"
+import { saveJSONfile } from "~/lib/actions"
 
 const CategorySchema = z.object({
   id: z.string(),
@@ -59,9 +60,15 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
   }
 
   const updateServerBudgets = async (data: IBudgetData) => {
-    ;("use server")
+    // prettier-ignore
+    "use server"
 
-    // Seperate new categories, updated categories, and categories to delete
+    saveJSONfile("temp/.debug.updateServerBudgets.json", data)
+
+    /*
+    ========== HANDLE CATEGORIES DATA ==========
+    */
+
     const newCategories = data.categories
       .filter((category) => category.id === null)
       .map((category) => {
@@ -74,36 +81,6 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
       .map((category) => {
         return UpdateCategory.parse(category)
       })
-
-    // TODO: const deletedCategories = data.categories.filter(
-
-    // seperate new amounts, updated amounts, and amounts to delete
-    const yearBudgetsWithNewAmounts = data.budgetsByYear.filter((yearBudget) =>
-      yearBudget.budgetsByParent.some((parentBudget) =>
-        parentBudget.budgetsByCategory.some((category) =>
-          category.monthlyAmounts.some(
-            (amount) => amount.amount > 0 && amount.id === null,
-          ),
-        ),
-      ),
-    )
-
-    const yearBudgetsWithExistingAmounts = data.budgetsByYear.filter(
-      (yearBudget) =>
-        yearBudget.budgetsByParent.some((parentBudget) =>
-          parentBudget.budgetsByCategory.some((category) =>
-            category.monthlyAmounts.some(
-              (amount) => amount.amount > 0 && amount.id !== null,
-            ),
-          ),
-        ),
-    )
-
-    // TODO: const yearBudgetsWithDeletedAmounts = data.budgetsByYear.filter(
-
-    /*
-    ========== INSERT CATEGORIES ==========
-    */
 
     try {
       await db.insert(categories).values(newCategories)
@@ -123,10 +100,6 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
       console.error(e)
     }
 
-    /*
-    ========== UPDATE CATEGORIES ==========
-    */
-
     try {
       for (const category of updatedCategories) {
         await db
@@ -140,11 +113,11 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
     }
 
     /*
-    ========== INSERT AMOUNTS ==========
+    ========== HANDLE AMOUNTS DATA ==========
     */
 
     try {
-      // prep new amounts by updating category ids
+      // Any new categories should have an id now, so update the category ids in the amounts data
       data.budgetsByYear.forEach((yearBudget) => {
         yearBudget.budgetsByParent.forEach((parentBudget) => {
           const nullCategories = parentBudget.budgetsByCategory.filter(
@@ -174,47 +147,105 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
       console.error(e)
     }
 
-    const newAmounts = yearBudgetsWithNewAmounts.map((yearBudget) =>
-      yearBudget.budgetsByParent.map((parentBudget) =>
-        parentBudget.budgetsByCategory.map((category) =>
-          category.monthlyAmounts.map((amount, month) => {
-            if (amount.amount <= 0 || amount.id !== null) {
-              return null
-            }
-            delete amount.id
-            return CreateAmount.parse({
-              userId: userId,
-              categoryId: category.id,
-              amount: amount.amount,
-              year: yearBudget.year,
-              month: month + 1,
-            })
-          }),
+    const yearBudgetsWithNewAmounts = data.budgetsByYear.filter((yearBudget) =>
+      // These will be year budgets that have at least one amount > 0 with no id
+      yearBudget.budgetsByParent.some((parentBudget) =>
+        parentBudget.budgetsByCategory.some((category) =>
+          category.monthlyAmounts.some(
+            (amount) => amount.amount > 0 && !amount.id,
+          ),
         ),
       ),
     )
 
-    // flatten array
-    const flattenedNewAmounts = newAmounts
-      .flat(3)
-      .filter((amount) => amount !== null) as {
-      userId: string
-      categoryId: string
-      amount: number
-      year: number
-      month: number
-    }[]
-
     try {
+      const newAmounts = yearBudgetsWithNewAmounts.map((yearBudget) =>
+        yearBudget.budgetsByParent.map((parentBudget) =>
+          parentBudget.budgetsByCategory.map((category) =>
+            category.monthlyAmounts.map((amount, month) => {
+              if (amount.amount === 0 || amount.id) {
+                // Skip amounts that are 0 or already have an id
+                return
+              }
+              return CreateAmount.parse({
+                userId: userId,
+                categoryId: category.id,
+                amount: amount.amount,
+                year: yearBudget.year,
+                month: month + 1,
+              })
+            }),
+          ),
+        ),
+      )
+
+      // Flatten and remove undefined values
+      const flattenedNewAmounts = newAmounts.flat(3).filter((a) => a) as {
+        userId: string
+        categoryId: string
+        amount: number
+        year: number
+        month: number
+      }[]
+
       await db.insert(amounts).values(flattenedNewAmounts)
     } catch (e) {
       console.error("Something went wrong while inserting new amounts:")
       console.error(e)
     }
 
-    /*
-    ========== UPDATE AMOUNTS ==========
-    */
+    const yearBudgetsWithUpdatedAmounts = data.budgetsByYear.filter(
+      // These will be year budgets that have at least one amount amount > 0 with an id
+      (yearBudget) =>
+        yearBudget.budgetsByParent.some((parentBudget) =>
+          parentBudget.budgetsByCategory.some((category) =>
+            category.monthlyAmounts.some(
+              (amount) => amount.amount > 0 && amount.id,
+            ),
+          ),
+        ),
+    )
+
+    try {
+      const updatedAmounts = yearBudgetsWithUpdatedAmounts.map((yearBudget) =>
+        yearBudget.budgetsByParent.map((parentBudget) =>
+          parentBudget.budgetsByCategory.map((category) =>
+            category.monthlyAmounts.map((amount, month) => {
+              if (amount.amount === 0 || !amount.id) {
+                // Skip amounts that are 0 or don't have an id
+                return
+              }
+              return UpdateAmount.parse({
+                id: amount.id,
+                userId: userId,
+                categoryId: category.id,
+                amount: amount.amount,
+                year: yearBudget.year,
+                month: month + 1,
+              })
+            }),
+          ),
+        ),
+      )
+
+      // Flatten and remove undefined values
+      const flattenedUpdatedAmounts = updatedAmounts
+        .flat(3)
+        .filter((a) => a) as {
+        id: string
+        amount: number
+      }[]
+
+      for (const amount of flattenedUpdatedAmounts) {
+        await db
+          .update(amounts)
+          .set({ amount: amount.amount })
+          .where(eq(amounts.id, amount.id))
+      }
+    } catch (e) {
+      console.error("Something went wrong while updating amounts:")
+      console.error(e)
+    }
 
     return getBudgetData(userId)
   }
