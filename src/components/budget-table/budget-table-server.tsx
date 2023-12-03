@@ -82,6 +82,23 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
         return UpdateCategory.parse(category)
       })
 
+    /* Do update first so if name was changed on existing category, it will be updated before 
+    trying to insert new categories, in case the new category name is the same as the updated 
+    category name for some reason
+    */
+
+    try {
+      for (const category of updatedCategories) {
+        await db
+          .update(categories)
+          .set({ name: category.name })
+          .where(eq(categories.id, category.id))
+      }
+    } catch (e) {
+      console.error("Something went wrong while updating categories:")
+      console.error(e)
+    }
+
     try {
       await db.insert(categories).values(newCategories)
       try {
@@ -97,18 +114,6 @@ const BudgetTableServer: FC<BudgetTableServerProps> = async ({ userId }) => {
       }
     } catch (e) {
       console.error("Something went wrong while inserting new categories:")
-      console.error(e)
-    }
-
-    try {
-      for (const category of updatedCategories) {
-        await db
-          .update(categories)
-          .set({ name: category.name })
-          .where(eq(categories.id, category.id))
-      }
-    } catch (e) {
-      console.error("Something went wrong while updating categories:")
       console.error(e)
     }
 

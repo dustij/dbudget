@@ -41,7 +41,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const [budgets, setBudgets] = useState<IBudgetData>(data)
   const [isDirty, setIsDirty] = useState<boolean>(false)
   const refsMatrix = useRef<RefItem[][]>([])
-  const keyTimeRef = useRef<number>(new Date().getTime())
 
   // track row index across different parents
   let totalRowIndex = 0
@@ -81,14 +80,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     const data = await action.updateServerBudgets(budgets)
     setBudgets(data)
     setIsDirty(false)
-    // keyTimeRef.current = new Date().getTime()
   }
 
   const handleCancel = async () => {
     const data = await action.getServerBudgets()
     setBudgets(data)
     setIsDirty(false)
-    keyTimeRef.current = new Date().getTime()
   }
 
   const handleKeyDown = (
@@ -366,7 +363,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
   const handleAmountOut = (
     e: React.FocusEvent<HTMLInputElement>,
-    setValue: React.Dispatch<React.SetStateAction<string | number>>,
     { row, col }: { row: number; col: number },
     category: ICategory,
   ) => {
@@ -680,6 +676,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
   return (
     <>
+      {console.log("rendering BudgetTableClient", new Date().getTime())}
       <div
         className={
           "sticky left-0 top-0 z-30 flex h-[48px] items-center justify-between gap-2 border-b bg-white px-4"
@@ -764,7 +761,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                   </td>
                   {Array.from({ length: 12 }).map((_, col) => (
                     <td
-                      key={`${parentName}-${col}-${keyTimeRef.current}`}
+                      key={`${parentName}-${col}-${new Date().getTime()}`}
                       className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-900 mobile:text-sm"
                     >
                       {formatCurrency(getParentTotal(parentName, col))}
@@ -776,13 +773,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                 {budgets.categories
                   .filter((c) => c.parent === parentName)
                   .map((category) => {
-                    keyTimeRef.current = new Date().getTime()
                     const row = totalRowIndex++
                     return (
                       <tr key={row} className="group">
                         <td className="sticky left-0 z-10 cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-2 text-left text-base font-normal text-zinc-500 group-hover:bg-accent mobile:text-sm">
                           <MyInput
-                            key={`${category.name}-${keyTimeRef.current}`}
+                            key={`${category.name}-${new Date().getTime()}`}
                             name={category.name}
                             data-previous-value=""
                             autoComplete="off"
@@ -817,7 +813,9 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                             )}
                           >
                             <MyInput
-                              key={`${year}-${category.name}-${col}-${keyTimeRef.current}`}
+                              key={`${year}-${
+                                category.name
+                              }-${col}-${new Date().getTime()}`}
                               name={`${year}-${category.name}-${col}`}
                               className="w-full text-zinc-500"
                               type="number"
@@ -835,13 +833,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
                                 e.currentTarget.select()
                                 e.target.dataset.previousValue = e.target.value
                               }}
-                              onFocusOut={({ e, setValue }) =>
-                                handleAmountOut(
-                                  e,
-                                  setValue,
-                                  { row, col },
-                                  category,
-                                )
+                              onFocusOut={({ e }) =>
+                                handleAmountOut(e, { row, col }, category)
                               }
                               onKeyDown={(e) =>
                                 handleKeyDown(e, { row: row, col: col + 1 })
