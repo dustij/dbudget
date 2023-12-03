@@ -46,9 +46,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   let totalRowIndex = 0
 
   useEffect(() => {
-    console.debug({ refsMatrix: refsMatrix.current })
-    console.debug({ budgets })
-
     const emptyInput = refsMatrix.current.find((row) =>
       row.find((col) => col.category.id === "@just-added!"),
     )?.[0]?.input
@@ -680,7 +677,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
   return (
     <>
-      {console.debug("rendering BudgetTableClient", new Date().getTime())}
       <div
         className={
           "sticky left-0 top-0 z-30 flex h-[48px] items-center justify-between gap-2 border-b bg-white px-4"
