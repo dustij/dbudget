@@ -2,6 +2,7 @@
 
 import { useState, type FC, useRef, useEffect, useCallback } from "react"
 import { cn } from "~/lib/utils"
+import { Button } from "./ui/button"
 
 interface YearPickerProps {
   children: number
@@ -10,7 +11,6 @@ interface YearPickerProps {
 
 const YearPicker: FC<YearPickerProps> = ({ children, onYearChange }) => {
   const [isEditing, setIsEditing] = useState(false)
-  const [isMouseDown, setIsMouseDown] = useState(false)
   const [value, setValue] = useState(children)
   const [isFirstFocus, setIsFirstFocus] = useState(true)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -50,73 +50,62 @@ const YearPicker: FC<YearPickerProps> = ({ children, onYearChange }) => {
   }
 
   return (
-    <div className="flex flex-row items-center justify-center">
-      <div className="flex flex-row items-center justify-center">
-        <button
-          className={cn(
-            "flex h-8 w-8 flex-row items-center justify-center border-x bg-white text-sm font-medium text-zinc-400 transition hover:bg-zinc-50 hover:text-zinc-900 ",
-            isMouseDown && "hover:bg-opacity-70 hover:text-opacity-70",
-          )}
-          type="button"
-          onClick={() => decrement()}
-          onMouseDown={() => setIsMouseDown(true)}
-          onMouseUp={() => setIsMouseDown(false)}
+    <div className="flex items-center justify-center gap-2">
+      <Button
+        variant="ghost"
+        className="h-8 p-1 text-zinc-500 hover:text-zinc-900 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-lime-500"
+        type="button"
+        onClick={() => decrement()}
+      >
+        <svg
+          className="h-4 w-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
         >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </button>
-        <input
-          id="year-picker"
-          ref={inputRef}
-          className="h-8 w-16 rounded bg-white text-center text-base font-medium text-zinc-900 selection:bg-lime-200 hover:cursor-default focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-lime-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-          type="number"
-          value={value}
-          onChange={(e) => {
-            setValue(parseInt(e.target.value))
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") submitEditing()
-            if (e.key === "Escape") submitEditing()
-          }}
-          onBlur={() => submitEditing()}
-          onFocus={() => setIsEditing(true)}
-        />
-        <button
-          className={cn(
-            "flex h-8 w-8 flex-row items-center justify-center border-x bg-white text-sm font-medium text-zinc-400 transition hover:bg-zinc-50 hover:text-zinc-900",
-            isMouseDown && "hover:bg-opacity-70 hover:text-opacity-70",
-          )}
-          type="button"
-          onClick={() => increment()}
-          onMouseDown={() => setIsMouseDown(true)}
-          onMouseUp={() => setIsMouseDown(false)}
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+      </Button>
+      <input
+        id="year-picker"
+        ref={inputRef}
+        className="h-8 w-20 cursor-default rounded border border-input bg-white text-center text-base text-zinc-900 selection:bg-lime-200 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-lime-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        type="number"
+        value={value}
+        onChange={(e) => {
+          setValue(parseInt(e.target.value))
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") submitEditing()
+          if (e.key === "Escape") submitEditing()
+        }}
+        onBlur={() => submitEditing()}
+        onFocus={() => setIsEditing(true)}
+      />
+      <Button
+        variant="ghost"
+        className="h-8 p-1 text-zinc-500 hover:text-zinc-900 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-lime-500"
+        onClick={() => increment()}
+      >
+        <svg
+          className="h-4 w-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
         >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </button>
-      </div>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M9 5l7 7-7 7"
+          />
+        </svg>
+      </Button>
     </div>
   )
 }

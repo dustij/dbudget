@@ -10,7 +10,7 @@ interface StatusBarProps {
   onClick?: () => void
 }
 
-const getLastLogMessage = (log: Record<string, string> | null) => {
+const getLastLogMessage = (log: Record<number, string> | null) => {
   const lastLog = Object.values(log || {}).slice(-1)[0] || null
   return lastLog ? lastLog.split("]")[1] : null
 }
@@ -46,7 +46,7 @@ const StatusBar: FC<StatusBarProps> = ({ onClick, initialTime }) => {
 
   return (
     <div
-      className="flex h-full items-center justify-between px-4 py-2 transition hover:cursor-pointer hover:bg-zinc-100"
+      className="flex h-full items-center justify-between px-4 py-2 transition hover:cursor-pointer hover:bg-accent"
       onClick={onClick}
     >
       <span
