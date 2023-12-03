@@ -680,7 +680,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
   return (
     <>
-      {console.log("rendering BudgetTableClient", new Date().getTime())}
+      {console.debug("rendering BudgetTableClient", new Date().getTime())}
       <div
         className={
           "sticky left-0 top-0 z-30 flex h-[48px] items-center justify-between gap-2 border-b bg-white px-4"
