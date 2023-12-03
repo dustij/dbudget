@@ -9,6 +9,9 @@ export const performRevalidation = async () => {
 }
 
 export const saveJSONfile = async (path: string, data: any) => {
+  if (process.env.NODE_ENV === "production") {
+    return
+  }
   const fs = require("fs")
   const filePath = path
   const fileData = JSON.stringify(data, null, 2)
