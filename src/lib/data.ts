@@ -10,7 +10,7 @@ export async function getBudgetData(userId: string): Promise<IBudgetData> {
       .from(categories)
       .leftJoin(amounts, eq(amounts.categoryId, categories.id))
       .where(eq(categories.userId, userId))
-      .orderBy(categories.createdAt)
+      .orderBy(categories.parent, categories.name, amounts.year, amounts.month)
 
     const reducedData = rawData.reduce(
       (acc, row) => {

@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog"
+import { Button } from "~/components/ui/button"
 
 interface HeaderProps {
   user: SessionUser
@@ -245,17 +246,14 @@ const Header: FC<HeaderProps> = ({ user, className }) => {
             <DialogHeader>
               <DialogTitle>User Details</DialogTitle>
             </DialogHeader>
-            <div className="flex flex-col justify-between space-y-2 py-2">
+            <div className="flex flex-col justify-between space-y-6 py-2">
               <div className="flex flex-col px-6">
                 <h1 className="text-lg font-semibold">{user.name}</h1>
                 <div className="font-light text-zinc-400">{user.email}</div>
               </div>
-              <div
-                onClick={() => signOut()}
-                className="flex items-center border-t px-6 py-2 text-zinc-600 hover:cursor-pointer hover:text-zinc-950"
-              >
-                <p>Sign Out</p>
-              </div>
+              <Button className="" onClick={() => signOut()}>
+                Sign Out
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

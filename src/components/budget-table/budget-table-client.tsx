@@ -114,10 +114,12 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           return
         }
 
+        /* Moving between columns is not supported yet due to the way input keys are generated. May be fixed in the future.
         // If is first row, move to last row in previous column
         const lastRow = refsMatrix.current[refsMatrix.current.length - 1]!
         lastRow[col - 1]!.input.focus()
         return
+        */
       }
 
       // If is last row and is last column, we are at the bottom right corner of the table, so do nothing
@@ -133,9 +135,11 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         return
       }
 
+      /* Moving between columns is not supported yet due to the way input keys are generated. May be fixed in the future.
       // If is last row, move to first row in next column
       const firstRow = refsMatrix.current[0]!
       firstRow[col + 1]!.input.focus()
+      */
     }
   }
 
@@ -676,7 +680,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
   return (
     <>
-      {console.log("rendering BudgetTableClient", new Date().getTime())}
+      {console.debug("rendering BudgetTableClient", new Date().getTime())}
       <div
         className={
           "sticky left-0 top-0 z-30 flex h-[48px] items-center justify-between gap-2 border-b bg-white px-4"
