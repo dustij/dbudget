@@ -7,6 +7,13 @@ import { cn, formatCurrency, toTitleCase } from "~/lib/utils"
 import { MyInput } from "../my-input"
 import { Button } from "../ui/button"
 import { saveJSONfile } from "~/lib/actions"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog"
 
 const parentNames: CategoryParent[] = [
   "income",
@@ -40,15 +47,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   const [year, setYear] = useState<number>(new Date().getFullYear())
   const [budgets, setBudgets] = useState<IBudgetData>(data)
   const [isDirty, setIsDirty] = useState<boolean>(false)
+  const [isSaving, setIsSaving] = useState<boolean>(false)
   const refsMatrix = useRef<RefItem[][]>([])
 
   // track row index across different parents
   let totalRowIndex = 0
 
   useEffect(() => {
-    console.debug({ refsMatrix: refsMatrix.current })
-    console.debug({ budgets })
-
     const emptyInput = refsMatrix.current.find((row) =>
       row.find((col) => col.category.id === "@just-added!"),
     )?.[0]?.input
@@ -77,9 +82,11 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
   const handleSave = async () => {
     saveJSONfile("temp/.debug.budgets.json", budgets)
+    setIsSaving(true)
     const data = await action.updateServerBudgets(budgets)
     setBudgets(data)
     setIsDirty(false)
+    setIsSaving(false)
   }
 
   const handleCancel = async () => {
@@ -680,7 +687,6 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
 
   return (
     <>
-      {console.debug("rendering BudgetTableClient", new Date().getTime())}
       <div
         className={
           "sticky left-0 top-0 z-30 flex h-[48px] items-center justify-between gap-2 border-b bg-white px-4"
@@ -899,6 +905,18 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
             </tr>
           </tfoot>
         </table>
+        {isSaving && (
+          <Dialog open={isSaving}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Saving...</DialogTitle>
+                <DialogDescription>
+                  Please wait while we save your changes.
+                </DialogDescription>
+              </DialogHeader>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </>
   )
