@@ -75,6 +75,7 @@ const Header: FC<HeaderProps> = ({ user, className }) => {
                 onClick={() => setShowSidebar(false)}
               />
             </div>
+
             <Link
               href="/dashboard/budget"
               onClick={() => setShowSidebar(false)}
@@ -93,24 +94,7 @@ const Header: FC<HeaderProps> = ({ user, className }) => {
                 )}
               />
             </Link>
-            <Link
-              href="/dashboard/balance"
-              onClick={() => setShowSidebar(false)}
-              className={cn(
-                "group relative",
-                segement[1] === "balance"
-                  ? "text-zinc-900"
-                  : "text-zinc-400 hover:text-zinc-900",
-              )}
-            >
-              <span className="px-6 text-lg">Balance</span>
-              <span
-                className={cn(
-                  "absolute inset-y-0 left-0 w-1 scale-y-0 transform rounded-full bg-lime-600 transition-transform duration-200 ease-out ",
-                  segement[1] === "balance" ? "scale-y-100" : "scale-y-0",
-                )}
-              />
-            </Link>
+
             <Link
               href="/dashboard/journal"
               onClick={() => setShowSidebar(false)}
@@ -129,6 +113,26 @@ const Header: FC<HeaderProps> = ({ user, className }) => {
                 )}
               />
             </Link>
+
+            <Link
+              href="/dashboard/balance"
+              onClick={() => setShowSidebar(false)}
+              className={cn(
+                "group relative",
+                segement[1] === "balance"
+                  ? "text-zinc-900"
+                  : "text-zinc-400 hover:text-zinc-900",
+              )}
+            >
+              <span className="px-6 text-lg">Balance</span>
+              <span
+                className={cn(
+                  "absolute inset-y-0 left-0 w-1 scale-y-0 transform rounded-full bg-lime-600 transition-transform duration-200 ease-out ",
+                  segement[1] === "balance" ? "scale-y-100" : "scale-y-0",
+                )}
+              />
+            </Link>
+
             <Link
               href="/dashboard/reminders"
               onClick={() => setShowSidebar(false)}
@@ -171,23 +175,7 @@ const Header: FC<HeaderProps> = ({ user, className }) => {
                 )}
               />
             </Link>
-            <Link
-              href="/dashboard/balance"
-              className={cn(
-                "group relative",
-                segement[1] === "balance"
-                  ? "text-zinc-900"
-                  : "text-zinc-400 hover:text-zinc-900",
-              )}
-            >
-              <span>Balance</span>
-              <span
-                className={cn(
-                  "absolute inset-x-0 bottom-0 h-0.5 scale-x-0 transform rounded-full bg-lime-600 transition-transform duration-200 ease-out",
-                  segement[1] === "balance" ? "scale-x-100" : "scale-x-0",
-                )}
-              />
-            </Link>
+
             <Link
               href="/dashboard/journal"
               className={cn(
@@ -205,6 +193,25 @@ const Header: FC<HeaderProps> = ({ user, className }) => {
                 )}
               />
             </Link>
+
+            <Link
+              href="/dashboard/balance"
+              className={cn(
+                "group relative",
+                segement[1] === "balance"
+                  ? "text-zinc-900"
+                  : "text-zinc-400 hover:text-zinc-900",
+              )}
+            >
+              <span>Balance</span>
+              <span
+                className={cn(
+                  "absolute inset-x-0 bottom-0 h-0.5 scale-x-0 transform rounded-full bg-lime-600 transition-transform duration-200 ease-out",
+                  segement[1] === "balance" ? "scale-x-100" : "scale-x-0",
+                )}
+              />
+            </Link>
+
             <Link
               href="/dashboard/reminders"
               onClick={() => setShowSidebar(false)}
