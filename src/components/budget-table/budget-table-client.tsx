@@ -877,13 +877,13 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
           </tbody>
           <tfoot className="sticky bottom-0 z-30 bg-white">
             <tr>
-              <td className="sticky left-0 cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-t bg-white px-1.5 text-left text-base font-normal text-zinc-900 mobile:text-sm">
+              <td className="sticky left-0 cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-t border-t-lime-500 bg-white px-1.5 text-left text-base font-normal text-lime-600 mobile:text-sm">
                 Total
               </td>
               {Array.from({ length: 12 }).map((_, col) => (
                 <td
                   key={col}
-                  className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-t bg-white px-1.5 text-right text-base font-normal text-zinc-900 mobile:text-sm"
+                  className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-t border-t-lime-500 bg-white px-1.5 text-right text-base font-normal text-lime-600 mobile:text-sm"
                 >
                   {formatCurrency(
                     budgets.categories.reduce((acc, curr) => {
