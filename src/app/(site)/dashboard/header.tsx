@@ -178,6 +178,7 @@ const Header: FC<HeaderProps> = ({ user, className }) => {
 
             <Link
               href="/dashboard/journal"
+              //TODO: onClick={(e) => alert("Unsaved changes will be lost.")}
               className={cn(
                 "group relative",
                 segement[1] === "journal"
