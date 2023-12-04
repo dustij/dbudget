@@ -44,3 +44,5 @@ type CategoryParent =
 interface ILog {
   [key: number]: string // key is a timestamp in milliseconds
 }
+
+interface IJournalData {}
