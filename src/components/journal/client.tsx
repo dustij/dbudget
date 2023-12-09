@@ -36,6 +36,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select"
+import { cn } from "~/lib/utils"
+import { IoAddCircleOutline } from "react-icons/io5"
 
 interface RefItem {
   input: HTMLInputElement
@@ -129,14 +131,14 @@ const JournalClient: FC<JournalClientProps> = ({ userId, data, action }) => {
             </tr>
           </thead>
           <tbody>
-            <tr>
+            <tr className="group">
               <td className="relative h-6 border-b border-r p-0 text-zinc-500 group-hover:bg-accent">
                 <DateCellInput className="text-zinc-500" />
               </td>
 
               <td className="relative h-6 border-b border-r p-0 group-hover:bg-accent">
                 <Select>
-                  <SelectTrigger className="w-full border-transparent text-zinc-500 outline-none outline-0 ring-0 focus:border-lime-500 focus:outline-0 focus:ring-0 mobile:text-sm">
+                  <SelectTrigger className="h-6 w-full border-transparent text-zinc-500 outline-none outline-0 ring-0 focus:border-lime-500 focus:outline-0 focus:ring-0 group-hover:bg-accent mobile:text-sm">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -173,6 +175,23 @@ const JournalClient: FC<JournalClientProps> = ({ userId, data, action }) => {
                   }}
                 />
               </td>
+            </tr>
+            <tr>
+              <td
+                className={cn(
+                  "sticky left-0 z-10 h-6 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm",
+                )}
+                // onClick={() => handleAddRow(parentName)}
+              >
+                <IoAddCircleOutline className="mr-1 inline-block h-full pb-[2px]" />
+                Add
+              </td>
+              {Array.from({ length: 3 }).map((_, index) => (
+                <td
+                  key={index}
+                  className={cn("border-b bg-white hover:cursor-default")}
+                ></td>
+              ))}
             </tr>
           </tbody>
         </table>
