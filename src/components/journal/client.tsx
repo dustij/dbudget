@@ -1,6 +1,21 @@
 "use client"
 
-import { FC, Suspense, useRef, useState } from "react"
+import { FC, useRef, useState } from "react"
+import {
+  Menubar,
+  MenubarCheckboxItem,
+  MenubarContent,
+  MenubarItem,
+  MenubarMenu,
+  MenubarRadioGroup,
+  MenubarRadioItem,
+  MenubarSeparator,
+  MenubarShortcut,
+  MenubarSub,
+  MenubarSubContent,
+  MenubarSubTrigger,
+  MenubarTrigger,
+} from "../ui/menubar"
 import { Button } from "../ui/button"
 import {
   Dialog,
@@ -12,6 +27,15 @@ import {
 import YearPicker from "../year-picker"
 import { MyInput } from "../my-input"
 import { DateCellInput } from "../date-picker"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select"
 
 interface RefItem {
   input: HTMLInputElement
@@ -66,7 +90,7 @@ const JournalClient: FC<JournalClientProps> = ({ userId, data, action }) => {
         <div className="flex items-center gap-2">
           <Button
             variant="default"
-            className="h-8 font-normal focus-visible:border-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-lime-500"
+            className="h-8 font-normal focus:border-0 focus:outline-none focus:ring-1 focus:ring-lime-500"
             disabled={!isDirty}
             onClick={handleSave}
           >
@@ -74,7 +98,7 @@ const JournalClient: FC<JournalClientProps> = ({ userId, data, action }) => {
           </Button>
           <Button
             variant="outline"
-            className="h-8 font-normal text-zinc-600 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-lime-500"
+            className="h-8 font-normal text-zinc-600 hover:text-zinc-900 focus:outline-none focus:ring-1 focus:ring-lime-500"
             disabled={!isDirty}
             onClick={handleCancel}
           >
@@ -106,10 +130,28 @@ const JournalClient: FC<JournalClientProps> = ({ userId, data, action }) => {
           </thead>
           <tbody>
             <tr>
-              <td className="relative h-6 border-b border-r p-0 group-hover:bg-accent">
-                <DateCellInput />
+              <td className="relative h-6 border-b border-r p-0 text-zinc-500 group-hover:bg-accent">
+                <DateCellInput className="text-zinc-500" />
               </td>
-              <td className="relative h-6 border-b border-r p-0 group-hover:bg-accent"></td>
+
+              <td className="relative h-6 border-b border-r p-0 group-hover:bg-accent">
+                <Select>
+                  <SelectTrigger className="w-full border-transparent text-zinc-500 outline-none outline-0 ring-0 focus:border-lime-500 focus:outline-0 focus:ring-0 mobile:text-sm">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Categories</SelectLabel>
+                      <SelectItem value="food">Food</SelectItem>
+                      <SelectItem value="gas">Gas</SelectItem>
+                      <SelectItem value="entertainment">
+                        Entertainment
+                      </SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </td>
+
               <td className="relative h-6 border-b border-r p-0 group-hover:bg-accent">
                 <MyInput
                   className="w-full text-zinc-500"
@@ -120,7 +162,17 @@ const JournalClient: FC<JournalClientProps> = ({ userId, data, action }) => {
                   }}
                 />
               </td>
-              <td className="relative h-6 border-b border-r p-0 group-hover:bg-accent"></td>
+
+              <td className="relative h-6 border-b border-r p-0 group-hover:bg-accent">
+                <MyInput
+                  className="w-full text-zinc-500"
+                  type="text"
+                  value={""}
+                  onFocus={(e) => {
+                    e.currentTarget.select()
+                  }}
+                />
+              </td>
             </tr>
           </tbody>
         </table>
