@@ -6,7 +6,6 @@ import { IoAddCircleOutline } from "react-icons/io5"
 import { cn, formatCurrency, toTitleCase } from "~/lib/utils"
 import { MyInput } from "../my-input"
 import { Button } from "../ui/button"
-import { saveJSONfile } from "~/lib/actions"
 import {
   Dialog,
   DialogContent,
@@ -77,7 +76,6 @@ const BudgetClient: FC<BudgetClientProps> = ({ userId, data, action }) => {
   }
 
   const handleSave = async () => {
-    saveJSONfile("temp/.debug.budgets.json", budgets)
     setIsSaving(true)
     const data = await action.setServerBudgets(budgets)
     setBudgets(data)

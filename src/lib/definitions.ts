@@ -45,4 +45,22 @@ interface ILog {
   [key: number]: string // key is a timestamp in milliseconds
 }
 
-interface IJournalData {}
+interface IJournalData {
+  categories: ICategory[] | []
+  journalsByYear: IYearJournal[] | []
+}
+
+interface IYearJournal {
+  year: number
+  journals: IJournal[]
+}
+
+interface IJournal {
+  id?: string | null
+  date: Date | string
+  amount: number
+  categoryId: string
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}

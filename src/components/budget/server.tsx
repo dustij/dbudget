@@ -62,8 +62,6 @@ const BudgetServer: FC<BudgetServerProps> = async ({ userId }) => {
   const setServerBudgets = async (data: IBudgetData) => {
     "use server"
 
-    saveJSONfile("temp/.debug.updateServerBudgets.json", data)
-
     /*
     ========== HANDLE CATEGORIES DATA ==========
     */

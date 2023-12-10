@@ -38,6 +38,7 @@ import {
 } from "../ui/select"
 import { cn } from "~/lib/utils"
 import { IoAddCircleOutline } from "react-icons/io5"
+import { categories } from "~/db/schema"
 
 interface RefItem {
   input: HTMLInputElement
@@ -131,7 +132,76 @@ const JournalClient: FC<JournalClientProps> = ({ userId, data, action }) => {
             </tr>
           </thead>
           <tbody>
-            <tr className="group">
+            {journals.journalsByYear
+              .filter((j) => j.year === year)[0]
+              ?.journals.map((journal) => (
+                <tr key={journal.id} className="group">
+                  <td className="relative h-6 border-b border-r p-0 text-zinc-500 group-hover:bg-accent">
+                    <DateCellInput
+                      key={`${journal.id}-${journal.date}`}
+                      className="text-zinc-500"
+                      date={journal.date}
+                    />
+                  </td>
+
+                  <td className="relative h-6 border-b border-r p-0 group-hover:bg-accent">
+                    <Select key={`${journal.id}-${journal.categoryId}`}>
+                      <SelectTrigger className="h-6 w-full border-transparent text-zinc-500 outline-none outline-0 ring-0 focus:border-lime-500 focus:outline-0 focus:ring-0 group-hover:bg-accent mobile:text-sm">
+                        <SelectValue
+                          placeholder={
+                            journals.categories.filter(
+                              (c) => c.id === journal.categoryId,
+                            )[0]?.name ?? "Select a category"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Categories</SelectLabel>
+                          {journals.categories.map((category) => (
+                            <SelectItem
+                              key={`${journal.id}-${category.id}`}
+                              value={category.id ?? ""}
+                            >
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="food">Food</SelectItem>
+                          <SelectItem value="gas">Gas</SelectItem>
+                          <SelectItem value="entertainment">
+                            Entertainment
+                          </SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </td>
+
+                  <td className="relative h-6 border-b border-r p-0 group-hover:bg-accent">
+                    <MyInput
+                      key={`${journal.id}-amount`}
+                      className="w-full text-zinc-500"
+                      type="number"
+                      value={journal.amount / 100}
+                      onFocus={(e) => {
+                        e.currentTarget.select()
+                      }}
+                    />
+                  </td>
+
+                  <td className="relative h-6 border-b border-r p-0 group-hover:bg-accent">
+                    <MyInput
+                      key={`${journal.id}-notes`}
+                      className="w-full text-zinc-500"
+                      type="text"
+                      value={journal.notes ?? ""}
+                      onFocus={(e) => {
+                        e.currentTarget.select()
+                      }}
+                    />
+                  </td>
+                </tr>
+              ))}
+            {/* <tr className="group">
               <td className="relative h-6 border-b border-r p-0 text-zinc-500 group-hover:bg-accent">
                 <DateCellInput className="text-zinc-500" />
               </td>
@@ -175,7 +245,7 @@ const JournalClient: FC<JournalClientProps> = ({ userId, data, action }) => {
                   }}
                 />
               </td>
-            </tr>
+            </tr> */}
             <tr>
               <td
                 className={cn(

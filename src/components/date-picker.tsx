@@ -13,15 +13,23 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover"
 
-export const DateCellInput = ({ className }: { className?: string }) => {
-  const [date, setDate] = React.useState<Date>()
+export const DateCellInput = ({
+  className,
+  date,
+}: {
+  className?: string
+  date?: string | Date
+}) => {
+  const [_date, setDate] = React.useState<string | Date>(date || new Date())
   return (
     <input
       type="date"
       className={cn(
-        "absolute left-0 top-0 h-full w-full cursor-default overflow-hidden text-ellipsis whitespace-nowrap rounded bg-transparent px-1.5 pl-2.5 text-left text-base text-zinc-900 [appearance:textfield] selection:bg-lime-200 hover:cursor-default focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-lime-500 mobile:text-sm",
+        "absolute left-0 top-0 h-full w-full cursor-default overflow-hidden text-ellipsis whitespace-nowrap rounded bg-transparent px-1.5 pl-2.5 text-left text-base text-zinc-900 selection:bg-lime-200 hover:cursor-default focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-lime-500 mobile:text-sm",
         className,
       )}
+      value={_date instanceof Date ? _date.toISOString().split("T")[0] : _date}
+      onChange={(e) => setDate(e.target.value)}
     />
   )
 }
