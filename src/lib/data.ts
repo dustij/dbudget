@@ -91,7 +91,7 @@ export async function getBudgetData(userId: string): Promise<IBudgetData> {
     })()
 
     // console.log("formattedData >", JSON.stringify(formattedData, null, 2))
-    saveJSONfile("temp/.debug.data.json", formattedData)
+    saveJSONfile("temp/.debug.budget.json", formattedData)
 
     return formattedData
   } catch (error) {

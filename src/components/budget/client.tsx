@@ -1,12 +1,11 @@
 "use client"
 
-import React, { type FC, useState, useEffect, useRef } from "react"
+import React, { type FC, useState, useEffect, useRef, Suspense } from "react"
 import YearPicker from "../year-picker"
 import { IoAddCircleOutline } from "react-icons/io5"
 import { cn, formatCurrency, toTitleCase } from "~/lib/utils"
 import { MyInput } from "../my-input"
 import { Button } from "../ui/button"
-import { saveJSONfile } from "~/lib/actions"
 import {
   Dialog,
   DialogContent,
@@ -30,20 +29,16 @@ interface RefItem {
   category: ICategory
 }
 
-interface BudgetTableClientProps {
+interface BudgetClientProps {
   userId: string
   data: IBudgetData
   action: {
     getServerBudgets: () => Promise<IBudgetData>
-    updateServerBudgets: (data: IBudgetData) => Promise<IBudgetData>
+    setServerBudgets: (data: IBudgetData) => Promise<IBudgetData>
   }
 }
 
-const BudgetTableClient: FC<BudgetTableClientProps> = ({
-  userId,
-  data,
-  action,
-}) => {
+const BudgetClient: FC<BudgetClientProps> = ({ userId, data, action }) => {
   const [year, setYear] = useState<number>(new Date().getFullYear())
   const [budgets, setBudgets] = useState<IBudgetData>(data)
   const [isDirty, setIsDirty] = useState<boolean>(false)
@@ -81,9 +76,8 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   }
 
   const handleSave = async () => {
-    saveJSONfile("temp/.debug.budgets.json", budgets)
     setIsSaving(true)
-    const data = await action.updateServerBudgets(budgets)
+    const data = await action.setServerBudgets(budgets)
     setBudgets(data)
     setIsDirty(false)
     setIsSaving(false)
@@ -689,7 +683,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
     <>
       <div
         className={
-          "sticky left-0 top-0 z-30 flex h-[48px] items-center justify-between gap-2 border-b bg-white px-4"
+          "sticky left-0 top-0 z-40 flex h-[48px] items-center justify-between gap-2 border-b bg-white px-4"
         }
       >
         <YearPicker onYearChange={hanldeYearChange}>{year}</YearPicker>
@@ -720,43 +714,43 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
         >
           <thead className="sticky top-[48px] z-30 h-[33px] bg-white">
             <tr>
-              <th className="sticky left-0 cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-left text-base font-normal text-zinc-400">
+              <th className="sticky left-0 cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-b-lime-500 bg-white px-1.5 text-left text-base font-normal text-lime-600">
                 Category
               </th>
-              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-b-lime-500 bg-white px-1.5 text-right text-base font-normal text-lime-600">
                 Jan
               </th>
-              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-b-lime-500 bg-white px-1.5 text-right text-base font-normal text-lime-600">
                 Feb
               </th>
-              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-b-lime-500 bg-white px-1.5 text-right text-base font-normal text-lime-600">
                 Mar
               </th>
-              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-b-lime-500 bg-white px-1.5 text-right text-base font-normal text-lime-600">
                 Apr
               </th>
-              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-b-lime-500 bg-white px-1.5 text-right text-base font-normal text-lime-600">
                 May
               </th>
-              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-b-lime-500 bg-white px-1.5 text-right text-base font-normal text-lime-600">
                 Jun
               </th>
-              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-b-lime-500 bg-white px-1.5 text-right text-base font-normal text-lime-600">
                 Jul
               </th>
-              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-b-lime-500 bg-white px-1.5 text-right text-base font-normal text-lime-600">
                 Aug
               </th>
-              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-b-lime-500 bg-white px-1.5 text-right text-base font-normal text-lime-600">
                 Sep
               </th>
-              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-b-lime-500 bg-white px-1.5 text-right text-base font-normal text-lime-600">
                 Oct
               </th>
-              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-b-lime-500 bg-white px-1.5 text-right text-base font-normal text-lime-600">
                 Nov
               </th>
-              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b bg-white px-1.5 text-right text-base font-normal text-zinc-400">
+              <th className="cursor-default overflow-hidden text-ellipsis whitespace-nowrap border-b border-b-lime-500 bg-white px-1.5 text-right text-base font-normal text-lime-600">
                 Dec
               </th>
             </tr>
@@ -905,6 +899,7 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
             </tr>
           </tfoot>
         </table>
+
         {isSaving && (
           <Dialog open={isSaving}>
             <DialogContent className="sm:max-w-[425px]">
@@ -922,4 +917,4 @@ const BudgetTableClient: FC<BudgetTableClientProps> = ({
   )
 }
 
-export default BudgetTableClient
+export default BudgetClient

@@ -1,6 +1,6 @@
 import type { FC } from "react"
 import { getServerAuthSession } from "~/app/api/auth/[...nextauth]/options"
-import BudgetTableServer from "~/components/budget-table/budget-table-server"
+import BudgetServer from "~/components/budget/server"
 
 interface BudgetProps {}
 
@@ -11,7 +11,7 @@ const Budget: FC<BudgetProps> = async () => {
     return null
   }
 
-  return <BudgetTableServer userId={session.user.id} />
+  return <BudgetServer userId={session.user.id} />
 }
 
 export default Budget

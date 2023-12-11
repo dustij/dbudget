@@ -39,6 +39,7 @@ const MyInput = React.forwardRef<HTMLInputElement, InputProps>(
         )}
         ref={ref}
         value={_value}
+        step={type === "number" ? "0.01" : undefined}
         onChange={(e) => setValue(e.target.value)}
         onBlur={(e) => {
           type === "number" &&
