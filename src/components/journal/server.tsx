@@ -105,11 +105,11 @@ const JournalServer: FC<JournalServerProps> = async ({ userId }) => {
   const setServerJournals = async (data: IJournalData) => {
     "use server"
     // filter out journals with null id only if they have 0 amount
-    data.journalsByYear.forEach((year) => {
-      year.journals = year.journals.filter(
-        (journal) => journal.id !== null || journal.amount !== 0,
-      )
-    })
+    // data.journalsByYear.forEach((year) => {
+    //   year.journals = year.journals.filter(
+    //     (journal) => journal.id !== null || journal.amount !== 0,
+    //   )
+    // })
     return data
   }
 

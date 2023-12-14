@@ -16,10 +16,11 @@ import {
 interface DateCellProps {
   className?: string
   date?: string | Date
+  onFocusOut?: ({}: { e: React.FocusEvent<HTMLInputElement> }) => void
 }
 
 export const DateCellInput = React.forwardRef<HTMLInputElement, DateCellProps>(
-  ({ className, date }, ref) => {
+  ({ className, date, onFocusOut }, ref) => {
     const [_date, setDate] = React.useState<string | Date>(date || new Date())
     return (
       <input
@@ -33,6 +34,7 @@ export const DateCellInput = React.forwardRef<HTMLInputElement, DateCellProps>(
           _date instanceof Date ? _date.toISOString().split("T")[0] : _date
         }
         onChange={(e) => setDate(e.target.value)}
+        onBlur={(e) => onFocusOut?.({ e: e })}
       />
     )
   },

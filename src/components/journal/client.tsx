@@ -57,15 +57,15 @@ const JournalClient: FC<JournalClientProps> = ({ userId, data, action }) => {
     console.log("refsMatrix", refsMatrix)
   })
 
-  useEffect(() => {
-    const emptyInput = refsMatrix.current.find((r) =>
-      r.find((c) => c.journal?.id === "@just-added!"),
-    )?.[0]?.input
+  // useEffect(() => {
+  //   const emptyInput = refsMatrix.current.find((r) =>
+  //     r.find((c) => c.journal?.id === "@just-added!"),
+  //   )?.[0]?.input
 
-    if (emptyInput) {
-      emptyInput.focus()
-    }
-  }, [journals])
+  //   if (emptyInput) {
+  //     emptyInput.focus()
+  //   }
+  // }, [journals])
 
   const hanldeYearChange = (year: number) => {
     setYear(year)
@@ -248,6 +248,35 @@ const JournalClient: FC<JournalClientProps> = ({ userId, data, action }) => {
     setIsDirty(true)
   }
 
+  const handleDateOut = (
+    e: React.FocusEvent<HTMLInputElement>,
+    row: number,
+  ) => {
+    setJournals((prev) => ({
+      ...prev,
+      journalsByYear: prev.journalsByYear.map((j) => {
+        if (j.year === year) {
+          return {
+            ...j,
+            journals: j.journals.map((j, index) => {
+              if (index === row) {
+                return {
+                  ...j,
+                  date: e.target.value,
+                }
+              } else {
+                return j
+              }
+            }),
+          }
+        } else {
+          return j
+        }
+      }),
+    }))
+    setIsDirty(true)
+  }
+
   return (
     <>
       <div
@@ -304,7 +333,9 @@ const JournalClient: FC<JournalClientProps> = ({ userId, data, action }) => {
                 <tr key={row} className="group">
                   <td className="relative h-6 border-b border-r p-0 text-zinc-500 group-hover:bg-accent">
                     <DateCellInput
-                      key={`${journal.id}-${journal.date}`}
+                      key={`${journal.id}-${
+                        journal.date
+                      }-${new Date().getTime()}`}
                       className="text-zinc-500"
                       date={journal.date}
                       ref={(input) => {
@@ -314,12 +345,15 @@ const JournalClient: FC<JournalClientProps> = ({ userId, data, action }) => {
                           refsMatrix.current[row] = currentRow
                         }
                       }}
+                      onFocusOut={({ e }) => handleDateOut(e, row)}
                     />
                   </td>
 
                   <td className="relative h-6 border-b border-r p-0 group-hover:bg-accent">
                     <Select
-                      key={`${journal.id}-${journal.categoryId}`}
+                      key={`${journal.id}-${
+                        journal.categoryId
+                      }-${new Date().getTime()}`}
                       onValueChange={(val) =>
                         handleCategoryChange(val, journal, row)
                       }
@@ -358,7 +392,7 @@ const JournalClient: FC<JournalClientProps> = ({ userId, data, action }) => {
 
                   <td className="relative h-6 border-b border-r p-0 group-hover:bg-accent">
                     <MyInput
-                      key={`${journal.id}-amount`}
+                      key={`${journal.id}-amount-${new Date().getTime()}`}
                       className="w-full text-zinc-500"
                       type="number"
                       value={journal.amount / 100}
@@ -381,7 +415,7 @@ const JournalClient: FC<JournalClientProps> = ({ userId, data, action }) => {
 
                   <td className="relative h-6 border-b border-r p-0 group-hover:bg-accent">
                     <MyInput
-                      key={`${journal.id}-notes`}
+                      key={`${journal.id}-notes-${new Date().getTime()}`}
                       className="w-full text-zinc-500"
                       type="text"
                       value={journal.notes ?? ""}
