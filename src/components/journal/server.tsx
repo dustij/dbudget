@@ -59,35 +59,35 @@ const JournalServer: FC<JournalServerProps> = async ({ userId }) => {
         year: 2023,
         journals: [
           {
-            id: null,
+            id: "1",
             date: "2023-01-01",
             categoryId: "59zphcwwo627",
             amount: 100000,
             notes: "Commission",
           },
           {
-            id: null,
+            id: "2",
             date: "2023-01-02",
             categoryId: "alv3ovi5om44",
             amount: 100000,
             notes: "Hourly",
           },
           {
-            id: null,
+            id: "3",
             date: "2023-01-03",
             categoryId: "2de188scw15x",
             amount: 100000,
             notes: "Rent",
           },
           {
-            id: null,
+            id: "4",
             date: "2023-01-04",
             categoryId: "egh4quyucbr6",
             amount: 100000,
             notes: "Gas",
           },
           {
-            id: null,
+            id: "5",
             date: "2023-01-05",
             categoryId: "ee6m49dzdon5",
             amount: 100000,
@@ -104,7 +104,13 @@ const JournalServer: FC<JournalServerProps> = async ({ userId }) => {
   }
   const setServerJournals = async (data: IJournalData) => {
     "use server"
-    return { categories: [], journalsByYear: [] }
+    // filter out journals with null id only if they have 0 amount
+    data.journalsByYear.forEach((year) => {
+      year.journals = year.journals.filter(
+        (journal) => journal.id !== null || journal.amount !== 0,
+      )
+    })
+    return data
   }
 
   return (
