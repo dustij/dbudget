@@ -853,6 +853,7 @@ const BudgetClient: FC<BudgetClientProps> = ({ userId, data, action }) => {
                 {/* Add Button Row */}
                 <tr key={`${parentName}-add`}>
                   <td
+                    colSpan={13}
                     className={cn(
                       "sticky left-0 z-10 h-6 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm",
                       parentName === "savings" && "border-b-0",
@@ -862,7 +863,7 @@ const BudgetClient: FC<BudgetClientProps> = ({ userId, data, action }) => {
                     <IoAddCircleOutline className="mr-1 inline-block h-full pb-[2px]" />
                     Add
                   </td>
-                  {Array.from({ length: 12 }).map((_, index) => (
+                  {/* {Array.from({ length: 12 }).map((_, index) => (
                     <td
                       key={index}
                       className={cn(
@@ -870,7 +871,7 @@ const BudgetClient: FC<BudgetClientProps> = ({ userId, data, action }) => {
                         parentName === "savings" && "border-b-0",
                       )}
                     ></td>
-                  ))}
+                  ))} */}
                 </tr>
               </React.Fragment>
             ))}

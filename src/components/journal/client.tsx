@@ -39,6 +39,7 @@ import {
 import { cn } from "~/lib/utils"
 import { IoAddCircleOutline } from "react-icons/io5"
 import { categories } from "~/db/schema"
+import { set } from "date-fns"
 
 interface RefItem {
   input: HTMLInputElement
@@ -80,6 +81,31 @@ const JournalClient: FC<JournalClientProps> = ({ userId, data, action }) => {
     const data = await action.getServerJournals()
     setJournals(data)
     setIsDirty(false)
+  }
+
+  const handleAddRow = () => {
+    setIsDirty(true)
+    const newJournal = {
+      id: "",
+      date: new Date().toISOString().split("T")[0],
+      categoryId: "",
+      amount: 0,
+      notes: "",
+    } as IJournal
+
+    setJournals((prev) => ({
+      ...prev,
+      journalsByYear: prev.journalsByYear.map((j) => {
+        if (j.year === year) {
+          return {
+            ...j,
+            journals: [...j.journals, newJournal],
+          }
+        } else {
+          return j
+        }
+      }),
+    }))
   }
 
   return (
@@ -248,20 +274,21 @@ const JournalClient: FC<JournalClientProps> = ({ userId, data, action }) => {
             </tr> */}
             <tr>
               <td
+                colSpan={4}
                 className={cn(
                   "sticky left-0 z-10 h-6 border-b bg-white pl-3 text-base text-zinc-400 transition hover:cursor-pointer hover:bg-white hover:text-zinc-900 mobile:text-sm",
                 )}
-                // onClick={() => handleAddRow(parentName)}
+                onClick={handleAddRow}
               >
                 <IoAddCircleOutline className="mr-1 inline-block h-full pb-[2px]" />
                 Add
               </td>
-              {Array.from({ length: 3 }).map((_, index) => (
+              {/* {Array.from({ length: 3 }).map((_, index) => (
                 <td
                   key={index}
                   className={cn("border-b bg-white hover:cursor-default")}
                 ></td>
-              ))}
+              ))} */}
             </tr>
           </tbody>
         </table>
